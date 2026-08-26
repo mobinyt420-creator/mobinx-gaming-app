@@ -1,12 +1,16 @@
 export class Toast {
-  static show(message, type = 'info', duration = 3000) {
+  static show(message, type = 'info', duration = 2800) {
     let container = document.getElementById('toast-root');
     if (!container) {
       container = document.createElement('div');
       container.id = 'toast-root';
       container.className = 'toast-container';
-      document.querySelector('.app-container').appendChild(container);
+      const appContainer = document.querySelector('.app-container') || document.body;
+      appContainer.appendChild(container);
     }
+
+    // Clear previous toasts so they never stack on mobile screens
+    container.innerHTML = '';
 
     const toast = document.createElement('div');
     toast.className = `toast-item ${type}`;
