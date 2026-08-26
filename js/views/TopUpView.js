@@ -1,9 +1,16 @@
-import { Browser } from '@capacitor/browser';
 import { APP_CONFIG_URLS } from '../config/urls.js';
 import { stateManager } from '../services/stateManager.js';
 import { authService } from '../services/authService.js';
 
 let isBrowserOpening = false;
+
+// Safely access Capacitor Browser from window object (No bare imports that break webview!)
+function getCapacitorBrowser() {
+  if (typeof window !== 'undefined' && window.Capacitor?.Plugins?.Browser) {
+    return window.Capacitor.Plugins.Browser;
+  }
+  return null;
+}
 
 export async function openTopUpCustomTab() {
   if (isBrowserOpening) return;
@@ -13,18 +20,24 @@ export async function openTopUpCustomTab() {
   const targetUrl = urls.topup || APP_CONFIG_URLS.TOPUP_URL || 'https://noobtopup.com/';
 
   try {
-    // Open in native Chrome Custom Tab (Matches Screenshot 2 with 100% Google Login & bKash support)
-    await Browser.open({
-      url: targetUrl,
-      toolbarColor: '#0284c7',
-      presentationStyle: 'fullscreen'
-    });
+    const nativeBrowser = getCapacitorBrowser();
+    if (nativeBrowser) {
+      // In native Android APK: Opens Chrome Custom Tabs with full Google login & bKash
+      await nativeBrowser.open({
+        url: targetUrl,
+        toolbarColor: '#0284c7',
+        presentationStyle: 'fullscreen'
+      });
+      return;
+    }
   } catch (err) {
-    console.warn('Capacitor Browser fallback:', err);
-    window.open(targetUrl, '_blank');
+    console.warn('Capacitor Browser notice:', err);
   } finally {
     setTimeout(() => { isBrowserOpening = false; }, 1000);
   }
+
+  // Fallback for PC browser or standard web: opens in new window
+  window.open(targetUrl, '_blank');
 }
 
 export function renderTopUpView() {
@@ -57,7 +70,7 @@ export function renderTopUpView() {
 }
 
 export function bindTopUpEvents() {
-  // Automatically open the Chrome Custom Tab immediately when tapped
+  // Automatically open the Chrome Custom Tab immediately when entering view
   openTopUpCustomTab();
 
   document.getElementById('btn-reopen-topup')?.addEventListener('click', () => {
@@ -70,9 +83,12 @@ export function bindTopUpEvents() {
 
   // When user closes the Chrome Custom Tab (taps the X button), navigate cleanly back to Home
   try {
-    Browser.removeAllListeners();
-    Browser.addListener('browserFinished', () => {
-      stateManager.navigate('home');
-    });
+    const nativeBrowser = getCapacitorBrowser();
+    if (nativeBrowser?.removeAllListeners) {
+      nativeBrowser.removeAllListeners();
+      nativeBrowser.addListener('browserFinished', () => {
+        stateManager.navigate('home');
+      });
+    }
   } catch (e) {}
 }

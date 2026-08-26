@@ -1,9 +1,16 @@
-import { Browser } from '@capacitor/browser';
 import { APP_CONFIG_URLS } from '../config/urls.js';
 import { stateManager } from '../services/stateManager.js';
 import { authService } from '../services/authService.js';
 
 let isShopOpening = false;
+
+// Safely access Capacitor Browser from window object (No bare imports that break webview!)
+function getCapacitorBrowser() {
+  if (typeof window !== 'undefined' && window.Capacitor?.Plugins?.Browser) {
+    return window.Capacitor.Plugins.Browser;
+  }
+  return null;
+}
 
 export async function openShopCustomTab() {
   if (isShopOpening) return;
@@ -13,18 +20,24 @@ export async function openShopCustomTab() {
   const targetUrl = urls.shop || APP_CONFIG_URLS.SHOP_URL || 'https://www.obinshop.com/';
 
   try {
-    // Open in native Chrome Custom Tab
-    await Browser.open({
-      url: targetUrl,
-      toolbarColor: '#7c3aed',
-      presentationStyle: 'fullscreen'
-    });
+    const nativeBrowser = getCapacitorBrowser();
+    if (nativeBrowser) {
+      // In native Android APK: Opens Chrome Custom Tabs
+      await nativeBrowser.open({
+        url: targetUrl,
+        toolbarColor: '#7c3aed',
+        presentationStyle: 'fullscreen'
+      });
+      return;
+    }
   } catch (err) {
-    console.warn('Capacitor Browser fallback:', err);
-    window.open(targetUrl, '_blank');
+    console.warn('Capacitor Browser notice:', err);
   } finally {
     setTimeout(() => { isShopOpening = false; }, 1000);
   }
+
+  // Fallback for PC browser or standard web
+  window.open(targetUrl, '_blank');
 }
 
 export function renderShopView() {
@@ -57,7 +70,7 @@ export function renderShopView() {
 }
 
 export function bindShopEvents() {
-  // Automatically open the Chrome Custom Tab immediately when tapped
+  // Automatically open the Chrome Custom Tab immediately when entering view
   openShopCustomTab();
 
   document.getElementById('btn-reopen-shop')?.addEventListener('click', () => {
@@ -69,9 +82,12 @@ export function bindShopEvents() {
   });
 
   try {
-    Browser.removeAllListeners();
-    Browser.addListener('browserFinished', () => {
-      stateManager.navigate('home');
-    });
+    const nativeBrowser = getCapacitorBrowser();
+    if (nativeBrowser?.removeAllListeners) {
+      nativeBrowser.removeAllListeners();
+      nativeBrowser.addListener('browserFinished', () => {
+        stateManager.navigate('home');
+      });
+    }
   } catch (e) {}
 }
