@@ -1,123 +1,11 @@
 import { defaultUser, appUrls } from '../data/mockData.js';
+import { firebaseService } from './firebaseService.js';
 
 // Master Admin Email
 export const MASTER_ADMIN_EMAIL = "mobinyt420@gmail.com";
 
-// Pre-seeded realistic users database for Admin Panel tracking
-const initialRegisteredUsers = [
-  {
-    id: "MX-884920",
-    username: "Mobin_Admin",
-    fullName: "Mr. Mobin (Admin)",
-    email: "mobinyt420@gmail.com",
-    phone: "01812345678",
-    ffUid: "2894192841",
-    avatar: "assets/images/avatar_user.jpg",
-    role: "System Administrator (Admin)",
-    isAdmin: true,
-    status: "Active",
-    walletBalance: 2500,
-    diamonds: 1060,
-    registeredDate: "2026-08-01",
-    stats: { tournamentsJoined: 14, totalDownloads: 28, savedSensitivities: 6, referralsCount: 19 }
-  },
-  {
-    id: "MX-392810",
-    username: "Tanvir_Sniper",
-    fullName: "Tanvir Hossain",
-    email: "tanvir.ff@gmail.com",
-    phone: "01799887766",
-    ffUid: "1092837482",
-    avatar: "assets/images/avatar_user.jpg",
-    role: "VIP Pro Member",
-    isAdmin: false,
-    status: "Active",
-    walletBalance: 450,
-    diamonds: 310,
-    registeredDate: "2026-08-10",
-    stats: { tournamentsJoined: 8, totalDownloads: 15, savedSensitivities: 4, referralsCount: 6 }
-  },
-  {
-    id: "MX-748291",
-    username: "Shanto_Headshot",
-    fullName: "Nazmul Shanto",
-    email: "shanto.gaming@gmail.com",
-    phone: "01611223344",
-    ffUid: "9283746152",
-    avatar: "assets/images/avatar_user.jpg",
-    role: "VIP Pro Member",
-    isAdmin: false,
-    status: "Active",
-    walletBalance: 820,
-    diamonds: 1060,
-    registeredDate: "2026-08-15",
-    stats: { tournamentsJoined: 12, totalDownloads: 19, savedSensitivities: 5, referralsCount: 11 }
-  },
-  {
-    id: "MX-551928",
-    username: "Rifat_Booyah",
-    fullName: "Rifat Ahmed",
-    email: "rifat.booyah99@gmail.com",
-    phone: "01933445566",
-    ffUid: "4829104829",
-    avatar: "assets/images/avatar_user.jpg",
-    role: "Member",
-    isAdmin: false,
-    status: "Active",
-    walletBalance: 120,
-    diamonds: 100,
-    registeredDate: "2026-08-18",
-    stats: { tournamentsJoined: 4, totalDownloads: 9, savedSensitivities: 2, referralsCount: 2 }
-  },
-  {
-    id: "MX-662910",
-    username: "Sakib_Rusher",
-    fullName: "Sakib Al Hasan",
-    email: "sakib.rusher@gmail.com",
-    phone: "01522334455",
-    ffUid: "3392810485",
-    avatar: "assets/images/avatar_user.jpg",
-    role: "Member",
-    isAdmin: false,
-    status: "Active",
-    walletBalance: 300,
-    diamonds: 0,
-    registeredDate: "2026-08-20",
-    stats: { tournamentsJoined: 6, totalDownloads: 11, savedSensitivities: 3, referralsCount: 4 }
-  },
-  {
-    id: "MX-918273",
-    username: "Mehedi_Ghost",
-    fullName: "Mehedi Hasan",
-    email: "mehedi.ghost@gmail.com",
-    phone: "01344556677",
-    ffUid: "8829104928",
-    avatar: "assets/images/avatar_user.jpg",
-    role: "VIP Pro Member",
-    isAdmin: false,
-    status: "Active",
-    walletBalance: 650,
-    diamonds: 520,
-    registeredDate: "2026-08-22",
-    stats: { tournamentsJoined: 7, totalDownloads: 14, savedSensitivities: 3, referralsCount: 5 }
-  },
-  {
-    id: "MX-402918",
-    username: "Afsana_Queen",
-    fullName: "Afsana Akter",
-    email: "afsana.queenff@gmail.com",
-    phone: "01855667788",
-    ffUid: "5592810472",
-    avatar: "assets/images/avatar_user.jpg",
-    role: "VIP Pro Member",
-    isAdmin: false,
-    status: "Active",
-    walletBalance: 980,
-    diamonds: 2180,
-    registeredDate: "2026-08-24",
-    stats: { tournamentsJoined: 11, totalDownloads: 22, savedSensitivities: 8, referralsCount: 14 }
-  }
-];
+// Real registered users list (Zero fake dummy users for Play Store production)
+const initialRegisteredUsers = [];
 
 class AuthService {
   constructor() {
@@ -127,11 +15,8 @@ class AuthService {
     const customUrls = hasStorage ? localStorage.getItem('mobinx_custom_urls') : null;
     const savedUsers = hasStorage ? localStorage.getItem('mobinx_registered_users') : null;
 
-    // Load registered users database
-    this.registeredUsers = savedUsers ? JSON.parse(savedUsers) : [...initialRegisteredUsers];
-    if (hasStorage && !savedUsers) {
-      localStorage.setItem('mobinx_registered_users', JSON.stringify(this.registeredUsers));
-    }
+    // Load registered users (clean, zero fake dummy users)
+    this.registeredUsers = savedUsers ? JSON.parse(savedUsers) : [];
 
     this.user = savedSession ? JSON.parse(savedSession) : { ...defaultUser };
     this.adminEmail = adminEmail || MASTER_ADMIN_EMAIL;
@@ -146,6 +31,56 @@ class AuthService {
         this.user.role = "System Administrator (Admin)";
       }
     }
+  }
+
+  persistSession() {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('mobinx_user_session', JSON.stringify(this.user));
+    }
+  }
+
+  async loginWithGoogle(email, username, phone = '', ffUid = '') {
+    const cleanEmail = (email || '').toLowerCase().trim();
+    const cleanUsername = (username || cleanEmail.split('@')[0] || 'Player').trim();
+    
+    // Check if user already exists
+    let existing = this.registeredUsers.find(u => u.email && u.email.toLowerCase() === cleanEmail);
+    if (!existing) {
+      const newPlayerNum = this.registeredUsers.length + 1;
+      existing = {
+        id: `USR-${String(newPlayerNum).padStart(3, '0')}`,
+        playerNumber: newPlayerNum,
+        username: cleanUsername,
+        fullName: cleanUsername,
+        email: cleanEmail,
+        phone: phone || '',
+        ffUid: ffUid || '',
+        avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(cleanUsername)}`,
+        role: "Player",
+        isAdmin: cleanEmail === MASTER_ADMIN_EMAIL.toLowerCase(),
+        status: "Active",
+        registeredDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+        registeredAtIso: new Date().toISOString(),
+        platform: typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.includes('Android') ? 'Android Mobile' : 'Web Device',
+        ip: 'Connected'
+      };
+      this.registeredUsers.push(existing);
+      this.saveUsersDatabase();
+    } else {
+      if (phone) existing.phone = phone;
+      if (ffUid) existing.ffUid = ffUid;
+      this.saveUsersDatabase();
+    }
+
+    this.user = { ...existing };
+    this.persistSession();
+
+    // Sync to Cloud Firestore
+    try {
+      await firebaseService.saveToFirestore('users', existing.id, existing);
+    } catch(e) {}
+
+    return this.user;
   }
 
   hasCompletedOnboarding() {

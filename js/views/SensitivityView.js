@@ -195,11 +195,11 @@ export function renderSensitivityView() {
             <div class="sens-info-split-row">
               <div class="sens-info-pill">
                 <span class="dot-icon">🎯</span>
-                <span>BUTTON: <strong>${currentSensiData.presets[activePresetIndex].buttonSize}</strong></span>
+                <span>BUTTON: <strong style="color:#10b981 !important; font-size:13px; font-weight:900;">${currentSensiData.presets[activePresetIndex].buttonSize || '44%'}</strong></span>
               </div>
               <div class="sens-info-pill ${isNoDpiMode ? 'no-dpi' : ''}">
                 <span class="dot-icon">📱</span>
-                <span>DPI: <strong>${isNoDpiMode ? 'Default (No DPI)' : currentSensiData.presets[activePresetIndex].dpi}</strong></span>
+                <span>DPI: <strong style="color:${isNoDpiMode ? '#eab308' : '#38bdf8'} !important; font-size:13px; font-weight:900;">${isNoDpiMode ? 'Default (No DPI)' : (currentSensiData.presets[activePresetIndex].dpi || '480 DPI')}</strong></span>
               </div>
             </div>
 
