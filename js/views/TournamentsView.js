@@ -47,13 +47,14 @@ export function renderTournamentsView() {
         ` : items.map(match => {
           const spotsLeft = Math.max(0, match.slotsTotal - match.slotsFilled);
           const percentFilled = Math.min(100, Math.round((match.slotsFilled / match.slotsTotal) * 100));
-          const entryType = match.entryType || match.gameMode || 'Duo';
-          const matchDate = match.matchDate || match.date + ' at ' + match.time || 'TODAY at 08:30 PM';
-          const winPrize = match.prizePool || '405 TK';
+          const entryType = match.entryType || match.gameMode || 'Squad (4v4)';
+          const matchDate = match.matchDate || (match.date && match.time ? `${match.date} at ${match.time}` : 'TODAY at 08:30 PM');
+          const winPrize = match.prizePool || '৳1,500';
           const mapName = match.map || 'Bermuda';
           const isReleased = !!match.isRoomReleased;
           const roomId = match.roomId || 'MX-88942';
           const roomPass = match.roomPass || '1234';
+          const startTimestamp = match.startTimestamp || (match.matchTimeIso ? new Date(match.matchTimeIso).getTime() : Date.now() + 3600000);
 
           return `
             <div class="br-match-card" data-match-id="${match.id}" style="${isReleased ? 'border: 2px solid #ef4444; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.15);' : ''}">
@@ -68,7 +69,12 @@ export function renderTournamentsView() {
                 </div>
                 <div class="br-title-col">
                   <h3 class="br-match-title">${match.title}</h3>
-                  <span class="br-match-time">${matchDate}</span>
+                  <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 2px;">
+                    <span class="br-match-time">${matchDate}</span>
+                    <span class="badge badge-primary tourn-live-countdown" data-start-time="${startTimestamp}" style="font-size: 9px; font-weight: 800; background: rgba(37, 99, 235, 0.15); color: #2563eb; padding: 2px 8px; border-radius: 999px;">
+                      ⏳ Loading timer...
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -76,15 +82,15 @@ export function renderTournamentsView() {
               <div class="br-specs-grid">
                 <div class="br-spec-item">
                   <span class="br-spec-label">WIN PRIZE</span>
-                  <span class="br-spec-value bold">${winPrize}</span>
+                  <span class="br-spec-value bold" style="color: #10b981;">${winPrize}</span>
                 </div>
                 <div class="br-spec-item">
-                  <span class="br-spec-label">ENTRY TYPE</span>
+                  <span class="br-spec-label">GAME MODE</span>
                   <span class="br-spec-value">${entryType}</span>
                 </div>
                 <div class="br-spec-item">
                   <span class="br-spec-label">ENTRY FEE</span>
-                  <span class="br-spec-value free">FREE</span>
+                  <span class="br-spec-value ${match.entryFee && match.entryFee !== 'Free' ? '' : 'free'}">${match.entryFee || 'FREE'}</span>
                 </div>
               </div>
 
@@ -92,7 +98,7 @@ export function renderTournamentsView() {
               <div class="br-specs-grid-2">
                 <div class="br-spec-item">
                   <span class="br-spec-label">MAP</span>
-                  <span class="br-spec-value">${mapName}</span>
+                  <span class="br-spec-value">🗺️ ${mapName}</span>
                 </div>
                 <div class="br-spec-item">
                   <span class="br-spec-label">VERSION</span>
@@ -185,10 +191,11 @@ export function renderTournamentsView() {
               <!-- Collapsible Prize Breakdown Box -->
               <div class="br-collapsible-box" id="prize-box-${match.id}">
                 <div class="prize-details-content">
-                  <div class="prize-item"><span>🥇 1st Place (Booyah):</span> <span class="prize-val">250 TK / 520 💎</span></div>
-                  <div class="prize-item"><span>🥈 2nd Place:</span> <span class="prize-val">100 TK / 200 💎</span></div>
-                  <div class="prize-item"><span>🥉 3rd Place:</span> <span class="prize-val">55 TK / 100 💎</span></div>
-                  <p class="room-notice">🎁 Cash or Diamond prize is automatically credited to your wallet / bKash / Free Fire UID upon match completion.</p>
+                  <div class="prize-item"><span>🥇 1st Place (Booyah):</span> <span class="prize-val" style="color:#10b981; font-weight:800;">${match.prize1st || match.prizePool || '৳1,000'}</span></div>
+                  ${match.prize2nd ? `<div class="prize-item"><span>🥈 2nd Place:</span> <span class="prize-val" style="color:#3b82f6; font-weight:800;">${match.prize2nd}</span></div>` : ''}
+                  ${match.prize3rd ? `<div class="prize-item"><span>🥉 3rd Place:</span> <span class="prize-val" style="color:#eab308; font-weight:800;">${match.prize3rd}</span></div>` : ''}
+                  ${match.prizeKill ? `<div class="prize-item"><span>🎯 Per Kill / MVP:</span> <span class="prize-val" style="color:#06b6d4; font-weight:800;">${match.prizeKill}</span></div>` : ''}
+                  <p class="room-notice">🎁 Cash (bKash/Nagad) or Diamonds credited instantly upon match completion by Mobin X Admin.</p>
                 </div>
               </div>
 
@@ -199,7 +206,7 @@ export function renderTournamentsView() {
                   <polyline points="12 6 12 12 16 14"></polyline>
                 </svg>
                 <span>${isReleased ? 'ROOM IS LIVE NOW - ' : 'STARTS IN - '}</span>
-                <span class="br-timer-clock">${isReleased ? 'JOIN LOBBY' : '01m:00s'}</span>
+                <span class="br-timer-clock" data-start-time="${startTimestamp}">${isReleased ? 'JOIN LOBBY' : 'Calculating...'}</span>
               </div>
             </div>
           `;
@@ -209,8 +216,47 @@ export function renderTournamentsView() {
   `;
 }
 
+// Live Countdown Interval
+let countdownInterval = null;
+
 export function bindTournamentsEvents() {
+  // Clear any existing countdown ticker
+  if (countdownInterval) clearInterval(countdownInterval);
+
+  function updateCountdowns() {
+    document.querySelectorAll('.tourn-live-countdown, .br-timer-clock').forEach(el => {
+      const raw = el.getAttribute('data-start-time');
+      if (!raw) return;
+      const target = parseInt(raw);
+      if (isNaN(target)) return;
+
+      const diff = target - Date.now();
+      if (diff <= 0) {
+        el.textContent = el.classList.contains('tourn-live-countdown') ? '🔴 LIVE NOW' : 'LOBBY OPEN';
+        if (el.classList.contains('tourn-live-countdown')) {
+          el.style.background = 'rgba(239, 68, 68, 0.2)';
+          el.style.color = '#ef4444';
+        }
+        return;
+      }
+
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const secs = Math.floor((diff % (1000 * 60)) / 1000);
+
+      if (el.classList.contains('tourn-live-countdown')) {
+        el.textContent = hours > 24 ? `⏳ ${Math.floor(hours / 24)}d ${hours % 24}h ${mins}m` : `⏳ ${String(hours).padStart(2, '0')}h ${String(mins).padStart(2, '0')}m ${String(secs).padStart(2, '0')}s`;
+      } else {
+        el.textContent = `${String(hours).padStart(2, '0')}h:${String(mins).padStart(2, '0')}m:${String(secs).padStart(2, '0')}s`;
+      }
+    });
+  }
+
+  updateCountdowns();
+  countdownInterval = setInterval(updateCountdowns, 1000);
+
   document.getElementById('btn-tourn-back')?.addEventListener('click', () => {
+    if (countdownInterval) clearInterval(countdownInterval);
     stateManager.navigate('home');
   });
 

@@ -85,37 +85,43 @@ export function renderModal(activeModal) {
       bodyContent = `
         <div style="display: flex; flex-direction: column; gap: 14px;">
           <div style="display: flex; gap: 14px; align-items: center;">
-            <div style="width: 54px; height: 54px; border-radius: var(--radius-lg); background: var(--primary-light); display: flex; align-items: center; justify-content: center; font-size: 26px;">
+            <div style="width: 52px; height: 52px; border-radius: var(--radius-lg); background: var(--primary-light); display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0;">
               📥
             </div>
             <div>
-              <div style="font-weight: 800; font-size: 15px; color: var(--text-main);">${data.title}</div>
-              <div style="font-size: 11px; color: var(--text-secondary);">${data.version} • ${data.size}</div>
+              <div style="font-weight: 800; font-size: 14.5px; color: var(--text-main); line-height: 1.3;">${data.title}</div>
+              <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Verified APK Package • 100% Anti-Ban</div>
             </div>
           </div>
 
-          <div style="background: var(--success-light); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: var(--radius-md); padding: 10px 12px; display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--success); font-weight: 600;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-            <span>Verified 100% Virus & Malware Free by Mobin X Protect</span>
+          <!-- Sponsored Ad & Reward Verification Slot (AdMob Ready) -->
+          <div style="background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(6, 182, 212, 0.06) 100%); border: 1.5px dashed rgba(59, 130, 246, 0.35); border-radius: var(--radius-md); padding: 12px; text-align: center;">
+            <div style="font-size: 10px; font-weight: 800; color: var(--primary); letter-spacing: 0.8px; text-transform: uppercase;">
+              📢 Sponsored Free Fire Partner Ad (AdMob Ready)
+            </div>
+            <div style="font-size: 12px; font-weight: 700; color: var(--text-main); margin-top: 4px;">
+              🔥 Get 100% Bonus Diamonds on First Top-Up!
+            </div>
+            <div style="font-size: 10.5px; color: var(--text-muted); margin-top: 2px;">
+              Support Mobin X free servers by verifying link generation.
+            </div>
           </div>
-
-          <p style="font-size: 12px; color: var(--text-secondary); line-height: 1.4;">${data.description}</p>
 
           <div id="modal-download-progress-box" style="display: none; flex-direction: column; gap: 6px;">
             <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700;">
-              <span id="modal-progress-label">Downloading APK package...</span>
+              <span id="modal-progress-label">Step 1/2: Generating secure download link...</span>
               <span id="modal-progress-percent" style="color: var(--primary);">0%</span>
             </div>
             <div style="height: 8px; background: #e2e8f0; border-radius: var(--radius-full); overflow: hidden;">
-              <div id="modal-progress-bar-fill" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.2s ease;"></div>
+              <div id="modal-progress-bar-fill" style="width: 0%; height: 100%; background: linear-gradient(90deg, #2563eb, #06b6d4); transition: width 0.2s ease;"></div>
             </div>
           </div>
 
-          <div style="display: flex; gap: 10px; margin-top: 6px;">
+          <div style="display: flex; gap: 10px; margin-top: 4px;">
             <button class="btn-secondary" id="btn-modal-cancel" style="flex: 1;">Cancel</button>
-            <button class="btn-primary" id="btn-start-modal-download" style="flex: 2;">
+            <button class="btn-primary" id="btn-start-modal-download" style="flex: 2; display: flex; align-items: center; justify-content: center; gap: 6px;" data-url="${data.targetUrl || data.url || 'https://mrmobin.blogspot.com/'}">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-              <span>Download (${data.size})</span>
+              <span>Get Download Link</span>
             </button>
           </div>
         </div>
@@ -125,6 +131,7 @@ export function renderModal(activeModal) {
     case 'tournamentJoin':
       modalTitle = 'Join Battle Royale Match';
       const currentUserObj = authService.getCurrentUser();
+      const hasRealName = currentUserObj.username && currentUserObj.username !== 'Guest_Player';
       bodyContent = `
         <div style="display: flex; flex-direction: column; gap: 12px;">
           <div style="font-size: 15px; font-weight: 800; color: var(--text-main);">${data.title}</div>
@@ -136,17 +143,17 @@ export function renderModal(activeModal) {
 
           <div style="display: flex; flex-direction: column; gap: 6px;">
             <label style="font-size: 11.5px; font-weight: 700; color: var(--text-main);">Your In-Game Gamer Tag (IGN) *</label>
-            <input type="text" id="input-player-ign" placeholder="e.g. Mobin_Killer_99" value="${currentUserObj.username || 'Mobin_Gamer99'}" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); outline: none; font-size: 12.5px; font-weight: 600;" />
+            <input type="text" id="input-player-ign" placeholder="Enter your Free Fire IGN" value="${hasRealName ? currentUserObj.username : ''}" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); outline: none; font-size: 12.5px; font-weight: 600;" />
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
             <div>
               <label style="font-size: 11px; font-weight: 700; color: var(--text-main);">Free Fire UID *</label>
-              <input type="text" id="input-player-uid" placeholder="2894192841" value="${currentUserObj.ffUid || '2894192841'}" style="width: 100%; padding: 9px 10px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); outline: none; font-size: 12px; font-weight: 600;" />
+              <input type="text" id="input-player-uid" placeholder="Enter your FF UID" value="${currentUserObj.ffUid || ''}" style="width: 100%; padding: 9px 10px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); outline: none; font-size: 12px; font-weight: 600;" />
             </div>
             <div>
               <label style="font-size: 11px; font-weight: 700; color: var(--text-main);">Phone (Prize bKash) *</label>
-              <input type="tel" id="input-player-phone" placeholder="018XXXXXXXX" value="${currentUserObj.phone || '01812345678'}" style="width: 100%; padding: 9px 10px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); outline: none; font-size: 12px; font-weight: 600;" />
+              <input type="tel" id="input-player-phone" placeholder="01XXXXXXXXX" value="${currentUserObj.phone || ''}" style="width: 100%; padding: 9px 10px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); outline: none; font-size: 12px; font-weight: 600;" />
             </div>
           </div>
 
@@ -162,6 +169,35 @@ export function renderModal(activeModal) {
           </div>
         </div>
       `;
+      break;
+
+    case 'welcomeAnnouncement':
+      modalTitle = data.title || 'Official Announcement';
+      bodyContent = `
+        <div style="display: flex; flex-direction: column; gap: 14px; text-align: center;">
+          ${data.imageUrl ? `
+            <div style="width: 100%; border-radius: var(--radius-lg); overflow: hidden; max-height: 180px; box-shadow: var(--shadow-sm);">
+              <img src="${data.imageUrl}" alt="Notice" style="width: 100%; height: 100%; object-fit: cover;" />
+            </div>
+          ` : ''}
+          <div style="font-size: 16px; font-weight: 900; color: var(--text-main); line-height: 1.3;">${data.title || 'Welcome to Mobin X!'}</div>
+          <div style="font-size: 12.5px; color: var(--text-secondary); line-height: 1.5;">${data.message || ''}</div>
+          <div style="display: flex; gap: 10px; margin-top: 6px;">
+            <button class="btn-secondary" id="btn-modal-cancel" style="flex: 1;">Dismiss</button>
+            ${data.actionUrl ? `
+              <a href="${data.actionUrl}" target="_blank" class="btn-primary" id="btn-announcement-action" style="flex: 2; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <span>${data.actionLabel || 'Check It Out'}</span>
+                <span>→</span>
+              </a>
+            ` : ''}
+          </div>
+        </div>
+      `;
+      break;
+
+    case 'sensitivityGuide':
+      modalTitle = data.title || 'Sensitivity Guide';
+      bodyContent = data.content || '<p>Follow in-game guide instructions.</p>';
       break;
 
     case 'referralShare':
@@ -251,18 +287,31 @@ export function bindModalEvents(activeModal) {
     const progressBox = document.getElementById('modal-download-progress-box');
     const progressBar = document.getElementById('modal-progress-bar-fill');
     const progressPercent = document.getElementById('modal-progress-percent');
+    const progressLabel = document.getElementById('modal-progress-label');
+    const targetUrl = startBtn?.getAttribute('data-url') || data.targetUrl || data.url || 'https://mrmobin.blogspot.com/';
 
     startBtn?.addEventListener('click', () => {
       startBtn.style.display = 'none';
       if (progressBox) progressBox.style.display = 'flex';
 
-      downloadService.startDownload(data.id, (percent) => {
-        if (progressBar) progressBar.style.width = `${percent}%`;
-        if (progressPercent) progressPercent.textContent = `${percent}%`;
-      }, (completedItem) => {
-        Toast.show(`Download complete: ${completedItem.title}!`, 'success');
-        stateManager.closeModal();
-      });
+      let currentPercent = 0;
+      const interval = setInterval(() => {
+        currentPercent += 20;
+        if (progressBar) progressBar.style.width = currentPercent + '%';
+        if (progressPercent) progressPercent.textContent = currentPercent + '%';
+        if (progressLabel && currentPercent >= 60) {
+          progressLabel.textContent = 'Step 2/2: Security verified! Unlocking target link...';
+        }
+
+        if (currentPercent >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            stateManager.closeModal();
+            Toast.show('Security verified! Opening high-speed download link...', 'success');
+            window.open(targetUrl, '_blank');
+          }, 400);
+        }
+      }, 350);
     });
   }
 

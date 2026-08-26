@@ -1,249 +1,463 @@
-import { sensitivityService } from '../services/sensitivityService.js';
-import { authService } from '../services/authService.js';
+import { sensitivityService, DEVICE_BRANDS, QUICK_FEATURED_MODELS } from '../services/sensitivityService.js';
 import { stateManager } from '../services/stateManager.js';
 import { Toast } from '../components/Toast.js';
 
-let wizardStep = 1;
-let currentConfig = {
-  brand: 'Samsung',
-  ram: '6GB',
-  dpi: '440',
-  style: 'Drag Headshot (Ruok FF Style)'
-};
-
-let currentResult = null;
+// View State Management
+let currentViewMode = 'brands'; // 'brands' | 'models' | 'result' | 'custom'
+let selectedBrand = DEVICE_BRANDS[0];
+let selectedDeviceName = 'VIVO Y1';
+let currentSensiData = null;
+let activePresetIndex = 0;
+let isNoDpiMode = false;
+let searchQuery = '';
 
 export function renderSensitivityView() {
-  if (!currentResult) {
-    currentResult = sensitivityService.calculate(currentConfig);
+  if (!currentSensiData) {
+    currentSensiData = sensitivityService.generateForDevice(selectedDeviceName, selectedBrand.id);
   }
 
   return `
     <div class="view-container sensitivity-view">
+      
+      <!-- Top Navigation Header -->
       <div class="subview-header">
         <div class="subview-header-left">
-          <button class="back-btn" id="btn-sens-back">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-          </button>
-          <h2 class="subview-title">Sensitivity Maker</h2>
+          ${currentViewMode !== 'brands' ? `
+            <button class="back-btn" id="btn-sens-mode-back" title="Back">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+          ` : `
+            <button class="back-btn" id="btn-sens-app-back" title="Home">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+          `}
+          <h2 class="subview-title">
+            ${currentViewMode === 'brands' ? '🎯 Sensitivity Maker' : (currentViewMode === 'models' ? `${selectedBrand.name} Devices` : `${selectedDeviceName}`)}
+          </h2>
         </div>
-        <span class="badge badge-primary">🎯 200 Scale Meta</span>
+        <span class="badge badge-primary">Free Fire OB45 Meta</span>
       </div>
 
-      <!-- 3-Step Stepper Bar -->
-      <div class="stepper-header">
-        <div class="step-indicator">
-          <div class="step-circle ${wizardStep >= 1 ? (wizardStep === 1 ? 'active' : 'completed') : ''}">1</div>
-          <div class="step-line"></div>
-          <div class="step-circle ${wizardStep >= 2 ? (wizardStep === 2 ? 'active' : 'completed') : ''}">2</div>
-          <div class="step-line"></div>
-          <div class="step-circle ${wizardStep === 3 ? 'active' : ''}">3</div>
-        </div>
-        <span style="font-size: 11px; font-weight: 700; color: var(--primary);">Step ${wizardStep} of 3</span>
-      </div>
-
-      <div class="wizard-content">
-        <!-- Step 1: Device Hardware Specifications -->
-        ${wizardStep === 1 ? `
-          <div>
-            <h3 style="font-size: 15px; font-weight: 800; margin-bottom: 4px;">Step 1: Device Hardware</h3>
-            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">Calibrates touch sampling rate and DPI curve</p>
-            
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-              <div>
-                <label style="font-size: 11.5px; font-weight: 700;">Device Brand</label>
-                <select id="select-brand" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); font-size: 13px; background: #fff; margin-top: 4px;">
-                  ${['Samsung Galaxy', 'Xiaomi / Poco', 'Realme', 'Infinix', 'OnePlus', 'Apple iPhone', 'Vivo / iQOO', 'Tecno', 'Other Android'].map(b => `
-                    <option value="${b}" ${currentConfig.brand.startsWith(b.split(' ')[0]) ? 'selected' : ''}>${b}</option>
-                  `).join('')}
-                </select>
-              </div>
-
-              <div>
-                <label style="font-size: 11.5px; font-weight: 700;">RAM Memory</label>
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 4px;">
-                  ${['4GB', '6GB', '8GB', '12GB+'].map(r => `
-                    <button class="btn-secondary ram-select-btn ${currentConfig.ram === r ? 'active' : ''}" data-ram="${r}" style="padding: 8px 4px; font-size: 12px; ${currentConfig.ram === r ? 'border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 700;' : ''}">
-                      ${r}
-                    </button>
-                  `).join('')}
-                </div>
-              </div>
-
-              <div>
-                <label style="font-size: 11.5px; font-weight: 700;">Current Device DPI (Default: 420)</label>
-                <input type="number" id="input-dpi" value="${currentConfig.dpi}" placeholder="420" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); font-size: 13px; margin-top: 4px; outline: none;" />
-              </div>
-            </div>
+      <!-- VIEW 1: BRAND SELECTION & QUICK SEARCH -->
+      ${currentViewMode === 'brands' ? `
+        <div class="sens-brand-container">
+          
+          <!-- Search Bar -->
+          <div class="sens-search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="sens-global-search" class="sens-search-input" placeholder="SEARCH YOUR PHONE MODEL (e.g. Y22, A54)..." value="${searchQuery}" />
+            ${searchQuery ? `<button id="btn-clear-search" class="clear-search-btn">✕</button>` : ''}
           </div>
-          <button class="btn-primary" id="btn-wizard-next-1" style="width: 100%; margin-top: 14px;">Continue to Playstyle →</button>
-        ` : ''}
 
-        <!-- Step 2: Pro Playstyle Selection -->
-        ${wizardStep === 2 ? `
-          <div>
-            <h3 style="font-size: 15px; font-weight: 800; margin-bottom: 4px;">Step 2: Esports Play Style</h3>
-            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">Select pro player algorithm for vertical drag velocity</p>
-            <div class="selection-grid">
-              ${[
-                { name: 'Drag Headshot (Ruok FF Style)', icon: '🎯', desc: 'Max vertical drag accuracy' },
-                { name: 'One Tap (White444 Style)', icon: '⚡', desc: 'Fast flick & instant recoil reset' },
-                { name: 'Rush & Fast Gloo Wall (Raistar Style)', icon: '🔥', desc: 'High 360° close combat speed' },
-                { name: 'Balanced Competitive (Tournament Meta)', icon: '⚖️', desc: 'All-rounder tournament setup' }
-              ].map(st => `
-                <div class="selectable-option-card ${currentConfig.style === st.name ? 'selected' : ''}" data-step2-style="${st.name}">
-                  <span class="option-icon">${st.icon}</span>
-                  <span class="option-title">${st.name}</span>
-                  <span style="font-size: 9px; color: var(--text-muted);">${st.desc}</span>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-          <div style="display: flex; gap: 10px; margin-top: 14px;">
-            <button class="btn-secondary" id="btn-wizard-prev-2" style="flex: 1;">Back</button>
-            <button class="btn-primary" id="btn-wizard-generate" style="flex: 2;">⚡ Generate Sensitivity</button>
-          </div>
-        ` : ''}
-
-        <!-- Step 3: Results & 200 Scale Live Sliders -->
-        ${wizardStep === 3 ? `
-          <div class="sensitivity-results-panel">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-light); padding-bottom: 10px;">
-              <div>
-                <span class="badge badge-success">Free Fire OB45+ Meta</span>
-                <div style="font-size: 14px; font-weight: 800; color: var(--text-main); margin-top: 2px;">
-                  ${currentResult.brand} • ${currentResult.style.split(' (')[0]}
-                </div>
-              </div>
-              <button class="btn-secondary" id="btn-recalibrate" style="padding: 6px 10px; font-size: 11px;">
-                🔄 Recalibrate
+          <!-- Quick Featured Devices Bar -->
+          <div class="sens-section-label">⚡ QUICK POPULAR DEVICES</div>
+          <div class="sens-quick-chips">
+            ${QUICK_FEATURED_MODELS.map(m => `
+              <button class="sens-chip-btn" data-chip-model="${m.name}" data-chip-brand="${m.brand}">
+                <span>📈</span>
+                <span>${m.name}</span>
               </button>
-            </div>
+            `).join('')}
+          </div>
 
-            <!-- 200-Scale Sliders -->
-            ${[
-              { key: 'general', label: 'General Camera' },
-              { key: 'redDot', label: 'Red Dot Sight' },
-              { key: 'scope2x', label: '2X Scope' },
-              { key: 'scope4x', label: '4X Scope' },
-              { key: 'sniper', label: 'Sniper Scope (AWM/M82B)' },
-              { key: 'freeLook', label: 'Free Look (360°)' }
-            ].map(item => `
-              <div class="sens-slider-row">
-                <div class="sens-slider-header">
-                  <span class="sens-label">${item.label}</span>
-                  <span class="sens-value-badge" id="badge-sens-${item.key}">${currentResult.values[item.key]}</span>
+          <!-- Section Label -->
+          <div class="sens-section-label" style="margin-top: 14px;">📱 CHOOSE YOUR DEVICE BRAND</div>
+
+          <!-- 2-Column Brand Grid (Ref: Screenshot 5) -->
+          <div class="sens-brand-grid">
+            ${DEVICE_BRANDS.map(b => `
+              <div class="sens-brand-card" data-brand-id="${b.id}">
+                <div class="brand-left">
+                  <span class="brand-badge-icon">${b.icon}</span>
+                  <span class="brand-name">${b.name}</span>
                 </div>
-                <input type="range" class="custom-range-slider sens-live-slider" data-key="${item.key}" min="0" max="200" value="${currentResult.values[item.key]}" />
+                <span class="brand-chevron">›</span>
               </div>
             `).join('')}
+          </div>
 
-            <!-- Pro Tips Box -->
-            <div style="background: var(--bg-card-subtle); border-radius: var(--radius-md); padding: 10px 12px; font-size: 11px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 4px;">
-              <span style="font-weight: 800; color: var(--text-main);">💡 Pro Calibration Tips:</span>
-              ${currentResult.proTips.map(tip => `<div>• ${tip}</div>`).join('')}
-              <div style="font-weight: 700; color: var(--primary); margin-top: 2px;">• Recommended DPI: ${currentResult.dpi}</div>
-            </div>
+          <!-- Custom Generator Direct Option -->
+          <div class="sens-generator-footer">
+            <button class="btn-custom-generator" id="btn-open-custom-gen">
+              <span>✨</span>
+              <span>CALCULATE CUSTOM SENSITIVITY (BY RAM & DPI)</span>
+            </button>
+          </div>
 
-            <!-- Action Buttons -->
-            <div style="display: flex; gap: 10px; margin-top: 6px;">
-              <button class="btn-secondary" id="btn-save-sensitivity" style="flex: 1;">
-                💾 Save Preset
-              </button>
-              <button class="btn-primary" id="btn-copy-sensitivity" style="flex: 1.5;">
-                📋 Copy Settings
-              </button>
+        </div>
+      ` : ''}
+
+      <!-- VIEW 2: MODEL LIST FOR SELECTED BRAND -->
+      ${currentViewMode === 'models' ? `
+        <div class="sens-model-container">
+          
+          <div class="sens-model-header-box">
+            <div class="brand-header-info">
+              <span class="brand-large-icon">${selectedBrand.icon}</span>
+              <div>
+                <h3>${selectedBrand.name} SETTINGS</h3>
+                <p>Select your exact model for 100% verified crosshair calibrator</p>
+              </div>
             </div>
           </div>
-        ` : ''}
-      </div>
+
+          <!-- Model Search Input -->
+          <div class="sens-search-box" style="margin-bottom: 12px;">
+            <span class="search-icon">🎯</span>
+            <input type="text" id="sens-model-search" class="sens-search-input" placeholder="Search ${selectedBrand.name} model..." />
+          </div>
+
+          <div class="sens-model-list" id="sens-model-list-root">
+            ${renderModelListItems(selectedBrand.popularModels)}
+          </div>
+
+        </div>
+      ` : ''}
+
+      <!-- VIEW 3: SENSI RESULT SCREEN (Ref: Screenshot 3) -->
+      ${currentViewMode === 'result' ? `
+        <div class="sens-result-container">
+          
+          <!-- Device Header -->
+          <div class="sens-device-badge">
+            <div class="device-name-row">
+              <span class="icon">📱</span>
+              <h3>${currentSensiData.deviceName}</h3>
+            </div>
+            <div class="device-sub-status">
+              RECOMMENDED SENSI ${currentSensiData.presets[activePresetIndex].tabName} | 100% HEADSHOT ACCURACY
+            </div>
+          </div>
+
+          <!-- Presets Selector Tabs (Ref: # 1, # 2, VIP 3, VIP 4) -->
+          <div class="sens-presets-bar">
+            ${currentSensiData.presets.map((p, idx) => `
+              <button class="preset-tab-btn ${activePresetIndex === idx ? 'active' : ''} ${p.isVip ? 'vip' : ''}" data-preset-index="${idx}">
+                ${p.isVip ? '<span class="vip-tag">VIP</span>' : ''}
+                <span>${p.tabName}</span>
+              </button>
+            `).join('')}
+          </div>
+
+          <!-- Active Preset Description -->
+          <div class="preset-desc-pill">
+            <strong>${currentSensiData.presets[activePresetIndex].title}</strong>: ${currentSensiData.presets[activePresetIndex].subtitle}
+          </div>
+
+          <!-- Sensitivity Sliders Card -->
+          <div class="sens-sliders-card">
+            
+            <!-- General Slider -->
+            <div class="sens-slider-group">
+              <div class="slider-label-row">
+                <span class="slider-title">General</span>
+                <span class="slider-value" id="val-general">${isNoDpiMode ? currentSensiData.presets[activePresetIndex].noDpiGeneral : currentSensiData.presets[activePresetIndex].general}</span>
+              </div>
+              <div class="slider-track-wrap">
+                <input type="range" class="sens-range-slider" min="100" max="200" value="${isNoDpiMode ? currentSensiData.presets[activePresetIndex].noDpiGeneral : currentSensiData.presets[activePresetIndex].general}" readonly />
+              </div>
+            </div>
+
+            <!-- Red Dot Slider -->
+            <div class="sens-slider-group">
+              <div class="slider-label-row">
+                <span class="slider-title">Red Dot</span>
+                <span class="slider-value" id="val-reddot">${currentSensiData.presets[activePresetIndex].redDot}</span>
+              </div>
+              <div class="slider-track-wrap">
+                <input type="range" class="sens-range-slider" min="100" max="200" value="${currentSensiData.presets[activePresetIndex].redDot}" readonly />
+              </div>
+            </div>
+
+            <!-- 2x Scope Slider -->
+            <div class="sens-slider-group">
+              <div class="slider-label-row">
+                <span class="slider-title">2x Scope</span>
+                <span class="slider-value" id="val-scope2x">${currentSensiData.presets[activePresetIndex].scope2x}</span>
+              </div>
+              <div class="slider-track-wrap">
+                <input type="range" class="sens-range-slider" min="100" max="200" value="${currentSensiData.presets[activePresetIndex].scope2x}" readonly />
+              </div>
+            </div>
+
+            <!-- 4x Scope Slider -->
+            <div class="sens-slider-group">
+              <div class="slider-label-row">
+                <span class="slider-title">4x Scope</span>
+                <span class="slider-value" id="val-scope4x">${currentSensiData.presets[activePresetIndex].scope4x}</span>
+              </div>
+              <div class="slider-track-wrap">
+                <input type="range" class="sens-range-slider" min="100" max="200" value="${currentSensiData.presets[activePresetIndex].scope4x}" readonly />
+              </div>
+            </div>
+
+            <!-- Button & DPI Row (Ref: BUTTON: 44%, DPI: 480) -->
+            <div class="sens-info-split-row">
+              <div class="sens-info-pill">
+                <span class="dot-icon">🎯</span>
+                <span>BUTTON: <strong>${currentSensiData.presets[activePresetIndex].buttonSize}</strong></span>
+              </div>
+              <div class="sens-info-pill ${isNoDpiMode ? 'no-dpi' : ''}">
+                <span class="dot-icon">📱</span>
+                <span>DPI: <strong>${isNoDpiMode ? 'Default (No DPI)' : currentSensiData.presets[activePresetIndex].dpi}</strong></span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Action Buttons (Ref: SHARE, NO DPI, SAVE) -->
+          <div class="sens-action-buttons-row">
+            <button class="sens-action-btn" id="btn-sens-share">
+              <span>↗️</span>
+              <span>SHARE</span>
+            </button>
+            <button class="sens-action-btn ${isNoDpiMode ? 'active' : ''}" id="btn-sens-nodpi" title="Toggle No DPI Mode">
+              <span>✨</span>
+              <span>${isNoDpiMode ? 'USE DPI' : 'NO DPI'}</span>
+            </button>
+            <button class="sens-action-btn" id="btn-sens-save">
+              <span>💾</span>
+              <span>SAVE</span>
+            </button>
+          </div>
+
+          <!-- Community Feedback Row (Ref: NOT WORKING / IT WORKS) -->
+          <div class="sens-feedback-row">
+            <button class="btn-feedback not-working ${currentSensiData.feedback.userVote === 'notWorking' ? 'voted' : ''}" id="btn-vote-not-working">
+              <span class="icon">👎</span>
+              <div class="text-col">
+                <span class="title">NOT WORKING</span>
+                <span class="count" id="count-not-working">${currentSensiData.feedback.notWorking}</span>
+              </div>
+            </button>
+
+            <button class="btn-feedback it-works ${currentSensiData.feedback.userVote === 'itWorks' ? 'voted' : ''}" id="btn-vote-it-works">
+              <span class="icon">👍</span>
+              <div class="text-col">
+                <span class="title">IT WORKS</span>
+                <span class="count" id="count-it-works">${currentSensiData.feedback.itWorks}</span>
+              </div>
+            </button>
+          </div>
+
+          <!-- Helper Guides Links (Ref: How To Use? | Where's "Sniper" & "Free Look"?) -->
+          <div class="sens-helper-links-row">
+            <button class="sens-link-btn" id="btn-guide-how-to-use">
+              <span>🏃</span>
+              <span>How To Use?</span>
+            </button>
+            <span class="divider">•</span>
+            <button class="sens-link-btn" id="btn-guide-sniper-freelook">
+              <span>🎯</span>
+              <span>Where's "Sniper" & "Free Look"?</span>
+            </button>
+          </div>
+
+        </div>
+      ` : ''}
+
     </div>
   `;
 }
 
+function renderModelListItems(models) {
+  if (!models || models.length === 0) {
+    return `<div style="text-align: center; padding: 20px; color: var(--text-muted);">No models found</div>`;
+  }
+  return models.map(m => `
+    <div class="sens-model-item" data-model-name="${m}">
+      <span class="model-name">${m}</span>
+      <span class="model-select-arrow">📲</span>
+    </div>
+  `).join('');
+}
+
 export function bindSensitivityEvents() {
-  document.getElementById('btn-sens-back')?.addEventListener('click', () => {
-    if (wizardStep > 1) {
-      wizardStep--;
-      stateManager.navigate('sensitivity');
+  // Navigation Back Button
+  document.getElementById('btn-sens-app-back')?.addEventListener('click', () => {
+    stateManager.navigate('home');
+  });
+
+  document.getElementById('btn-sens-mode-back')?.addEventListener('click', () => {
+    if (currentViewMode === 'result') {
+      currentViewMode = 'models';
+    } else if (currentViewMode === 'models') {
+      currentViewMode = 'brands';
+    }
+    stateManager.notify();
+  });
+
+  // Brand click
+  document.querySelectorAll('.sens-brand-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const bId = card.dataset.brandId;
+      const found = DEVICE_BRANDS.find(b => b.id === bId);
+      if (found) {
+        selectedBrand = found;
+        currentViewMode = 'models';
+        stateManager.notify();
+      }
+    });
+  });
+
+  // Quick chips
+  document.querySelectorAll('.sens-chip-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const mName = btn.dataset.chipModel;
+      const bId = btn.dataset.chipBrand;
+      selectedDeviceName = mName;
+      currentSensiData = sensitivityService.generateForDevice(selectedDeviceName, bId);
+      activePresetIndex = 0;
+      isNoDpiMode = false;
+      currentViewMode = 'result';
+      stateManager.notify();
+    });
+  });
+
+  // Model selection
+  document.querySelectorAll('.sens-model-item').forEach(item => {
+    item.addEventListener('click', () => {
+      selectedDeviceName = item.dataset.modelName;
+      currentSensiData = sensitivityService.generateForDevice(selectedDeviceName, selectedBrand.id);
+      activePresetIndex = 0;
+      isNoDpiMode = false;
+      currentViewMode = 'result';
+      stateManager.notify();
+    });
+  });
+
+  // Global Search in Brands
+  const searchInput = document.getElementById('sens-global-search');
+  searchInput?.addEventListener('input', (e) => {
+    searchQuery = e.target.value.toLowerCase().trim();
+    if (!searchQuery) {
+      document.querySelectorAll('.sens-brand-card').forEach(c => c.style.display = 'flex');
+      return;
+    }
+    document.querySelectorAll('.sens-brand-card').forEach(c => {
+      const bId = c.dataset.brandId;
+      const brand = DEVICE_BRANDS.find(b => b.id === bId);
+      const matchesBrand = brand && brand.name.toLowerCase().includes(searchQuery);
+      const matchesModel = brand && brand.popularModels.some(m => m.toLowerCase().includes(searchQuery));
+      c.style.display = (matchesBrand || matchesModel) ? 'flex' : 'none';
+    });
+  });
+
+  document.getElementById('btn-clear-search')?.addEventListener('click', () => {
+    searchQuery = '';
+    stateManager.notify();
+  });
+
+  // Model Search within a Brand
+  const modelSearch = document.getElementById('sens-model-search');
+  modelSearch?.addEventListener('input', (e) => {
+    const q = e.target.value.toLowerCase().trim();
+    document.querySelectorAll('.sens-model-item').forEach(item => {
+      const name = item.dataset.modelName.toLowerCase();
+      item.style.display = name.includes(q) ? 'flex' : 'none';
+    });
+  });
+
+  // Custom Generator button
+  document.getElementById('btn-open-custom-gen')?.addEventListener('click', () => {
+    selectedDeviceName = 'Custom Gaming Device';
+    currentSensiData = sensitivityService.generateForDevice(selectedDeviceName, 'custom');
+    activePresetIndex = 0;
+    isNoDpiMode = false;
+    currentViewMode = 'result';
+    stateManager.notify();
+  });
+
+  // Presets Selector (#1, #2, VIP 3, VIP 4)
+  document.querySelectorAll('.preset-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activePresetIndex = parseInt(btn.dataset.presetIndex) || 0;
+      stateManager.notify();
+    });
+  });
+
+  // NO DPI Toggle Button
+  document.getElementById('btn-sens-nodpi')?.addEventListener('click', () => {
+    isNoDpiMode = !isNoDpiMode;
+    Toast.show(isNoDpiMode ? '✨ No DPI Mode: Use default phone display scaling' : '📱 DPI Mode: Calibrated for Developer Options DPI', 'info');
+    stateManager.notify();
+  });
+
+  // Share Button
+  document.getElementById('btn-sens-share')?.addEventListener('click', async () => {
+    const preset = currentSensiData.presets[activePresetIndex];
+    const text = `🎯 Free Fire Headshot Sensi for ${currentSensiData.deviceName} (${preset.tabName}):\n• General: ${isNoDpiMode ? preset.noDpiGeneral : preset.general}\n• Red Dot: ${preset.redDot}\n• 2x Scope: ${preset.scope2x}\n• 4x Scope: ${preset.scope4x}\n• Button Size: ${preset.buttonSize}\n• DPI: ${isNoDpiMode ? 'Default (No DPI)' : preset.dpi}\n⚡ Get Mobin X App: https://mobinx-gaming-app.vercel.app/`;
+    
+    if (navigator.clipboard) {
+      try {
+        await navigator.clipboard.writeText(text);
+        Toast.show('Sensitivity copied to clipboard! Share with your squad.', 'success');
+      } catch (e) {
+        Toast.show('Sensitivity config ready!', 'info');
+      }
     } else {
-      stateManager.navigate('home');
+      Toast.show('Sensitivity config ready!', 'info');
     }
   });
 
-  // Step 1: Device
-  document.querySelectorAll('.ram-select-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      currentConfig.ram = btn.getAttribute('data-ram');
-      document.querySelectorAll('.ram-select-btn').forEach(b => {
-        b.style.borderColor = 'var(--border-light)';
-        b.style.background = 'var(--bg-card)';
-        b.style.color = 'var(--text-main)';
-      });
-      btn.style.borderColor = 'var(--primary)';
-      btn.style.background = 'var(--primary-light)';
-      btn.style.color = 'var(--primary)';
+  // Save Button
+  document.getElementById('btn-sens-save')?.addEventListener('click', () => {
+    const success = sensitivityService.saveSensitivity({
+      deviceName: currentSensiData.deviceName,
+      activePreset: currentSensiData.presets[activePresetIndex]
+    });
+    if (success) {
+      Toast.show('Saved to your profile sensitivities!', 'success');
+    } else {
+      Toast.show('Sensitivity saved locally.', 'info');
+    }
+  });
+
+  // Feedback Buttons
+  document.getElementById('btn-vote-it-works')?.addEventListener('click', () => {
+    const updated = sensitivityService.recordFeedback(currentSensiData.deviceName, 'itWorks');
+    currentSensiData.feedback = updated;
+    Toast.show('Thanks for your feedback! Headshot confirmed. 🎯🔥', 'success');
+    stateManager.notify();
+  });
+
+  document.getElementById('btn-vote-not-working')?.addEventListener('click', () => {
+    const updated = sensitivityService.recordFeedback(currentSensiData.deviceName, 'notWorking');
+    currentSensiData.feedback = updated;
+    Toast.show('Feedback received. Try Preset #2 or toggle NO DPI mode.', 'warning');
+    stateManager.notify();
+  });
+
+  // Guide Helper Modals
+  document.getElementById('btn-guide-how-to-use')?.addEventListener('click', () => {
+    stateManager.openModal({
+      type: 'sensitivityGuide',
+      data: {
+        title: 'How To Apply Sensitivity & Drag',
+        content: `
+          <div style="font-size: 13px; line-height: 1.6; color: var(--text-main);">
+            <p><strong>1. In-Game Settings:</strong> Open Free Fire ➔ Settings ➔ Sensitivity. Enter the exact values displayed for General, Red Dot, 2x, and 4x Scopes.</p>
+            <p style="margin-top: 8px;"><strong>2. Fire Button Placement:</strong> Set your fire button size to the recommended percentage (${currentSensiData.presets[activePresetIndex].buttonSize}) and place it slightly lower in your custom HUD to allow longer vertical drag distance.</p>
+            <p style="margin-top: 8px;"><strong>3. Safe DPI:</strong> If you use DPI, set Developer Options ➔ Smallest Width to <strong>${currentSensiData.presets[activePresetIndex].dpi}</strong>. Or toggle <em>NO DPI</em> if you prefer default phone settings.</p>
+            <p style="margin-top: 8px;"><strong>4. Drag Technique:</strong> For close range, pull down then straight up (J-drag). For medium/long range, drag up smoothly.</p>
+          </div>
+        `
+      }
     });
   });
 
-  document.getElementById('btn-wizard-next-1')?.addEventListener('click', () => {
-    const brand = document.getElementById('select-brand')?.value || 'Samsung';
-    const dpi = document.getElementById('input-dpi')?.value || '440';
-    currentConfig.brand = brand;
-    currentConfig.dpi = dpi;
-    wizardStep = 2;
-    stateManager.navigate('sensitivity');
-  });
-
-  // Step 2: Playstyle
-  document.querySelectorAll('[data-step2-style]').forEach(card => {
-    card.addEventListener('click', () => {
-      currentConfig.style = card.getAttribute('data-step2-style');
-      document.querySelectorAll('[data-step2-style]').forEach(c => c.classList.remove('selected'));
-      card.classList.add('selected');
+  document.getElementById('btn-guide-sniper-freelook')?.addEventListener('click', () => {
+    stateManager.openModal({
+      type: 'sensitivityGuide',
+      data: {
+        title: 'Where are Sniper & Free Look?',
+        content: `
+          <div style="font-size: 13px; line-height: 1.6; color: var(--text-main);">
+            <p><strong>Sniper Scope (AWM, M82B, Kar98k):</strong> Set to <strong>${currentSensiData.presets[activePresetIndex].sniper}</strong>. In modern esports meta, sniper scope sensitivity should not be higher than 130 to prevent aim shaking when leading moving targets.</p>
+            <p style="margin-top: 8px;"><strong>Free Look Eye Button:</strong> Set to <strong>${currentSensiData.presets[activePresetIndex].freeLook}</strong> for quick 360° situational awareness without shifting your aim trajectory.</p>
+          </div>
+        `
+      }
     });
-  });
-
-  document.getElementById('btn-wizard-prev-2')?.addEventListener('click', () => {
-    wizardStep = 1;
-    stateManager.navigate('sensitivity');
-  });
-
-  document.getElementById('btn-wizard-generate')?.addEventListener('click', () => {
-    currentResult = sensitivityService.calculate(currentConfig);
-    wizardStep = 3;
-    Toast.show('Sensitivity calculated successfully!', 'success');
-    stateManager.navigate('sensitivity');
-  });
-
-  // Step 3: Sliders & Actions
-  document.querySelectorAll('.sens-live-slider').forEach(slider => {
-    slider.addEventListener('input', (e) => {
-      const key = slider.getAttribute('data-key');
-      const val = e.target.value;
-      const badge = document.getElementById(`badge-sens-${key}`);
-      if (badge) badge.textContent = val;
-      if (currentResult) currentResult.values[key] = parseInt(val, 10);
-    });
-  });
-
-  document.getElementById('btn-recalibrate')?.addEventListener('click', () => {
-    wizardStep = 1;
-    stateManager.navigate('sensitivity');
-  });
-
-  document.getElementById('btn-save-sensitivity')?.addEventListener('click', () => {
-    authService.saveSensitivity({
-      title: `${currentConfig.brand} Headshot Meta`,
-      config: currentConfig,
-      values: currentResult.values
-    });
-    Toast.show('Preset saved to your Profile vault!', 'success');
-  });
-
-  document.getElementById('btn-copy-sensitivity')?.addEventListener('click', () => {
-    const text = `🎯 MOBIN X Sensitivity Setting (OB45+ Meta):\n• General: ${currentResult.values.general}\n• Red Dot: ${currentResult.values.redDot}\n• 2X Scope: ${currentResult.values.scope2x}\n• 4X Scope: ${currentResult.values.scope4x}\n• Sniper: ${currentResult.values.sniper}\n• Free Look: ${currentResult.values.freeLook}\n• DPI: ${currentResult.dpi}`;
-    navigator.clipboard?.writeText(text);
-    Toast.show('Settings copied to clipboard!', 'success');
   });
 }

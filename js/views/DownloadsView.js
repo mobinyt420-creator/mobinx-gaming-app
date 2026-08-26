@@ -142,16 +142,15 @@ export function bindDownloadsEvents() {
       const itemId = btn.getAttribute('data-item-id');
       const item = downloadService.getById(itemId);
 
-      if (actUrl && (actUrl.startsWith('http://') || actUrl.startsWith('https://'))) {
-        Toast.show(`Opening ${actLabel}...`, 'info');
+      if (item) {
+        stateManager.openModal('downloadConfirm', { 
+          ...item, 
+          title: `${item.title} (${actLabel})`,
+          downloadLabel: actLabel, 
+          targetUrl: actUrl || 'https://mrmobin.blogspot.com/'
+        });
+      } else if (actUrl) {
         window.open(actUrl, '_blank');
-      } else if (actType === 'download') {
-        if (item) {
-          stateManager.openModal('downloadConfirm', { ...item, downloadLabel: actLabel });
-        }
-      } else {
-        Toast.show(`Opening ${actLabel}...`, 'info');
-        if (actUrl) window.open(actUrl, '_blank');
       }
     });
   });

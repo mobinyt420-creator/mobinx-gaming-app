@@ -89,6 +89,24 @@ class RealtimeSyncManager {
       });
       if (unsubConfig) this.unsubscribers.push(unsubConfig);
 
+      // Live Notices & Welcome Popup Listener
+      const unsubNotices = await firebaseService.subscribeDocument('config', 'notices', (data) => {
+        if (data) {
+          if (data.welcomePopup && data.welcomePopup.enabled) {
+            const dismissed = sessionStorage.getItem('mobinx_welcome_dismissed');
+            if (!dismissed) {
+              sessionStorage.setItem('mobinx_welcome_dismissed', 'true');
+              stateManager.openModal('welcomeAnnouncement', data.welcomePopup);
+            }
+          }
+          if (data.pushNotification && (!this.lastPushTime || data.pushNotification.timestamp > this.lastPushTime)) {
+            this.lastPushTime = data.pushNotification.timestamp;
+            Toast.show(`📢 ${data.pushNotification.message}`, 'info');
+          }
+        }
+      });
+      if (unsubNotices) this.unsubscribers.push(unsubNotices);
+
     } catch (e) {
       console.warn('Real-time Firestore listener notice:', e.message);
     }
