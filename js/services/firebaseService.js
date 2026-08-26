@@ -31,8 +31,17 @@ export async function initFirebase() {
   }
 }
 
-// Google Sign-In with real Popup
+// Google Sign-In with real Popup (protected for WebView environments)
 export async function signInWithGoogleFirebase() {
+  if (typeof window !== 'undefined') {
+    // In Capacitor or Mobile Webview, avoid popup redirects to prevent sessionStorage partition error
+    const isMobileApp = !!(window.Capacitor || (window.location && window.location.protocol === 'capacitor:') || (navigator.userAgent && navigator.userAgent.includes('wv')));
+    if (isMobileApp) {
+      console.log('Mobile App Environment: Using native in-app form instead of external browser popup');
+      return null;
+    }
+  }
+
   if (!isFirebaseInitialized) {
     await initFirebase();
   }
@@ -54,8 +63,8 @@ export async function signInWithGoogleFirebase() {
       phoneNumber: user.phoneNumber || ''
     };
   } catch (error) {
-    console.error('Google Sign-In Error:', error);
-    throw error;
+    console.warn('Google Sign-In notice:', error.message);
+    return null;
   }
 }
 

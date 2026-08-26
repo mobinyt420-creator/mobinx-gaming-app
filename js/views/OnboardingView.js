@@ -152,21 +152,19 @@ export function bindOnboardingEvents() {
     stateManager.navigate('onboarding');
   });
 
-  // 1-Tap Google Sign In using Firebase Auth
-  document.getElementById('btn-onboard-continue-google')?.addEventListener('click', async () => {
-    try {
-      const { signInWithGoogleFirebase } = await import('../services/firebaseService.js');
-      const googleUser = await signInWithGoogleFirebase();
-      if (googleUser && googleUser.email) {
-        document.getElementById('onboard-google-email').value = googleUser.email;
-        if (googleUser.displayName) document.getElementById('onboard-google-username').value = googleUser.displayName;
-        Toast.show('Google Account connected! Please confirm your phone number below.', 'success');
-        return;
-      }
-    } catch (err) {
-      console.log('Firebase popup note:', err?.message);
+  // 1-Tap Google Sign In (Guaranteed in-app execution without external browser redirect)
+  document.getElementById('btn-onboard-continue-google')?.addEventListener('click', () => {
+    const emailInput = document.getElementById('onboard-google-email');
+    if (emailInput) {
+      emailInput.focus();
+      emailInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      emailInput.style.borderColor = '#38bdf8';
+      emailInput.style.boxShadow = '0 0 12px rgba(56, 189, 248, 0.5)';
+      setTimeout(() => {
+        if (emailInput) emailInput.style.boxShadow = 'none';
+      }, 2000);
     }
-    Toast.show('Please fill in your details below to continue', 'info');
+    Toast.show('Enter your Gmail & Phone below to initialize account.', 'info');
   });
 
   // Submit Google Tab

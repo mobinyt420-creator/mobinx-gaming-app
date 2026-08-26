@@ -179,10 +179,10 @@ class App {
       }
     }
 
-    // 3. Render Bottom Navigation (Always keep visible except on Onboarding)
+    // 3. Render Bottom Navigation (Hidden on Onboarding, TopUp, and Shop for seamless in-app webview)
     const navRoot = document.getElementById('bottom-nav-root');
     if (navRoot) {
-      if (isOnboarding) {
+      if (isOnboarding || currentView === 'topup' || currentView === 'shop') {
         navRoot.innerHTML = '';
         navRoot.style.display = 'none';
       } else {
