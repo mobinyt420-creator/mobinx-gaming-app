@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Mobin X Gaming Ecosystem Collections
+    match /tournaments/{tournamentId} {
+      allow read, write: if true;
+    }
+    match /downloads/{downloadId} {
+      allow read, write: if true;
+    }
+    match /banners/{bannerId} {
+      allow read, write: if true;
+    }
+    match /flashDeals/{dealId} {
+      allow read, write: if true;
+    }
+    match /services/{serviceId} {
+      allow read, write: if true;
+    }
+    match /config/{configId} {
+      allow read, write: if true;
+    }
+    match /users/{userId} {
+      allow read, write: if true;
+    }
+
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

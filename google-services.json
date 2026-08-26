@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "219633934545",
+    "project_id": "obin-shop",
+    "storage_bucket": "obin-shop.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:219633934545:android:aa8914cf664d3f47e065f0",
+        "android_client_info": {
+          "package_name": "com.mobinx.gaming"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "219633934545-3rh1evb9ofahg5p46vm2souq9vr64368.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCOQ1pa1bOSIahvbpkTQFh6z858ESS2vvg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "219633934545-3rh1evb9ofahg5p46vm2souq9vr64368.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
