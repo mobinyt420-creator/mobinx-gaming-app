@@ -74,6 +74,25 @@ export async function saveToFirestore(collectionName, docId, data) {
   }
 }
 
+// Fetch documents from a collection in Firestore
+export async function getFromFirestore(collectionName) {
+  if (!isFirebaseInitialized) await initFirebase();
+  if (!db) return null;
+
+  try {
+    const { collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js');
+    const querySnapshot = await getDocs(collection(db, collectionName));
+    const items = [];
+    querySnapshot.forEach(doc => {
+      items.push({ id: doc.id, ...doc.data() });
+    });
+    return items;
+  } catch (err) {
+    console.warn(`Firestore read error in ${collectionName}:`, err.message);
+    return null;
+  }
+}
+
 // Real-Time Listener for a Collection (Firestore onSnapshot)
 export async function subscribeToCollection(collectionName, callback) {
   if (!isFirebaseInitialized) await initFirebase();
