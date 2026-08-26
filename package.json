@@ -1,0 +1,24 @@
+{
+  "name": "mobin-x-app",
+  "version": "1.0.0",
+  "description": "Mobin X Gaming Ecosystem - Official Android App",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "admin": "node admin-website/server.js",
+    "cap:init": "npx cap init \"Mobin X\" \"com.mobinx.gaming\" --web-dir .",
+    "cap:add": "npx cap add android",
+    "cap:sync": "npx cap sync",
+    "cap:open": "npx cap open android"
+  },
+  "keywords": [
+    "mobinx",
+    "gaming",
+    "topup",
+    "tournaments",
+    "esports"
+  ],
+  "author": "Mr Mobin",
+  "license": "ISC"
+}
