@@ -66,17 +66,17 @@ export function renderOnboardingView() {
 
             <div>
               <label style="font-size: 11.5px; font-weight: 700; color: #475569;">Gmail Address</label>
-              <input type="email" id="onboard-google-email" placeholder="e.g. gamer@gmail.com" value="mobinyt420@gmail.com" style="width: 100%; padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 12.5px; outline: none; margin-top: 4px; font-weight: 600;" />
+              <input type="email" id="onboard-google-email" placeholder="Enter your Gmail (e.g. name@gmail.com)" style="width: 100%; padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 12.5px; outline: none; margin-top: 4px; font-weight: 600;" />
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
               <div>
                 <label style="font-size: 11.5px; font-weight: 700; color: #475569;">In-Game Tag</label>
-                <input type="text" id="onboard-google-username" placeholder="Mobin_Admin" value="Mobin_Admin" style="width: 100%; padding: 9px 10px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 12px; outline: none; margin-top: 4px; font-weight: 600;" />
+                <input type="text" id="onboard-google-username" placeholder="Player Name" style="width: 100%; padding: 9px 10px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 12px; outline: none; margin-top: 4px; font-weight: 600;" />
               </div>
               <div>
                 <label style="font-size: 11.5px; font-weight: 700; color: #475569;">Free Fire UID</label>
-                <input type="text" id="onboard-google-uid" placeholder="2894192841" value="2894192841" style="width: 100%; padding: 9px 10px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 12px; outline: none; margin-top: 4px; font-weight: 600;" />
+                <input type="text" id="onboard-google-uid" placeholder="UID (e.g. 198273918)" style="width: 100%; padding: 9px 10px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 12px; outline: none; margin-top: 4px; font-weight: 600;" />
               </div>
             </div>
 
@@ -89,17 +89,17 @@ export function renderOnboardingView() {
           <div style="display: flex; flex-direction: column; gap: 11px;">
             <div>
               <label style="font-size: 11.5px; font-weight: 700; color: #475569;">Full Name *</label>
-              <input type="text" id="onboard-phone-name" placeholder="e.g. Tanvir Hossain" value="Tanvir Hossain" style="width: 100%; padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 12.5px; outline: none; margin-top: 4px; font-weight: 600;" />
+              <input type="text" id="onboard-phone-name" placeholder="Enter your full name" style="width: 100%; padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 12.5px; outline: none; margin-top: 4px; font-weight: 600;" />
             </div>
 
             <div>
               <label style="font-size: 11.5px; font-weight: 700; color: #475569;">Phone Number (bKash / Nagad) *</label>
-              <input type="tel" id="onboard-phone-number" placeholder="018XXXXXXXX" value="01812345678" style="width: 100%; padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 12.5px; outline: none; margin-top: 4px; font-weight: 600;" />
+              <input type="tel" id="onboard-phone-number" placeholder="Enter 11-digit phone (01XXXXXXXXX)" style="width: 100%; padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 12.5px; outline: none; margin-top: 4px; font-weight: 600;" />
             </div>
 
             <div>
               <label style="font-size: 11.5px; font-weight: 700; color: #475569;">Free Fire UID (Player ID)</label>
-              <input type="text" id="onboard-phone-uid" placeholder="e.g. 2894192841" value="2894192841" style="width: 100%; padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 12.5px; outline: none; margin-top: 4px; font-weight: 600;" />
+              <input type="text" id="onboard-phone-uid" placeholder="Free Fire UID (optional)" style="width: 100%; padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 12.5px; outline: none; margin-top: 4px; font-weight: 600;" />
             </div>
 
             <button id="btn-onboard-continue-phone" style="width: 100%; padding: 11px; background: #10b981; color: #ffffff; border: none; border-radius: 10px; font-size: 13px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25); margin-top: 4px;">
@@ -160,11 +160,17 @@ export function bindOnboardingEvents() {
     }
 
     // Direct input fallback
-    const email = document.getElementById('onboard-google-email')?.value || 'mobinyt420@gmail.com';
-    const username = document.getElementById('onboard-google-username')?.value || 'Mobin_Admin';
-    const ffUid = document.getElementById('onboard-google-uid')?.value || '2894192841';
+    const emailInput = document.getElementById('onboard-google-email')?.value?.trim();
+    const usernameInput = document.getElementById('onboard-google-username')?.value?.trim();
+    const ffUidInput = document.getElementById('onboard-google-uid')?.value?.trim();
 
-    const user = authService.loginWithGoogle(email, username, { ffUid });
+    if (!emailInput) {
+      Toast.show('Please enter your Gmail address', 'warning');
+      return;
+    }
+
+    const username = usernameInput || emailInput.split('@')[0] || 'Player';
+    const user = authService.loginWithGoogle(emailInput, username, { ffUid: ffUidInput || '' });
     Toast.show(`Welcome, ${user.username}! Account initialized.`, 'success');
     stateManager.navigate('home');
   };

@@ -14,21 +14,21 @@ export const appUrls = {
 };
 
 export const defaultUser = {
-  id: "MX-884920",
-  username: "Mobin_Gamer99",
-  email: "mrmobin1m@gmail.com",
+  id: "MX-GUEST",
+  username: "Guest_Player",
+  email: "guest@mobinx.app",
   avatar: "assets/images/avatar_user.jpg",
-  role: "VIP Member",
-  isAdmin: true,
-  level: 42,
-  walletBalance: 1250,
-  referralCode: "MOBINXVIP",
-  referralEarnings: 142.50,
+  role: "Guest Player",
+  isAdmin: false,
+  level: 1,
+  walletBalance: 0,
+  referralCode: "MOBINX",
+  referralEarnings: 0,
   stats: {
-    tournamentsJoined: 14,
-    totalDownloads: 28,
-    savedSensitivities: 6,
-    referralsCount: 19
+    tournamentsJoined: 0,
+    totalDownloads: 0,
+    savedSensitivities: 0,
+    referralsCount: 0
   }
 };
 

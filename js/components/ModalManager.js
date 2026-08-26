@@ -60,12 +60,12 @@ export function renderModal(activeModal) {
           <div style="width: 100%; display: flex; flex-direction: column; gap: 8px; text-align: left;">
             <div>
               <label style="font-size: 11.5px; font-weight: 700; color: var(--text-main);">Google / Gmail Address</label>
-              <input type="email" id="input-google-email" value="${currentUser.email || 'mrmobin1m@gmail.com'}" placeholder="your.name@gmail.com" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); font-size: 13px; margin-top: 4px; outline: none;" />
+              <input type="email" id="input-google-email" placeholder="Enter your Gmail address" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); font-size: 13px; margin-top: 4px; outline: none;" />
             </div>
 
             <div>
               <label style="font-size: 11.5px; font-weight: 700; color: var(--text-main);">Gamer Username</label>
-              <input type="text" id="input-google-username" value="${currentUser.username || 'Mobin_Gamer99'}" placeholder="Player Name" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); font-size: 13px; margin-top: 4px; outline: none;" />
+              <input type="text" id="input-google-username" placeholder="Enter your in-game name" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); font-size: 13px; margin-top: 4px; outline: none;" />
             </div>
           </div>
 
@@ -230,12 +230,18 @@ export function bindModalEvents(activeModal) {
 
   if (type === 'googleLogin') {
     document.getElementById('btn-confirm-google-login')?.addEventListener('click', () => {
-      const email = document.getElementById('input-google-email')?.value || 'mrmobin1m@gmail.com';
-      const username = document.getElementById('input-google-username')?.value || 'Mobin_Gamer99';
+      const email = document.getElementById('input-google-email')?.value?.trim();
+      const username = document.getElementById('input-google-username')?.value?.trim();
 
-      const user = authService.loginWithGoogle(email, username);
+      if (!email) {
+        Toast.show('Please enter your Gmail address', 'warning');
+        return;
+      }
+
+      const cleanUsername = username || email.split('@')[0] || 'Player';
+      const user = authService.loginWithGoogle(email, cleanUsername);
       stateManager.closeModal();
-      Toast.show(`Signed in as ${user.username}!`, 'success');
+      Toast.show(`Welcome back, ${user.username}!`, 'success');
       stateManager.navigate('profile');
     });
   }
