@@ -6,8 +6,16 @@ let countdownTimer = null;
 let remainingSeconds = 2 * 3600 + 35 * 60 + 48; // 02:35:48
 
 export function renderFlashSaleSection() {
-  const products = authService.getFlashDeals();
-  const duplicatedProducts = [...products, ...products, ...products];
+  const storedProducts = authService.getFlashDeals();
+  const baseProducts = (storedProducts && storedProducts.length > 0) ? storedProducts : [
+    { id: "flash-1", diamondAmount: "100 DIAMONDS", price: "৳ 80.00", badge: "100% BONUS", badgeColor: "#ea580c" },
+    { id: "flash-2", diamondAmount: "310 DIAMONDS", price: "৳ 270.00", badge: "POPULAR", badgeColor: "#2563eb" },
+    { id: "flash-3", diamondAmount: "520 DIAMONDS", price: "৳ 420.00", badge: "BEST VALUE", badgeColor: "#16a34a" },
+    { id: "flash-4", diamondAmount: "1060 DIAMONDS", price: "৳ 820.00", badge: "VIP BONUS", badgeColor: "#9333ea" }
+  ];
+
+  // Repeat for continuous seamless infinite glide
+  const duplicatedProducts = [...baseProducts, ...baseProducts, ...baseProducts, ...baseProducts];
 
   return `
     <section class="flash-diamond-section">
@@ -31,13 +39,13 @@ export function renderFlashSaleSection() {
         </div>
       </div>
 
-      <!-- Horizontal Infinite Auto-Scrolling Diamond Marquee (No Arrows) -->
+      <!-- Horizontal Seamless Infinite Auto-Scrolling Diamond Marquee -->
       <div class="flash-products-carousel" id="flash-products-track-container">
         <div class="flash-products-track infinite-flash-track" id="flash-products-track">
           ${duplicatedProducts.map((prod, idx) => `
             <div class="flash-diamond-card" data-product-id="${prod.id}">
-              <div class="flash-card-badge" style="background: ${prod.badgeColor};">
-                ${prod.badge}
+              <div class="flash-card-badge" style="background: ${prod.badgeColor || (idx % 2 === 0 ? '#ea580c' : '#2563eb')}; color: #ffffff;">
+                ${prod.badge || 'FLASH DEAL'}
               </div>
 
               <div class="flash-card-diamond-graphic">
@@ -59,7 +67,7 @@ export function renderFlashSaleSection() {
                 <div class="flash-diamond-price">${prod.price}</div>
               </div>
 
-              <button class="flash-buy-btn ${prod.btnStyle === 'navy' ? 'btn-navy' : 'btn-gold'}" data-buy-id="${prod.id}">
+              <button class="flash-buy-btn btn-gold" data-buy-id="${prod.id}" data-amount="${prod.diamondAmount}" data-price="${prod.price}">
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3">
                   <circle cx="9" cy="21" r="1"></circle>
                   <circle cx="20" cy="21" r="1"></circle>
@@ -78,7 +86,6 @@ export function renderFlashSaleSection() {
 export function initFlashSaleCountdown() {
   const digitsEl = document.getElementById('flash-countdown-digits');
 
-  // Countdown timer logic
   if (countdownTimer) clearInterval(countdownTimer);
 
   function formatTime(totalSec) {
@@ -99,17 +106,10 @@ export function initFlashSaleCountdown() {
   document.querySelectorAll('.flash-buy-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
-      const buyId = btn.getAttribute('data-buy-id');
-      const prod = flashSaleProducts.find(p => p.id === buyId);
-      
-      // Visual feedback
-      btn.style.transform = 'scale(0.92)';
-      setTimeout(() => { btn.style.transform = ''; }, 150);
-
-      Toast.show(`Selected ${prod?.diamondAmount || 'Diamonds'} (${prod?.price || ''})! Opening Top Up...`, 'success');
-      setTimeout(() => {
-        stateManager.navigate('topup', { selectedPackage: prod });
-      }, 400);
+      const amount = btn.dataset.amount || 'Diamonds';
+      const price = btn.dataset.price || '';
+      Toast.show(`Opening Top Up for ${amount} (${price})...`, 'info');
+      stateManager.navigate('topup');
     });
   });
 }

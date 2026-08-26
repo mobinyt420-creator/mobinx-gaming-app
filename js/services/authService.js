@@ -48,7 +48,8 @@ class AuthService {
     if (!existing) {
       const newPlayerNum = this.registeredUsers.length + 1;
       existing = {
-        id: `USR-${String(newPlayerNum).padStart(3, '0')}`,
+        id: String(newPlayerNum),
+        userId: newPlayerNum,
         playerNumber: newPlayerNum,
         username: cleanUsername,
         fullName: cleanUsername,

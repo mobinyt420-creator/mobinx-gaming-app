@@ -394,13 +394,17 @@
 
 .flash-products-track {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   width: max-content;
   padding: 4px 6px;
 }
 
 .infinite-flash-track {
-  animation: glideFlashSale 28s linear infinite;
+  animation: glideFlashSale 18s linear infinite;
+  display: flex;
+  gap: 12px;
+  width: max-content;
+  will-change: transform;
 }
 
 .infinite-flash-track:hover {
@@ -412,16 +416,16 @@
     transform: translateX(0);
   }
   100% {
-    transform: translateX(calc(-100% / 3));
+    transform: translateX(-50%);
   }
 }
 
 .flash-diamond-card {
-  flex: 0 0 118px;
+  flex: 0 0 120px;
   background: #ffffff;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-light);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   padding: 10px 8px;
   display: flex;
   flex-direction: column;

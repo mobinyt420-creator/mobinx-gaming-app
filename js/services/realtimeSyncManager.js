@@ -45,18 +45,16 @@ class RealtimeSyncManager {
 
       console.log('⚡ Mobin X App: Connected to Real-Time Cloud Firestore Sync');
 
-      // Live Tournaments Listener
+      // Live Tournaments Listener (Handles additions, updates, and deletions immediately)
       const unsubTournaments = await firebaseService.subscribeCollection('tournaments', (items) => {
-        if (items && items.length > 0) {
-          tournamentService.setAll(items);
-          this.triggerViewUpdate('tournaments');
-        }
+        tournamentService.setAll(items || []);
+        this.triggerViewUpdate('tournaments');
       });
       if (unsubTournaments) this.unsubscribers.push(unsubTournaments);
 
       // Live Downloads Listener
       const unsubDownloads = await firebaseService.subscribeCollection('downloads', (items) => {
-        if (items && items.length > 0) {
+        if (items) {
           downloadService.setCatalog(items);
           this.triggerViewUpdate('downloads');
         }
@@ -65,7 +63,7 @@ class RealtimeSyncManager {
 
       // Live Banners Listener
       const unsubBanners = await firebaseService.subscribeCollection('banners', (items) => {
-        if (items && items.length > 0) {
+        if (items) {
           authService.saveHeroBanners(items);
           this.triggerViewUpdate('home');
         }
@@ -74,7 +72,7 @@ class RealtimeSyncManager {
 
       // Live Flash Deals Listener
       const unsubDeals = await firebaseService.subscribeCollection('flashDeals', (items) => {
-        if (items && items.length > 0) {
+        if (items) {
           authService.saveFlashDeals(items);
           this.triggerViewUpdate('home');
         }
@@ -117,6 +115,16 @@ class RealtimeSyncManager {
 
     switch (type) {
       case 'TOURNAMENTS_UPDATED':
+        if (payload && payload.deletedId) {
+          tournamentService.deleteTournament(payload.deletedId);
+        } else {
+          tournamentService.reloadFromStorage();
+        }
+        if (currentView === 'tournaments' || currentView === 'home') {
+          stateManager.setState({ currentView });
+        }
+        break;
+
       case 'ROOM_RELEASED':
         tournamentService.reloadFromStorage();
         if (showNotice && type === 'ROOM_RELEASED') {

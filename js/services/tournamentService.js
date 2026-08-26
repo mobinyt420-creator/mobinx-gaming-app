@@ -2,28 +2,14 @@ import { tournamentsList } from '../data/mockData.js';
 import { authService } from './authService.js';
 import { notificationService } from './notificationService.js';
 
-// Pre-seeded tournaments with participants and room status
-const initialTournaments = tournamentsList.map((t, idx) => ({
-  ...t,
-  isRoomReleased: idx === 0 ? true : false,
-  roomId: t.roomId || (idx === 0 ? "MX-88942" : ""),
-  roomPass: t.roomPass || (idx === 0 ? "1234" : ""),
-  participants: [
-    { playerName: "Mobin_Gamer99", ffUid: "2894192841", phone: "01812345678", joinedAt: "2026-08-25 02:15 PM", slot: 1 },
-    { playerName: "Tanvir_Sniper", ffUid: "1092837482", phone: "01799887766", joinedAt: "2026-08-25 02:30 PM", slot: 2 },
-    { playerName: "Shanto_Headshot", ffUid: "9283746152", phone: "01611223344", joinedAt: "2026-08-25 02:45 PM", slot: 3 },
-    { playerName: "Rifat_Booyah", ffUid: "4829104829", phone: "01933445566", joinedAt: "2026-08-25 03:00 PM", slot: 4 }
-  ]
-}));
+// Real tournaments data store (Clean, zero fake dummy tournaments)
+const initialTournaments = [];
 
 class TournamentService {
   constructor() {
     const hasStorage = typeof localStorage !== 'undefined';
     const saved = hasStorage ? localStorage.getItem('mobinx_tournaments_data') : null;
-    this.tournaments = saved ? JSON.parse(saved) : [...initialTournaments];
-    if (hasStorage && !saved) {
-      localStorage.setItem('mobinx_tournaments_data', JSON.stringify(this.tournaments));
-    }
+    this.tournaments = saved ? JSON.parse(saved) : [];
   }
 
   getAll() {
