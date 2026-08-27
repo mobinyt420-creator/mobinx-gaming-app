@@ -73,6 +73,7 @@ class AuthService {
 
   async syncUserToFirestore(user) {
     if (!user || !user.email) return;
+    if (user.email.toLowerCase() === 'guest@mobinx.app') return; // Do not write guest placeholders to cloud!
     try {
       const cleanEmail = user.email.toLowerCase().trim();
       const docId = `user_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
