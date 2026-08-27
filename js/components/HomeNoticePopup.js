@@ -18,17 +18,23 @@ function isVersionHigher(vLatest, vCurrent) {
 }
 
 export function renderHomeNoticePopup() {
+  const currentState = stateManager.getState();
+  // NEVER show popups over onboarding, login, or welcome screens
+  if (currentState.currentView === 'onboarding' || !authService.hasCompletedOnboarding()) {
+    return '';
+  }
+
   const popup = authService.getHomeNoticePopup();
   const updateConfig = authService.getAppUpdateConfig();
 
   // 1. Check if App Update is available & enabled
-  const isUpdateEnabled = updateConfig && (updateConfig.enabled !== false);
+  const isUpdateEnabled = updateConfig && (updateConfig.enabled === true);
   const latestVer = (updateConfig && updateConfig.latestVersion) ? String(updateConfig.latestVersion).trim() : '1.0';
   const isNewerVer = isVersionHigher(latestVer, CURRENT_APP_VERSION);
   const isForceUpdate = updateConfig && (updateConfig.forceUpdate === true);
 
-  // If update is enabled and (a newer version is tagged OR admin forced alert)
-  const isUpdateAvailable = isUpdateEnabled && (isNewerVer || (isForceUpdate && latestVer !== '0.0'));
+  // ONLY show update popup if a genuinely newer version (e.g. 1.1+) is released!
+  const isUpdateAvailable = isUpdateEnabled && (isNewerVer || (isForceUpdate && isNewerVer));
   
   // Check if dismissed in this session (only for non-blocking updates)
   const isUpdateDismissed = !isForceUpdate && typeof sessionStorage !== 'undefined' && sessionStorage.getItem('mobinx_update_dismissed');

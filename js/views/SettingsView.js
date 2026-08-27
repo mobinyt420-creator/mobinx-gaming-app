@@ -1,6 +1,7 @@
 import { authService } from '../services/authService.js';
 import { stateManager } from '../services/stateManager.js';
 import { Toast } from '../components/Toast.js';
+import { openExternalStore } from '../services/browserService.js';
 
 export function renderSettingsView() {
   const user = authService.getCurrentUser();
@@ -113,11 +114,11 @@ export function bindSettingsEvents() {
   });
 
   document.getElementById('link-privacy-policy')?.addEventListener('click', () => {
-    Toast.show('Privacy Policy: All player data encrypted with AES-256.', 'info');
+    openExternalStore('https://mobinx-admin-console.vercel.app/privacy.html', '#0284c7');
   });
 
   document.getElementById('link-terms-service')?.addEventListener('click', () => {
-    Toast.show('Terms: Standard esports fair-play guidelines applied.', 'info');
+    openExternalStore('https://mobinx-admin-console.vercel.app/privacy.html', '#0284c7');
   });
 
   document.getElementById('link-about-app')?.addEventListener('click', () => {

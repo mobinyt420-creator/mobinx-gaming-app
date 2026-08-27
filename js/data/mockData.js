@@ -450,7 +450,7 @@ export const faqList = [
 ];
 
 export const defaultHomeNoticePopup = {
-  enabled: true,
+  enabled: false,
   image: "assets/images/banner_booyah.jpg",
   title: "Special Offer / নোটিশ",
   description: "অল্প দামে ১৮ মাসের জন্য Google ai Pro নিতে চাইলে নিচের বাটনে ক্লিক করে আমাদের সাথে যোগাযোগ করুন।",

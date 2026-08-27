@@ -2,6 +2,7 @@ import { authService } from '../services/authService.js';
 import { stateManager } from '../services/stateManager.js';
 import { firebaseService } from '../services/firebaseService.js';
 import { Toast } from '../components/Toast.js';
+import { openExternalStore } from '../services/browserService.js';
 
 let onboardStep = 1; // 1 = Welcome Screen (Dark), 2 = Almost There Profile Setup (Matches Image 2)
 let selectedGoogleAccount = null;
@@ -261,6 +262,12 @@ function renderProfileSetupStep() {
             <polyline points="12 5 19 12 12 19"></polyline>
           </svg>
         </button>
+
+        <!-- Terms & Privacy Policy Link for Google Play Compliance -->
+        <div style="text-align: center; margin-top: 14px;">
+          <span style="font-size: 11.5px; color: #64748b;">By signing in, you agree to our </span>
+          <a href="javascript:void(0)" id="link-onboard-privacy" style="font-size: 11.5px; font-weight: 700; color: #2563eb; text-decoration: underline;">Privacy Policy & Data Safety</a>
+        </div>
       </div>
 
     </div>
@@ -481,6 +488,11 @@ export function bindOnboardingEvents() {
       Toast.show(`🎉 Welcome to Mobin X!`, 'success');
       stateManager.navigate('home');
     }
+  });
+
+  // Privacy Policy Link Click (Google Play Data Safety)
+  document.getElementById('link-onboard-privacy')?.addEventListener('click', () => {
+    openExternalStore('https://mobinx-admin-console.vercel.app/privacy.html', '#0284c7');
   });
 }
 
