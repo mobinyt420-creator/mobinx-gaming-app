@@ -32,9 +32,11 @@ class StateManager {
       activeModal: null
     });
     // Scroll content container to top
-    const mainContent = document.getElementById('app-main-content');
-    if (mainContent) {
-      mainContent.scrollTop = 0;
+    if (typeof document !== 'undefined') {
+      const mainContent = document.getElementById('app-main-content');
+      if (mainContent) {
+        mainContent.scrollTop = 0;
+      }
     }
   }
 
