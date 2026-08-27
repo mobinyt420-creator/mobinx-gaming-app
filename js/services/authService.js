@@ -37,6 +37,14 @@ class AuthService {
         this.user.isAdmin = true;
         this.user.role = "System Administrator (Admin)";
       }
+      this.user.stats = this.user.stats || {
+        tournamentsJoined: 0,
+        totalDownloads: 0,
+        savedSensitivities: 0,
+        referralsCount: 0
+      };
+      this.user.referralEarnings = this.user.referralEarnings ?? 0;
+
       // Auto-sync existing user session to Firestore
       setTimeout(() => this.syncUserToFirestore(this.user), 1000);
     }
@@ -73,6 +81,23 @@ class AuthService {
         platform: typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.includes('Android') ? 'Android Mobile' : 'Web Device',
         ip: 'Active Online'
       };
+      
+      // Instant local bridge for same-browser testing
+      try {
+        if (typeof localStorage !== 'undefined') {
+          const currentList = JSON.parse(localStorage.getItem('mobinx_users_list') || '[]');
+          const idx = currentList.findIndex(u => (u.email && u.email.toLowerCase() === cleanEmail) || u.id === docId);
+          if (idx >= 0) currentList[idx] = { ...currentList[idx], ...userData };
+          else currentList.unshift(userData);
+          localStorage.setItem('mobinx_users_list', JSON.stringify(currentList));
+        }
+        if (typeof BroadcastChannel !== 'undefined') {
+          const bc = new BroadcastChannel('mobinx_sync_bus');
+          bc.postMessage({ type: 'USER_REGISTERED', user: userData });
+          bc.close();
+        }
+      } catch(e) {}
+
       await firebaseService.saveToFirestore('users', docId, userData);
       console.log('✅ User synchronized to Cloud Firestore:', docId);
     } catch (e) {
@@ -104,6 +129,14 @@ class AuthService {
         role: isAdmin ? "System Administrator (Admin)" : "VIP Pro Member",
         isAdmin: isAdmin,
         status: "Active",
+        stats: {
+          tournamentsJoined: 0,
+          totalDownloads: 0,
+          savedSensitivities: 0,
+          referralsCount: 0
+        },
+        referralEarnings: 0,
+        walletBalance: 0,
         registeredDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
         registeredAtIso: new Date().toISOString(),
         lastLoginAt: new Date().toISOString(),
@@ -116,6 +149,13 @@ class AuthService {
       if (phone) { existing.phone = phone; existing.phoneNumber = phone; }
       if (ffUid) existing.ffUid = ffUid;
       if (isAdmin) { existing.isAdmin = true; existing.role = "System Administrator (Admin)"; }
+      existing.stats = existing.stats || {
+        tournamentsJoined: 0,
+        totalDownloads: 0,
+        savedSensitivities: 0,
+        referralsCount: 0
+      };
+      existing.referralEarnings = existing.referralEarnings ?? 0;
       this.saveUsersDatabase();
     }
 
