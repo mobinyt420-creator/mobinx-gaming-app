@@ -35,7 +35,7 @@ export function renderDrawerMenu(isOpen = false, currentView = 'home') {
           
           <div class="drawer-user-info" id="drawer-user-card" style="cursor: pointer;">
             <div class="drawer-avatar">
-              <img src="${user.avatar || 'assets/images/avatar_user.jpg'}" alt="${user.username || 'Player'}" referrerpolicy="no-referrer" onerror="this.src='assets/images/avatar_user.jpg'" />
+              <img src="${user.avatar && !user.avatar.includes('dicebear') ? user.avatar : 'data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 64 64\'><circle cx=\'32\' cy=\'32\' r=\'32\' fill=\'%231e293b\'/><circle cx=\'32\' cy=\'24\' r=\'12\' fill=\'%233b82f6\'/><path d=\'M14 52c0-10 8-18 18-18s18 8 18 18\' fill=\'%232563eb\'/></svg>'}" alt="${user.username || 'Player'}" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 64 64\'><circle cx=\'32\' cy=\'32\' r=\'32\' fill=\'%231e293b\'/><circle cx=\'32\' cy=\'24\' r=\'12\' fill=\'%233b82f6\'/><path d=\'M14 52c0-10 8-18 18-18s18 8 18 18\' fill=\'%232563eb\'/></svg>';" />
             </div>
             <div>
               <div class="drawer-user-name">${user.username}</div>

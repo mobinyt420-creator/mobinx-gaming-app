@@ -18,7 +18,7 @@ export function renderProfileView() {
       <!-- Profile Hero Card -->
       <div class="profile-hero" style="${isAdmin ? 'background: linear-gradient(135deg, #1e1b4b 0%, #1e3a8a 50%, #7c3aed 100%);' : ''}">
         <div class="profile-avatar-large">
-          <img src="${user.avatar || 'assets/images/avatar_user.jpg'}" alt="${user.username || 'Player'}" referrerpolicy="no-referrer" onerror="this.src='assets/images/avatar_user.jpg'" />
+          <img src="${user.avatar && !user.avatar.includes('dicebear') ? user.avatar : 'data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 64 64\'><circle cx=\'32\' cy=\'32\' r=\'32\' fill=\'%231e293b\'/><circle cx=\'32\' cy=\'24\' r=\'12\' fill=\'%233b82f6\'/><path d=\'M14 52c0-10 8-18 18-18s18 8 18 18\' fill=\'%232563eb\'/></svg>'}" alt="${user.username || 'Player'}" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 64 64\'><circle cx=\'32\' cy=\'32\' r=\'32\' fill=\'%231e293b\'/><circle cx=\'32\' cy=\'24\' r=\'12\' fill=\'%233b82f6\'/><path d=\'M14 52c0-10 8-18 18-18s18 8 18 18\' fill=\'%232563eb\'/></svg>';" />
         </div>
         <div class="profile-username">
           <span>${user.username || user.fullName || 'Player'}</span>
