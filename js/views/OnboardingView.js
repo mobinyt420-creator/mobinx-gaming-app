@@ -461,13 +461,8 @@ export function bindOnboardingEvents() {
 
     try {
       const email = selectedGoogleAccount.email;
-      const user = await authService.loginWithGoogle(email, fullName, cleanDigits);
-      if (selectedGoogleAccount.photoURL) {
-        user.avatar = selectedGoogleAccount.photoURL;
-        authService.saveUsersDatabase();
-        authService.persistSession();
-      }
-
+      const avatarUrl = selectedGoogleAccount.photoURL || '';
+      const user = await authService.loginWithGoogle(email, fullName, cleanDigits, '', avatarUrl);
       authService.setOnboardingCompleted(true);
       Toast.show(`🎉 Welcome to Mobin X, ${user.username || fullName}!`, 'success');
       stateManager.navigate('home');
@@ -483,7 +478,7 @@ export function bindOnboardingEvents() {
 /**
  * Helper to reset onboarding to step 1 if accessed from drawer
  */
-export function resetOnboardingStep() {
-  onboardStep = 1;
+export function resetOnboardingStep(step = 1) {
+  onboardStep = step;
   selectedGoogleAccount = null;
 }

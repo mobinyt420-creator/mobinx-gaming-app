@@ -45,7 +45,7 @@ export function renderHeader() {
         </button>
 
         <div class="header-avatar" id="btn-header-profile" title="My Profile">
-          <img src="${user.avatar}" alt="${user.username}" />
+          <img src="${user.avatar || 'assets/images/avatar_user.jpg'}" alt="${user.username || 'Player'}" referrerpolicy="no-referrer" onerror="this.src='assets/images/avatar_user.jpg'" />
         </div>
       </div>
     </header>

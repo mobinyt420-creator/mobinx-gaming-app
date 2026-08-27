@@ -35,7 +35,7 @@ export function renderDrawerMenu(isOpen = false, currentView = 'home') {
           
           <div class="drawer-user-info" id="drawer-user-card" style="cursor: pointer;">
             <div class="drawer-avatar">
-              <img src="${user.avatar}" alt="${user.username}" />
+              <img src="${user.avatar || 'assets/images/avatar_user.jpg'}" alt="${user.username || 'Player'}" referrerpolicy="no-referrer" onerror="this.src='assets/images/avatar_user.jpg'" />
             </div>
             <div>
               <div class="drawer-user-name">${user.username}</div>

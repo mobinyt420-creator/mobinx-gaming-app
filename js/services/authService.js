@@ -106,10 +106,11 @@ class AuthService {
     }
   }
 
-  async loginWithGoogle(email, username, phone = '', ffUid = '') {
+  async loginWithGoogle(email, username, phone = '', ffUid = '', avatarUrl = '') {
     const cleanEmail = (email || '').toLowerCase().trim();
     const cleanUsername = (username || cleanEmail.split('@')[0] || 'Player').trim();
     const isAdmin = cleanEmail === MASTER_ADMIN_EMAIL.toLowerCase() || cleanEmail === 'mrmobin1m@gmail.com';
+    const finalAvatar = avatarUrl || 'assets/images/avatar_user.jpg';
     
     // Check if user already exists in local registered users
     let existing = this.registeredUsers.find(u => u.email && u.email.toLowerCase() === cleanEmail);
@@ -126,7 +127,7 @@ class AuthService {
         phone: phone || '',
         phoneNumber: phone || '',
         ffUid: ffUid || '',
-        avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(cleanUsername)}`,
+        avatar: finalAvatar,
         role: isAdmin ? "System Administrator (Admin)" : "VIP Pro Member",
         isAdmin: isAdmin,
         status: "Active",
@@ -149,6 +150,8 @@ class AuthService {
     } else {
       if (phone) { existing.phone = phone; existing.phoneNumber = phone; }
       if (ffUid) existing.ffUid = ffUid;
+      if (cleanUsername && cleanUsername !== 'Player') { existing.username = cleanUsername; existing.fullName = cleanUsername; }
+      if (avatarUrl) existing.avatar = avatarUrl;
       if (isAdmin) { existing.isAdmin = true; existing.role = "System Administrator (Admin)"; }
       existing.stats = existing.stats || {
         tournamentsJoined: 0,
