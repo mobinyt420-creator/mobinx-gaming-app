@@ -117,6 +117,21 @@ html, body {
   padding-bottom: calc(var(--bottom-nav-height) + 16px);
 }
 
+.app-container.onboarding-active,
+.device-viewport.onboarding-active {
+  background: #01040f;
+}
+
+.app-main-content.onboarding-mode {
+  padding-bottom: 0 !important;
+  background: transparent;
+}
+
+.app-container.onboarding-active:has(.onboarding-step-2),
+.device-viewport.onboarding-active:has(.onboarding-step-2) {
+  background: #f0f7ff !important;
+}
+
 .app-main-content.fullscreen-webview-mode {
   padding-bottom: 0 !important;
   overflow: hidden !important;

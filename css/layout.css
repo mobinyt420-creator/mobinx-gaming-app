@@ -435,3 +435,34 @@
     transform: translateY(0);
   }
 }
+
+/* Mobile & APK Native Status Bar Spacing (Clears Wifi, Battery & Clock) */
+@media (max-width: 768px) {
+  .app-header {
+    padding-top: max(28px, var(--safe-top));
+    height: calc(var(--header-height) + max(28px, var(--safe-top)));
+    min-height: calc(var(--header-height) + max(28px, var(--safe-top)));
+  }
+
+  .drawer-header {
+    padding-top: max(36px, calc(var(--safe-top) + 20px)) !important;
+  }
+
+  .drawer-close-btn {
+    top: max(28px, calc(var(--safe-top) + 12px)) !important;
+  }
+
+  .subview-header {
+    padding-top: max(28px, var(--safe-top)) !important;
+  }
+
+  .in-app-custom-tab-view .custom-tab-appbar {
+    padding-top: max(28px, var(--safe-top)) !important;
+    height: calc(54px + max(28px, var(--safe-top))) !important;
+    min-height: calc(54px + max(28px, var(--safe-top))) !important;
+  }
+
+  .onboarding-view {
+    padding-top: max(32px, calc(var(--safe-top) + 16px)) !important;
+  }
+}

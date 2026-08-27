@@ -448,3 +448,24 @@ export const faqList = [
     a: "Log in with your Gmail. The first account logged in is automatically granted Admin Privileges to manage banners, URLs, tournaments, and flash sale items."
   }
 ];
+
+export const defaultHomeNoticePopup = {
+  enabled: true,
+  image: "assets/images/banner_booyah.jpg",
+  title: "Special Offer / নোটিশ",
+  description: "অল্প দামে ১৮ মাসের জন্য Google ai Pro নিতে চাইলে নিচের বাটনে ক্লিক করে আমাদের সাথে যোগাযোগ করুন।",
+  buttonText: "ক্লিক করুন",
+  buttonUrl: "https://t.me/mrmobin1m",
+  actionType: "external", // 'external', 'topup', 'shop', 'tournaments', 'downloads'
+  showOncePerSession: true
+};
+
+export const defaultAppUpdateConfig = {
+  latestVersion: "1.0",
+  currentVersion: "1.0",
+  updateTitle: "নতুন আপডেট এসেছে! 🚀",
+  updateMessage: "Mobin X অ্যাপের নতুন ভার্সন Google Play Store-এ উপলব্ধ। সর্বোচ্চ স্পিড ও নতুন ফিচারের জন্য এখনই আপডেট করুন।",
+  updateUrl: "https://play.google.com/store/apps/details?id=com.mobinx.gaming",
+  forceUpdate: false
+};
+

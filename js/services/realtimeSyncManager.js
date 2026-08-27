@@ -105,6 +105,24 @@ class RealtimeSyncManager {
       });
       if (unsubNotices) this.unsubscribers.push(unsubNotices);
 
+      // Live Home Notice Popup Listener (Screenshot Modal)
+      const unsubHomePopup = await firebaseService.subscribeDocument('config', 'home_popup', (data) => {
+        if (data) {
+          authService.saveHomeNoticePopup(data);
+          this.triggerViewUpdate('home');
+        }
+      });
+      if (unsubHomePopup) this.unsubscribers.push(unsubHomePopup);
+
+      // Live Google Play Store App Update Listener
+      const unsubAppUpdate = await firebaseService.subscribeDocument('config', 'app_update', (data) => {
+        if (data) {
+          authService.saveAppUpdateConfig(data);
+          this.triggerViewUpdate('home');
+        }
+      });
+      if (unsubAppUpdate) this.unsubscribers.push(unsubAppUpdate);
+
     } catch (e) {
       console.warn('Real-time Firestore listener notice:', e.message);
     }
@@ -114,6 +132,20 @@ class RealtimeSyncManager {
     const currentView = stateManager.getState().currentView;
 
     switch (type) {
+      case 'HOME_POPUP_UPDATED':
+        if (payload) {
+          authService.saveHomeNoticePopup(payload);
+          this.triggerViewUpdate('home');
+        }
+        break;
+
+      case 'APP_UPDATE_CONFIG_UPDATED':
+        if (payload) {
+          authService.saveAppUpdateConfig(payload);
+          this.triggerViewUpdate('home');
+        }
+        break;
+
       case 'TOURNAMENTS_UPDATED':
         if (payload && payload.deletedId) {
           tournamentService.deleteTournament(payload.deletedId);

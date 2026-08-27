@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "219633934545-6jisgkjl5d1sp5nna3t21ar8k8kiv6jf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mobinx.gaming",
+            "certificate_hash": "70113657e8e40ff52450f87dd777944c51dbdd31"
+          }
+        },
+        {
           "client_id": "219633934545-3rh1evb9ofahg5p46vm2souq9vr64368.apps.googleusercontent.com",
           "client_type": 3
         }

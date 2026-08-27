@@ -1,5 +1,6 @@
 import { authService } from '../services/authService.js';
 import { stateManager } from '../services/stateManager.js';
+import { openExternalStore } from '../services/browserService.js';
 
 export function renderPopularServicesGrid() {
   const services = authService.getPopularServices();
@@ -37,6 +38,16 @@ export function bindPopularServicesEvents() {
   document.querySelectorAll('.popular-service-card').forEach(card => {
     card.addEventListener('click', () => {
       const route = card.getAttribute('data-service');
+      if (route === 'topup') {
+        const urls = authService.getUrls();
+        openExternalStore(urls.topup || 'https://noobtopup.com/', '#0284c7');
+        return;
+      }
+      if (route === 'shop') {
+        const urls = authService.getUrls();
+        openExternalStore(urls.shop || 'https://www.obinshop.com/', '#7c3aed');
+        return;
+      }
       if (route) {
         stateManager.navigate(route);
       }

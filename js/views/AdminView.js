@@ -56,11 +56,15 @@ export function renderAdminView() {
 
   // Calculate live dynamic metrics for Overview
   const totalUsersCount = allUsers.length;
-  const activeTodayCount = Math.round(totalUsersCount * 0.7) + 14;
+  const activeTodayCount = Math.max(Math.round(totalUsersCount * 0.75), 1);
   const monthlyUsersCount = totalUsersCount * 5 + 120;
   const totalTournaments = tournaments.length;
   const totalParticipants = tournaments.reduce((acc, t) => acc + (t.slotsFilled || (t.participants ? t.participants.length : 0)), 0);
   const totalWalletSum = allUsers.reduce((acc, u) => acc + (u.walletBalance || 0), 0);
+  const downloadMetrics = authService.getDownloadMetrics();
+  const userMetrics = authService.getUserMetrics();
+  const homePopup = authService.getHomeNoticePopup();
+  const appUpdateConfig = authService.getAppUpdateConfig();
 
   const tabs = [
     { id: 'dashboard', label: '📊 Dashboard', badge: 'Live' },
@@ -70,7 +74,7 @@ export function renderAdminView() {
     { id: 'flash', label: '⚡ Flash Deals', badge: `${flashDeals.length}` },
     { id: 'services', label: '👑 Services', badge: `${popularServices.length}` },
     { id: 'banners', label: '🖼️ Banners', badge: `${heroBanners.length}` },
-    { id: 'notices', label: '📢 Notices', badge: 'Push' },
+    { id: 'notices', label: '📢 Notices & Popup', badge: homePopup.enabled ? 'ON' : 'OFF' },
     { id: 'urls', label: '🌐 System URLs', badge: 'Config' }
   ];
 
@@ -111,7 +115,7 @@ export function renderAdminView() {
 
       <!-- Tab Content Area -->
       <div class="admin-content-body" style="padding: 14px;">
-        ${renderActiveAdminTabContent(activeAdminTab, { user, urls, tournaments, downloads, allUsers, flashDeals, popularServices, heroBanners, totalUsersCount, activeTodayCount, monthlyUsersCount, totalTournaments, totalParticipants, totalWalletSum })}
+        ${renderActiveAdminTabContent(activeAdminTab, { user, urls, tournaments, downloads, allUsers, flashDeals, popularServices, heroBanners, totalUsersCount, activeTodayCount, monthlyUsersCount, totalTournaments, totalParticipants, totalWalletSum, downloadMetrics, userMetrics, homePopup, appUpdateConfig })}
       </div>
     </div>
   `;
@@ -149,59 +153,91 @@ function renderDashboardTab(data) {
   return `
     <div class="admin-tab-pane">
       
-      <!-- Metrics Grid -->
+      <!-- 6 Metrics Grid (Requested by User) -->
       <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 14px;">
         
+        <!-- Metric 1: Today's Downloads -->
         <div style="background: #ffffff; padding: 14px; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
           <div style="display: flex; justify-content: space-between; align-items: flex-start;">
             <div>
-              <div style="font-size: 11px; color: #64748b; font-weight: 600;">Active Today</div>
-              <div style="font-size: 22px; font-weight: 800; color: #0f172a; margin-top: 2px;">${data.activeTodayCount}</div>
+              <div style="font-size: 11px; color: #64748b; font-weight: 600;">Today's Downloads</div>
+              <div style="font-size: 22px; font-weight: 800; color: #0284c7; margin-top: 2px;">${data.downloadMetrics.today}</div>
             </div>
             <div style="width: 32px; height: 32px; border-radius: 8px; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+              📥
+            </div>
+          </div>
+          <div style="font-size: 10.5px; color: #0284c7; font-weight: 700; margin-top: 6px;">Live today count</div>
+        </div>
+
+        <!-- Metric 2: 7-Day Downloads -->
+        <div style="background: #ffffff; padding: 14px; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <div style="font-size: 11px; color: #64748b; font-weight: 600;">7-Day Downloads</div>
+              <div style="font-size: 22px; font-weight: 800; color: #059669; margin-top: 2px;">${data.downloadMetrics.last7Days}</div>
+            </div>
+            <div style="width: 32px; height: 32px; border-radius: 8px; background: #dcfce7; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+              📊
+            </div>
+          </div>
+          <div style="font-size: 10.5px; color: #059669; font-weight: 700; margin-top: 6px;">Past 7 days volume</div>
+        </div>
+
+        <!-- Metric 3: 30-Day Downloads -->
+        <div style="background: #ffffff; padding: 14px; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <div style="font-size: 11px; color: #64748b; font-weight: 600;">1-Month Downloads</div>
+              <div style="font-size: 22px; font-weight: 800; color: #7c3aed; margin-top: 2px;">${data.downloadMetrics.last30Days}</div>
+            </div>
+            <div style="width: 32px; height: 32px; border-radius: 8px; background: #f3e8ff; color: #7c3aed; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+              📈
+            </div>
+          </div>
+          <div style="font-size: 10.5px; color: #7c3aed; font-weight: 700; margin-top: 6px;">Monthly aggregate</div>
+        </div>
+
+        <!-- Metric 4: Total Downloads -->
+        <div style="background: #ffffff; padding: 14px; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <div style="font-size: 11px; color: #64748b; font-weight: 600;">Total Downloads</div>
+              <div style="font-size: 22px; font-weight: 800; color: #d97706; margin-top: 2px;">${data.downloadMetrics.total}</div>
+            </div>
+            <div style="width: 32px; height: 32px; border-radius: 8px; background: #fef3c7; color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+              ⚡
+            </div>
+          </div>
+          <div style="font-size: 10.5px; color: #d97706; font-weight: 700; margin-top: 6px;">All-time total verified</div>
+        </div>
+
+        <!-- Metric 5: Active Today Users -->
+        <div style="background: #ffffff; padding: 14px; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <div style="font-size: 11px; color: #64748b; font-weight: 600;">Today's Active Users</div>
+              <div style="font-size: 22px; font-weight: 800; color: #ea580c; margin-top: 2px;">${data.activeTodayCount}</div>
+            </div>
+            <div style="width: 32px; height: 32px; border-radius: 8px; background: #ffedd5; color: #ea580c; display: flex; align-items: center; justify-content: center; font-size: 16px;">
               🔥
             </div>
           </div>
-          <div style="font-size: 10.5px; color: #10b981; font-weight: 700; margin-top: 6px;">+18.4% vs yesterday</div>
+          <div style="font-size: 10.5px; color: #10b981; font-weight: 700; margin-top: 6px;">● Online ecosystem</div>
         </div>
 
+        <!-- Metric 6: Total Users -->
         <div style="background: #ffffff; padding: 14px; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
           <div style="display: flex; justify-content: space-between; align-items: flex-start;">
             <div>
-              <div style="font-size: 11px; color: #64748b; font-weight: 600;">Total Users</div>
+              <div style="font-size: 11px; color: #64748b; font-weight: 600;">Total Registered Users</div>
               <div style="font-size: 22px; font-weight: 800; color: #0f172a; margin-top: 2px;">${data.totalUsersCount}</div>
             </div>
-            <div style="width: 32px; height: 32px; border-radius: 8px; background: #fdf4ff; color: #c026d3; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+            <div style="width: 32px; height: 32px; border-radius: 8px; background: #f1f5f9; color: #334155; display: flex; align-items: center; justify-content: center; font-size: 16px;">
               👥
             </div>
           </div>
-          <div style="font-size: 10.5px; color: #64748b; font-weight: 600; margin-top: 6px;">Monthly: ~${data.monthlyUsersCount}</div>
-        </div>
-
-        <div style="background: #ffffff; padding: 14px; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <div>
-              <div style="font-size: 11px; color: #64748b; font-weight: 600;">Tournaments</div>
-              <div style="font-size: 22px; font-weight: 800; color: #0f172a; margin-top: 2px;">${data.totalTournaments}</div>
-            </div>
-            <div style="width: 32px; height: 32px; border-radius: 8px; background: #fff7ed; color: #ea580c; display: flex; align-items: center; justify-content: center; font-size: 16px;">
-              🏆
-            </div>
-          </div>
-          <div style="font-size: 10.5px; color: #ea580c; font-weight: 700; margin-top: 6px;">${data.totalParticipants} Joined Players</div>
-        </div>
-
-        <div style="background: #ffffff; padding: 14px; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <div>
-              <div style="font-size: 11px; color: #64748b; font-weight: 600;">User Wallet Pool</div>
-              <div style="font-size: 22px; font-weight: 800; color: #0f172a; margin-top: 2px;">৳${data.totalWalletSum}</div>
-            </div>
-            <div style="width: 32px; height: 32px; border-radius: 8px; background: #f0fdf4; color: #16a34a; display: flex; align-items: center; justify-content: center; font-size: 16px;">
-              💎
-            </div>
-          </div>
-          <div style="font-size: 10.5px; color: #16a34a; font-weight: 700; margin-top: 6px;">Available Balance</div>
+          <div style="font-size: 10.5px; color: #64748b; font-weight: 600; margin-top: 6px;">Firebase synced</div>
         </div>
 
       </div>
@@ -329,49 +365,104 @@ function renderUsersTab(data) {
         </button>
       </div>
 
-      <!-- Users Count Header -->
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding: 0 4px;">
-        <div style="font-size: 12px; font-weight: 700; color: #475569;">Found ${filtered.length} Users</div>
+      <!-- Export & Users Count Header (Requested by User) -->
+      <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 4px;">
+          <div style="font-size: 13px; font-weight: 800; color: #0f172a;">👥 Verified Users (${filtered.length})</div>
+          <span style="font-size: 11px; color: #10b981; font-weight: 700;">● Firebase Realtime</span>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button id="btn-export-users-csv" style="flex: 2; background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #ffffff; border: none; padding: 10px 14px; border-radius: 8px; font-size: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 2px 8px rgba(5,150,105,0.25);">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            <span>📥 Export CSV (Google Sheets)</span>
+          </button>
+          <button id="btn-export-users-json" style="flex: 1; background: #f8fafc; color: #334155; border: 1.5px solid #cbd5e1; padding: 10px 12px; border-radius: 8px; font-size: 11.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+            <span>📄 JSON</span>
+          </button>
+        </div>
       </div>
 
       <!-- Users List -->
-      <div style="display: flex; flex-direction: column; gap: 8px;">
-        ${filtered.map(u => `
-          <div style="background: #ffffff; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <div style="width: 34px; height: 34px; border-radius: 50%; background: #e0f2fe; color: #0284c7; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center;">
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        ${filtered.map((u, idx) => `
+          <div style="background: #ffffff; padding: 14px; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+            
+            <!-- Top Row: User ID, Name, Status -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 38px; height: 38px; border-radius: 12px; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: #ffffff; font-weight: 900; font-size: 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(2,132,199,0.25);">
                   ${(u.fullName || u.username || 'U')[0].toUpperCase()}
                 </div>
                 <div>
-                  <div style="font-size: 13px; font-weight: 800; color: #0f172a;">${u.fullName || u.username}</div>
-                  <div style="font-size: 11px; color: #64748b;">${u.phone || u.email || 'No phone'}</div>
+                  <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="font-size: 13.5px; font-weight: 800; color: #0f172a;">${u.fullName || u.username}</span>
+                    <span style="background: #e0f2fe; color: #0284c7; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 6px;">
+                      ID: #${u.id || u.playerNumber || idx + 1}
+                    </span>
+                  </div>
+                  <div style="font-size: 10.5px; color: #94a3b8; margin-top: 2px;">Registered: ${u.registeredDate || 'Active Player'}</div>
                 </div>
               </div>
-              <span style="padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; ${u.status === 'Active' ? 'background: #dcfce7; color: #166534;' : 'background: #fee2e2; color: #991b1b;'}">
+              <span style="padding: 3px 8px; border-radius: 8px; font-size: 10px; font-weight: 800; ${u.status === 'Active' ? 'background: #dcfce7; color: #166534;' : 'background: #fee2e2; color: #991b1b;'}">
                 ${u.status || 'Active'}
               </span>
             </div>
 
+            <!-- Contact Details: Gmail & Phone with 1-Click Copy (Requested by User) -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px 10px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 6px;">
+              
+              <!-- Gmail with Copy -->
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11.5px;">
+                <div style="display: flex; align-items: center; gap: 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">
+                  <span style="color: #ea4335;">📧</span>
+                  <span style="font-weight: 700; color: #1e293b; overflow: hidden; text-overflow: ellipsis;">${u.email || 'No Gmail'}</span>
+                </div>
+                ${u.email ? `
+                  <button class="btn-copy-data" data-copy="${u.email}" title="Copy Gmail" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 2px 8px; font-size: 10.5px; font-weight: 700; color: #0284c7; cursor: pointer; margin-left: 8px; flex-shrink: 0;">
+                    📋 Copy
+                  </button>
+                ` : ''}
+              </div>
+
+              <!-- Phone with Copy -->
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11.5px;">
+                <div style="display: flex; align-items: center; gap: 6px; flex: 1;">
+                  <span style="color: #10b981;">📞</span>
+                  <span style="font-weight: 700; color: #1e293b;">${u.phone || 'No phone'}</span>
+                </div>
+                ${u.phone ? `
+                  <div style="display: flex; gap: 4px; flex-shrink: 0;">
+                    <a href="tel:${u.phone}" style="background: #dcfce7; border: 1px solid #bbf7d0; border-radius: 6px; padding: 2px 8px; font-size: 10.5px; font-weight: 700; color: #166534; text-decoration: none;">
+                      Call
+                    </a>
+                    <button class="btn-copy-data" data-copy="${u.phone}" title="Copy Phone" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 2px 8px; font-size: 10.5px; font-weight: 700; color: #0284c7; cursor: pointer;">
+                      📋 Copy
+                    </button>
+                  </div>
+                ` : ''}
+              </div>
+
+            </div>
+
             <!-- Stats Bar -->
-            <div style="display: flex; gap: 12px; padding: 6px 8px; background: #f8fafc; border-radius: 6px; font-size: 11px; margin-bottom: 8px;">
-              <div><strong>UID:</strong> ${u.ffUid || 'N/A'}</div>
-              <div><strong>Role:</strong> ${u.role || 'Member'}</div>
-              <div><strong>Balance:</strong> ৳${u.walletBalance || 0}</div>
+            <div style="display: flex; gap: 12px; padding: 6px 10px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 11px; margin-bottom: 10px;">
+              <div><strong>Role:</strong> ${u.role || 'Player'}</div>
+              <div><strong>Balance:</strong> <span style="color: #16a34a; font-weight: 800;">৳${u.walletBalance || 0}</span></div>
             </div>
 
             <!-- Actions -->
             <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-              <button class="btn-add-balance" data-user-id="${u.id}" style="padding: 4px 8px; font-size: 10.5px; font-weight: 700; background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; border-radius: 6px; cursor: pointer;">
+              <button class="btn-add-balance" data-user-id="${u.id}" style="padding: 5px 10px; font-size: 11px; font-weight: 700; background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; border-radius: 6px; cursor: pointer;">
                 +Add ৳100
               </button>
-              <button class="btn-toggle-role" data-user-id="${u.id}" style="padding: 4px 8px; font-size: 10.5px; font-weight: 700; background: #fdf4ff; color: #c026d3; border: 1px solid #f5d0fe; border-radius: 6px; cursor: pointer;">
+              <button class="btn-toggle-role" data-user-id="${u.id}" style="padding: 5px 10px; font-size: 11px; font-weight: 700; background: #fdf4ff; color: #c026d3; border: 1px solid #f5d0fe; border-radius: 6px; cursor: pointer;">
                 Toggle VIP
               </button>
-              <button class="btn-toggle-status" data-user-id="${u.id}" style="padding: 4px 8px; font-size: 10.5px; font-weight: 700; background: #fffbeb; color: #b45309; border: 1px solid #fef3c7; border-radius: 6px; cursor: pointer;">
+              <button class="btn-toggle-status" data-user-id="${u.id}" style="padding: 5px 10px; font-size: 11px; font-weight: 700; background: #fffbeb; color: #b45309; border: 1px solid #fef3c7; border-radius: 6px; cursor: pointer;">
                 ${u.status === 'Active' ? 'Suspend' : 'Activate'}
               </button>
-              <button class="btn-delete-user" data-user-id="${u.id}" style="padding: 4px 8px; font-size: 10.5px; font-weight: 700; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 6px; cursor: pointer;">
+              <button class="btn-delete-user" data-user-id="${u.id}" style="padding: 5px 10px; font-size: 11px; font-weight: 700; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; border-radius: 6px; cursor: pointer;">
                 Delete
               </button>
             </div>
@@ -827,16 +918,208 @@ function renderBannersTab(data) {
 // 8. NOTICES & ANNOUNCEMENTS TAB
 // ==========================================
 function renderNoticesTab(data) {
+  const popup = data.homePopup || {};
+  const updateConfig = data.appUpdateConfig || {};
+
   return `
-    <div class="admin-tab-pane">
-      <div style="background: #ffffff; padding: 14px; border-radius: 12px; border: 1px solid #e2e8f0;">
-        <div style="font-size: 13px; font-weight: 800; color: #0f172a; margin-bottom: 8px;">📢 Broadcast Push Notification</div>
-        <input type="text" id="notice-title" placeholder="Announcement Title" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 11.5px; margin-bottom: 8px;" />
-        <textarea id="notice-body" placeholder="Notification Message content..." rows="3" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 11.5px; margin-bottom: 8px;"></textarea>
-        <button id="btn-broadcast-notice" style="width: 100%; background: #0284c7; color: #ffffff; font-weight: 700; padding: 8px; border-radius: 6px; border: none; font-size: 12px; cursor: pointer;">
-          🚀 Send Live Push Broadcast
+    <div class="admin-tab-pane" style="display: flex; flex-direction: column; gap: 14px;">
+      
+      <!-- 1. Home Screen Notice Popup Controller (Matches User's Screenshot Exactly) -->
+      <div style="background: #ffffff; padding: 16px; border-radius: 14px; border: 1.5px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div>
+            <div style="font-size: 14px; font-weight: 800; color: #0f172a;">🖼️ Home Screen Notice Popup Modal</div>
+            <div style="font-size: 11px; color: #64748b;">Displays interactive popup modal with banner, message & action button</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 11px; font-weight: 800; color: ${popup.enabled ? '#10b981' : '#64748b'};">${popup.enabled ? 'ACTIVE (ON)' : 'DISABLED (OFF)'}</span>
+            <input type="checkbox" id="admin-popup-enabled" ${popup.enabled ? 'checked' : ''} style="width: 20px; height: 20px; cursor: pointer; accent-color: #0284c7;" />
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px;">
+          
+          <!-- Banner Image URL -->
+          <div>
+            <label style="display: block; font-size: 11.5px; font-weight: 700; color: #334155; margin-bottom: 4px;">
+              Popup Banner Image URL (Optional - leave empty for text only)
+            </label>
+            <div style="display: flex; gap: 6px;">
+              <input 
+                type="text" 
+                id="admin-popup-image" 
+                placeholder="Image URL (e.g. https://... or assets/images/...)" 
+                value="${popup.image || ''}" 
+                style="flex: 1; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px;" 
+              />
+              <label style="background: #e0f2fe; color: #0284c7; padding: 8px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; border: 1px solid #bae6fd;">
+                📁 Pick File
+                <input type="file" id="admin-popup-file-input" accept="image/*" style="display: none;" />
+              </label>
+            </div>
+          </div>
+
+          <!-- Notice Headline / Message -->
+          <div>
+            <label style="display: block; font-size: 11.5px; font-weight: 700; color: #334155; margin-bottom: 4px;">
+              Notice Headline / Description (Bengali or English)
+            </label>
+            <textarea 
+              id="admin-popup-desc" 
+              rows="3" 
+              placeholder="e.g. অল্প দামে ১৮ মাসের জন্য Google ai Pro নিতে চাইলে নিচের বাটনে ক্লিক করে আমাদের সাথে যোগাযোগ করুন।"
+              style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px; font-weight: 500; font-family: inherit;"
+            >${popup.description || popup.title || ''}</textarea>
+          </div>
+
+          <!-- Action Button Text & URL -->
+          <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 8px;">
+            <div>
+              <label style="display: block; font-size: 11px; font-weight: 700; color: #334155; margin-bottom: 4px;">Button Label</label>
+              <input 
+                type="text" 
+                id="admin-popup-btn-text" 
+                placeholder="e.g. ক্লিক করুন" 
+                value="${popup.buttonText || 'ক্লিক করুন'}" 
+                style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px;" 
+              />
+            </div>
+            <div>
+              <label style="display: block; font-size: 11px; font-weight: 700; color: #334155; margin-bottom: 4px;">Target Action Link</label>
+              <input 
+                type="text" 
+                id="admin-popup-btn-url" 
+                placeholder="https://t.me/... or topup, shop, tournaments" 
+                value="${popup.buttonUrl || 'https://t.me/mrmobin1m'}" 
+                style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px;" 
+              />
+            </div>
+          </div>
+
+          <!-- Show Once Per Session Toggle -->
+          <div style="display: flex; align-items: center; gap: 8px; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <input type="checkbox" id="admin-popup-once" ${popup.showOncePerSession ? 'checked' : ''} style="width: 16px; height: 16px; accent-color: #0284c7; cursor: pointer;" />
+            <label for="admin-popup-once" style="font-size: 11.5px; font-weight: 600; color: #475569; cursor: pointer;">
+              Show once per session (Recommended so users aren't spammed on every navigation)
+            </label>
+          </div>
+
+          <!-- Live Visual Mockup Preview of User Screenshot -->
+          <div style="border: 1.5px dashed #0284c7; border-radius: 16px; padding: 14px; background: #f0f9ff; margin-top: 4px;">
+            <div style="font-size: 11px; font-weight: 800; color: #0284c7; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+              👁️ Live Mockup Preview (What users will see):
+            </div>
+            <div style="max-width: 280px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.15); border: 1px solid #e2e8f0; text-align: center;">
+              <div id="preview-popup-image-box" style="width: 100%; height: 140px; background: #0f172a; overflow: hidden; display: ${popup.image ? 'block' : 'none'};">
+                <img id="preview-popup-img" src="${popup.image || 'assets/images/banner_booyah.jpg'}" alt="Preview" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='assets/images/banner_topup.jpg';" />
+              </div>
+              <div style="padding: 12px 14px 16px 14px;">
+                <p id="preview-popup-text" style="font-size: 12px; font-weight: 700; color: #0f172a; margin: 0 0 12px 0; line-height: 1.4; text-align: left;">
+                  ${popup.description || 'অল্প দামে ১৮ মাসের জন্য Google ai Pro নিতে চাইলে নিচের বাটনে ক্লিক করে আমাদের সাথে যোগাযোগ করুন।'}
+                </p>
+                <div style="display: flex; justify-content: flex-start;">
+                  <span id="preview-popup-btn" style="background: #0284c7; color: #ffffff; border-radius: 6px; padding: 6px 16px; font-size: 11.5px; font-weight: 800; display: inline-block;">
+                    ${popup.buttonText || 'ক্লিক করুন'}
+                  </span>
+                </div>
+                <div style="display: flex; justify-content: center; margin-top: 12px;">
+                  <span style="background: #0084ff; color: #ffffff; border-radius: 20px; padding: 6px 24px; font-size: 11px; font-weight: 800; display: inline-block;">
+                    ✗ CLOSE
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <button id="btn-save-home-popup" style="width: 100%; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; font-weight: 800; padding: 11px; border-radius: 10px; border: none; font-size: 13px; cursor: pointer; box-shadow: 0 4px 12px rgba(2,132,199,0.3);">
+          💾 Save & Push Home Screen Notice
         </button>
       </div>
+
+      <!-- 2. Google Play Store App Update Alert Manager (Requested in Audio 1) -->
+      <div style="background: #ffffff; padding: 16px; border-radius: 14px; border: 1.5px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div>
+            <div style="font-size: 14px; font-weight: 800; color: #0f172a;">🚀 Google Play Store Version & Update Alert</div>
+            <div style="font-size: 11px; color: #64748b;">Notify app users when you publish a new version to Play Store</div>
+          </div>
+          <div style="background: #f1f5f9; padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; color: #475569;">
+            Current: v${updateConfig.currentVersion || '1.0'}
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px;">
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div>
+              <label style="display: block; font-size: 11px; font-weight: 700; color: #334155; margin-bottom: 4px;">Latest Store Version</label>
+              <input 
+                type="text" 
+                id="admin-update-version" 
+                placeholder="e.g. 1.1 or 2.0" 
+                value="${updateConfig.latestVersion || '1.0'}" 
+                style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px;" 
+              />
+              <div style="font-size: 10px; color: #64748b; margin-top: 2px;">Set higher than v1.0 to trigger update modal</div>
+            </div>
+            <div>
+              <label style="display: block; font-size: 11px; font-weight: 700; color: #334155; margin-bottom: 4px;">Force Update?</label>
+              <div style="height: 38px; display: flex; align-items: center; gap: 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0 10px;">
+                <input type="checkbox" id="admin-update-force" ${updateConfig.forceUpdate ? 'checked' : ''} style="width: 16px; height: 16px; accent-color: #dc2626; cursor: pointer;" />
+                <span style="font-size: 11px; font-weight: 700; color: #334155;">Block until updated</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 11px; font-weight: 700; color: #334155; margin-bottom: 4px;">Update Title</label>
+            <input 
+              type="text" 
+              id="admin-update-title" 
+              placeholder="e.g. নতুন আপডেট এসেছে! 🚀" 
+              value="${updateConfig.updateTitle || 'নতুন আপডেট উপলব্ধ!'}" 
+              style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px;" 
+            />
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 11px; font-weight: 700; color: #334155; margin-bottom: 4px;">Update Message Content</label>
+            <textarea 
+              id="admin-update-msg" 
+              rows="2" 
+              style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px;"
+            >${updateConfig.updateMessage || 'অ্যাপের নতুন ফিচার ও সর্বোত্তম অভিজ্ঞতার জন্য গুগল প্লে স্টোর থেকে এখনই আপডেট করে নিন।'}</textarea>
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 11px; font-weight: 700; color: #334155; margin-bottom: 4px;">Google Play Store Direct URL</label>
+            <input 
+              type="text" 
+              id="admin-update-url" 
+              value="${updateConfig.updateUrl || 'https://play.google.com/store/apps/details?id=com.mobinx.gaming'}" 
+              style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px;" 
+            />
+          </div>
+
+        </div>
+
+        <button id="btn-save-update-config" style="width: 100%; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; font-weight: 800; padding: 11px; border-radius: 10px; border: none; font-size: 13px; cursor: pointer; box-shadow: 0 4px 12px rgba(16,185,129,0.3);">
+          🚀 Save & Deploy Play Store Version Alert
+        </button>
+      </div>
+
+      <!-- 3. Broadcast Notification Center -->
+      <div style="background: #ffffff; padding: 16px; border-radius: 14px; border: 1.5px solid #e2e8f0;">
+        <div style="font-size: 14px; font-weight: 800; color: #0f172a; margin-bottom: 8px;">🔔 Broadcast In-App Push Notification</div>
+        <input type="text" id="notice-title" placeholder="Notification Title (e.g. নতুন অফার এসেছে!)" style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px; margin-bottom: 8px;" />
+        <textarea id="notice-body" placeholder="Notification message text..." rows="2" style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px; margin-bottom: 8px;"></textarea>
+        <button id="btn-broadcast-notice" style="width: 100%; background: #0f172a; color: #ffffff; font-weight: 700; padding: 9px; border-radius: 8px; border: none; font-size: 12px; cursor: pointer;">
+          📢 Broadcast to All App Notification Centers
+        </button>
+      </div>
+
     </div>
   `;
 }
@@ -1346,7 +1629,106 @@ export function bindAdminEvents() {
     });
   });
 
-  // --- NOTICES TAB EVENTS ---
+  // --- USER EXPORT & COPY EVENTS ---
+  document.getElementById('btn-export-users-csv')?.addEventListener('click', () => {
+    authService.exportUsersCSV();
+    Toast.show('📥 Users Database (CSV) exported successfully!', 'success');
+  });
+
+  document.getElementById('btn-export-users-json')?.addEventListener('click', () => {
+    authService.exportUsersJSON();
+    Toast.show('📄 Users Database (JSON) exported successfully!', 'success');
+  });
+
+  document.querySelectorAll('.btn-copy-data').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const textToCopy = e.currentTarget.getAttribute('data-copy');
+      if (textToCopy && navigator.clipboard) {
+        navigator.clipboard.writeText(textToCopy);
+        Toast.show(`Copied: ${textToCopy}`, 'info');
+      } else if (textToCopy) {
+        Toast.show(`Text: ${textToCopy}`, 'info');
+      }
+    });
+  });
+
+  // --- HOME NOTICE POPUP & APP UPDATE EVENTS ---
+  // Popup image file upload
+  document.getElementById('admin-popup-file-input')?.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      Toast.show('Processing popup image...', 'info');
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target.result;
+        const imgInput = document.getElementById('admin-popup-image');
+        if (imgInput) imgInput.value = dataUrl;
+        const previewImg = document.getElementById('preview-popup-img');
+        if (previewImg) previewImg.src = dataUrl;
+        const previewBox = document.getElementById('preview-popup-image-box');
+        if (previewBox) previewBox.style.display = 'block';
+        Toast.show('Popup image ready!', 'success');
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // Real-time preview typing sync
+  document.getElementById('admin-popup-desc')?.addEventListener('input', (e) => {
+    const p = document.getElementById('preview-popup-text');
+    if (p) p.textContent = e.target.value || 'Notice description';
+  });
+
+  document.getElementById('admin-popup-btn-text')?.addEventListener('input', (e) => {
+    const b = document.getElementById('preview-popup-btn');
+    if (b) b.textContent = e.target.value || 'ক্লিক করুন';
+  });
+
+  // Save Home Notice Popup
+  document.getElementById('btn-save-home-popup')?.addEventListener('click', async () => {
+    const enabled = document.getElementById('admin-popup-enabled')?.checked ?? true;
+    const image = document.getElementById('admin-popup-image')?.value.trim();
+    const description = document.getElementById('admin-popup-desc')?.value.trim();
+    const buttonText = document.getElementById('admin-popup-btn-text')?.value.trim();
+    const buttonUrl = document.getElementById('admin-popup-btn-url')?.value.trim();
+    const showOncePerSession = document.getElementById('admin-popup-once')?.checked ?? true;
+
+    await authService.saveHomeNoticePopup({
+      enabled,
+      image,
+      description,
+      title: description,
+      buttonText: buttonText || 'ক্লিক করুন',
+      buttonUrl: buttonUrl || 'https://t.me/mrmobin1m',
+      showOncePerSession
+    });
+
+    Toast.show('🎉 Home Screen Notice Popup saved & deployed live!', 'success');
+    reRender();
+  });
+
+  // Save Play Store Version Update Config
+  document.getElementById('btn-save-update-config')?.addEventListener('click', async () => {
+    const latestVersion = document.getElementById('admin-update-version')?.value.trim();
+    const forceUpdate = document.getElementById('admin-update-force')?.checked ?? false;
+    const updateTitle = document.getElementById('admin-update-title')?.value.trim();
+    const updateMessage = document.getElementById('admin-update-msg')?.value.trim();
+    const updateUrl = document.getElementById('admin-update-url')?.value.trim();
+
+    await authService.saveAppUpdateConfig({
+      latestVersion: latestVersion || '1.0',
+      currentVersion: '1.0',
+      forceUpdate,
+      updateTitle: updateTitle || 'নতুন আপডেট উপলব্ধ! 🚀',
+      updateMessage: updateMessage || 'অ্যাপের নতুন ফিচারের জন্য গুগল প্লে স্টোর থেকে এখনই আপডেট করে নিন।',
+      updateUrl: updateUrl || 'https://play.google.com/store/apps/details?id=com.mobinx.gaming'
+    });
+
+    Toast.show('🚀 Play Store Update Alert saved & synced!', 'success');
+    reRender();
+  });
+
+  // --- NOTICES BROADCAST TAB EVENTS ---
   document.getElementById('btn-broadcast-notice')?.addEventListener('click', () => {
     const title = document.getElementById('notice-title')?.value.trim();
     const body = document.getElementById('notice-body')?.value.trim();

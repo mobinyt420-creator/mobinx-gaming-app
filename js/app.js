@@ -21,6 +21,7 @@ import { renderSettingsView, bindSettingsEvents } from './views/SettingsView.js'
 import { renderHelpView, bindHelpEvents } from './views/HelpView.js';
 import { renderAboutView, bindAboutEvents } from './views/AboutView.js';
 import { realtimeSyncManager } from './services/realtimeSyncManager.js';
+import { openExternalStore } from './services/browserService.js';
 
 class App {
   constructor() {
@@ -43,6 +44,28 @@ class App {
     stateManager.subscribe((state) => {
       this.render(state);
     });
+
+    // Native Android hardware Back button handler
+    window.handleNativeBackPressed = () => {
+      const state = stateManager.getState();
+      if (state.activeModal) {
+        stateManager.closeModal();
+        return;
+      }
+      if (state.drawerOpen) {
+        stateManager.toggleDrawer(false);
+        return;
+      }
+      if (state.currentView !== 'home' && state.currentView !== 'onboarding') {
+        stateManager.navigate('home');
+        return;
+      }
+      if (typeof window !== 'undefined' && window.AndroidBridge && typeof window.AndroidBridge.exitApp === 'function') {
+        window.AndroidBridge.exitApp();
+      } else if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+        window.Capacitor.Plugins.App.exitApp();
+      }
+    };
 
     // Initial render
     this.render(stateManager.getState());
@@ -93,10 +116,11 @@ class App {
       statusBar.classList.remove('status-bar-cct-mode');
     }
 
-    // 1. Render Main App Header (Always keep visible except on Onboarding)
+    // 1. Render Main App Header (Hidden on Onboarding, TopUp, and Shop which have integrated in-app browser bars)
     const headerRoot = document.getElementById('header-root');
+    const hideHeader = isOnboarding || currentView === 'topup' || currentView === 'shop';
     if (headerRoot) {
-      if (isOnboarding) {
+      if (hideHeader) {
         headerRoot.innerHTML = '';
         headerRoot.style.display = 'none';
       } else {
@@ -108,7 +132,19 @@ class App {
 
     // 2. Render Main View
     const mainContent = document.getElementById('app-main-content');
+    const appContainer = document.getElementById('app-shell-container');
+    const deviceViewport = document.querySelector('.device-viewport');
     if (mainContent) {
+      if (isOnboarding) {
+        mainContent.classList.add('onboarding-mode');
+        appContainer?.classList.add('onboarding-active');
+        deviceViewport?.classList.add('onboarding-active');
+      } else {
+        mainContent.classList.remove('onboarding-mode');
+        appContainer?.classList.remove('onboarding-active');
+        deviceViewport?.classList.remove('onboarding-active');
+      }
+
       // In webviews, prevent outer container double-scroll
       if (currentView === 'topup' || currentView === 'shop') {
         mainContent.classList.add('fullscreen-webview-mode');
@@ -125,14 +161,18 @@ class App {
           mainContent.innerHTML = renderHomeView();
           bindHomeEvents();
           break;
-        case 'topup':
-          mainContent.innerHTML = renderTopUpView();
-          bindTopUpEvents();
+        case 'topup': {
+          const urls = authService.getUrls();
+          openExternalStore(urls.topup || 'https://noobtopup.com/', '#0284c7');
+          stateManager.setState({ currentView: 'home' });
           break;
-        case 'shop':
-          mainContent.innerHTML = renderShopView();
-          bindShopEvents();
+        }
+        case 'shop': {
+          const urls = authService.getUrls();
+          openExternalStore(urls.shop || 'https://www.obinshop.com/', '#7c3aed');
+          stateManager.setState({ currentView: 'home' });
           break;
+        }
         case 'downloads':
           mainContent.innerHTML = renderDownloadsView();
           bindDownloadsEvents();

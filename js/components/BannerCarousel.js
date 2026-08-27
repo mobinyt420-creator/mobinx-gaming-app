@@ -1,5 +1,6 @@
 import { authService } from '../services/authService.js';
 import { stateManager } from '../services/stateManager.js';
+import { openExternalStore } from '../services/browserService.js';
 
 let carouselTimer = null;
 let currentSlideIndex = 0;
@@ -72,8 +73,18 @@ export function initBannerCarousel() {
       const banner = heroBanners[i];
       if (banner && banner.actionRoute) {
         const route = banner.actionRoute.trim();
+        if (route === 'topup') {
+          const urls = authService.getUrls();
+          openExternalStore(urls.topup || 'https://noobtopup.com/', '#0284c7');
+          return;
+        }
+        if (route === 'shop') {
+          const urls = authService.getUrls();
+          openExternalStore(urls.shop || 'https://www.obinshop.com/', '#7c3aed');
+          return;
+        }
         if (route.startsWith('http://') || route.startsWith('https://')) {
-          window.open(route, '_blank');
+          openExternalStore(route, '#0284c7');
         } else {
           stateManager.navigate(route, banner.actionPayload);
         }

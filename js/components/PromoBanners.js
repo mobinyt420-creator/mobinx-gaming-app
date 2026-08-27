@@ -1,5 +1,7 @@
 import { appUrls } from '../data/mockData.js';
 import { stateManager } from '../services/stateManager.js';
+import { authService } from '../services/authService.js';
+import { openExternalStore } from '../services/browserService.js';
 
 export function renderPromoBanners() {
   return `
@@ -53,6 +55,7 @@ export function bindPromoBannersEvents() {
   });
 
   document.getElementById('btn-promo-offers')?.addEventListener('click', () => {
-    stateManager.navigate('topup');
+    const urls = authService.getUrls();
+    openExternalStore(urls.topup || 'https://noobtopup.com/', '#0284c7');
   });
 }

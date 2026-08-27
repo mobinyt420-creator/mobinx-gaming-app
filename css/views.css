@@ -1763,4 +1763,65 @@
   transform: scale(0.98);
 }
 
+/* ==========================================
+   ADMIN PANEL MOBILE-FRIENDLY RESPONSIVENESS
+   ========================================== */
+.admin-view {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.admin-tab-bar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+
+.admin-tab-bar::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+.admin-nav-pill:active {
+  transform: scale(0.95);
+}
+
+.btn-copy-data:active {
+  transform: scale(0.92);
+  background: #e0f2fe !important;
+}
+
+#btn-export-users-csv:active,
+#btn-export-users-json:active {
+  transform: scale(0.97);
+}
+
+#btn-popup-action:active,
+#btn-popup-close:active {
+  transform: scale(0.96);
+}
+
+/* Pop-up animation keyframes */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-content-body {
+    padding: 10px !important;
+  }
+}
+
+
 

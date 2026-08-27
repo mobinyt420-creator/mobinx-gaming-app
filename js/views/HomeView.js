@@ -3,6 +3,7 @@ import { renderCategorySlider, bindCategoryEvents } from '../components/Category
 import { renderPopularServicesGrid, bindPopularServicesEvents } from '../components/PopularServicesGrid.js';
 import { renderFlashSaleSection, initFlashSaleCountdown } from '../components/FlashSaleSection.js';
 import { renderPromoBanners, bindPromoBannersEvents } from '../components/PromoBanners.js';
+import { renderHomeNoticePopup, bindHomeNoticePopupEvents } from '../components/HomeNoticePopup.js';
 import { stateManager } from '../services/stateManager.js';
 
 export function renderHomeView() {
@@ -22,6 +23,9 @@ export function renderHomeView() {
 
       <!-- 5. Mini Promotional Banners (Telegram & Special Offers) -->
       ${renderPromoBanners()}
+
+      <!-- 6. Home Notice / Play Store Update Modal Popup (Admin Controlled) -->
+      ${renderHomeNoticePopup()}
     </div>
   `;
 }
@@ -32,4 +36,5 @@ export function bindHomeEvents() {
   bindPopularServicesEvents();
   initFlashSaleCountdown();
   bindPromoBannersEvents();
+  bindHomeNoticePopupEvents();
 }

@@ -1,6 +1,8 @@
 import { authService } from '../services/authService.js';
+import { firebaseService } from '../services/firebaseService.js';
 import { stateManager } from '../services/stateManager.js';
 import { Toast } from '../components/Toast.js';
+import { resetOnboardingStep } from './OnboardingView.js';
 
 export function renderProfileView() {
   const user = authService.getCurrentUser();
@@ -133,8 +135,24 @@ export function renderProfileView() {
 }
 
 export function bindProfileEvents() {
-  document.getElementById('btn-profile-google-login')?.addEventListener('click', () => {
-    stateManager.openModal('googleLogin', {});
+  document.getElementById('btn-profile-google-login')?.addEventListener('click', async () => {
+    try {
+      Toast.show('Opening Google Account Picker...', 'info');
+      const googleUser = await firebaseService.signInWithGoogle();
+      if (googleUser && googleUser.email) {
+        const user = await authService.loginWithGoogle(googleUser.email, googleUser.displayName);
+        if (googleUser.photoURL) {
+          user.avatar = googleUser.photoURL;
+          authService.saveUsersDatabase();
+          authService.persistSession();
+        }
+        Toast.show(`Welcome back, ${user.username}!`, 'success');
+        stateManager.navigate('profile');
+      }
+    } catch (err) {
+      console.warn('Profile Google Login error:', err);
+      Toast.show(err.message || 'Google Sign-In was cancelled', 'warning');
+    }
   });
 
   document.getElementById('p-menu-support')?.addEventListener('click', () => {
@@ -181,7 +199,8 @@ export function bindProfileEvents() {
 
   document.getElementById('p-menu-logout')?.addEventListener('click', () => {
     authService.logout();
+    resetOnboardingStep();
     Toast.show('Logged out. Switched to guest session.', 'info');
-    stateManager.navigate('home');
+    stateManager.navigate('onboarding');
   });
 }

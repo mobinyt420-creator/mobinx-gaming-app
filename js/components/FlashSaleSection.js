@@ -1,6 +1,7 @@
 import { authService } from '../services/authService.js';
 import { stateManager } from '../services/stateManager.js';
 import { Toast } from './Toast.js';
+import { openExternalStore } from '../services/browserService.js';
 
 let countdownTimer = null;
 let remainingSeconds = 2 * 3600 + 35 * 60 + 48; // 02:35:48
@@ -109,7 +110,8 @@ export function initFlashSaleCountdown() {
       const amount = btn.dataset.amount || 'Diamonds';
       const price = btn.dataset.price || '';
       Toast.show(`Opening Top Up for ${amount} (${price})...`, 'info');
-      stateManager.navigate('topup');
+      const urls = authService.getUrls();
+      openExternalStore(urls.topup || 'https://noobtopup.com/', '#0284c7');
     });
   });
 }

@@ -64,4 +64,6 @@
   --header-height: 60px;
   --bottom-nav-height: 68px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --status-bar-offset: 30px;
 }

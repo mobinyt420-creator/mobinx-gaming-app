@@ -1,4 +1,6 @@
 import { stateManager } from '../services/stateManager.js';
+import { authService } from '../services/authService.js';
+import { openExternalStore } from '../services/browserService.js';
 
 export function renderBottomNav(currentView = 'home') {
   const tabs = [
@@ -72,6 +74,16 @@ export function bindBottomNavEvents() {
   document.querySelectorAll('.nav-tab').forEach(button => {
     button.addEventListener('click', (e) => {
       const target = e.currentTarget.getAttribute('data-nav');
+      if (target === 'topup') {
+        const urls = authService.getUrls();
+        openExternalStore(urls.topup || 'https://noobtopup.com/', '#0284c7');
+        return;
+      }
+      if (target === 'shop') {
+        const urls = authService.getUrls();
+        openExternalStore(urls.shop || 'https://www.obinshop.com/', '#7c3aed');
+        return;
+      }
       if (target) {
         stateManager.navigate(target);
       }

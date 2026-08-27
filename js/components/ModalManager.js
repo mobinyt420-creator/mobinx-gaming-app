@@ -2,6 +2,7 @@ import { stateManager } from '../services/stateManager.js';
 import { downloadService } from '../services/downloadService.js';
 import { tournamentService } from '../services/tournamentService.js';
 import { authService } from '../services/authService.js';
+import { firebaseService } from '../services/firebaseService.js';
 import { Toast } from './Toast.js';
 
 export function renderModal(activeModal) {
@@ -265,20 +266,32 @@ export function bindModalEvents(activeModal) {
   });
 
   if (type === 'googleLogin') {
-    document.getElementById('btn-confirm-google-login')?.addEventListener('click', () => {
-      const email = document.getElementById('input-google-email')?.value?.trim();
-      const username = document.getElementById('input-google-username')?.value?.trim();
+    document.getElementById('btn-confirm-google-login')?.addEventListener('click', async () => {
+      const emailInput = document.getElementById('input-google-email')?.value?.trim();
+      const usernameInput = document.getElementById('input-google-username')?.value?.trim();
 
-      if (!email) {
-        Toast.show('Please enter your Gmail address', 'warning');
-        return;
+      try {
+        if (!emailInput) {
+          // Launch real Google Sign-In with native account picker
+          const googleUser = await firebaseService.signInWithGoogle();
+          if (googleUser && googleUser.email) {
+            const user = await authService.loginWithGoogle(googleUser.email, googleUser.displayName || usernameInput);
+            stateManager.closeModal();
+            Toast.show(`Welcome back, ${user.username}!`, 'success');
+            stateManager.navigate('profile');
+            return;
+          }
+        } else {
+          const cleanUsername = usernameInput || emailInput.split('@')[0] || 'Player';
+          const user = await authService.loginWithGoogle(emailInput, cleanUsername);
+          stateManager.closeModal();
+          Toast.show(`Welcome back, ${user.username}!`, 'success');
+          stateManager.navigate('profile');
+        }
+      } catch (err) {
+        console.warn('Modal Google Sign-In error:', err);
+        Toast.show(err.message || 'Google Sign-In was cancelled', 'warning');
       }
-
-      const cleanUsername = username || email.split('@')[0] || 'Player';
-      const user = authService.loginWithGoogle(email, cleanUsername);
-      stateManager.closeModal();
-      Toast.show(`Welcome back, ${user.username}!`, 'success');
-      stateManager.navigate('profile');
     });
   }
 
@@ -306,6 +319,7 @@ export function bindModalEvents(activeModal) {
         if (currentPercent >= 100) {
           clearInterval(interval);
           setTimeout(() => {
+            authService.recordDownload(data.id || 'apk-download', data.title || 'APK Tool');
             stateManager.closeModal();
             Toast.show('Security verified! Opening high-speed download link...', 'success');
             window.open(targetUrl, '_blank');

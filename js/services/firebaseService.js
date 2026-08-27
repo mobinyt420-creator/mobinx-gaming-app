@@ -31,23 +31,46 @@ export async function initFirebase() {
   }
 }
 
-// Google Sign-In with real Popup (protected for WebView environments)
+// Real Google Sign-In with Native Android Account Chooser or Firebase Web Popup
 export async function signInWithGoogleFirebase() {
-  if (typeof window !== 'undefined') {
-    // In Capacitor or Mobile Webview, avoid popup redirects to prevent sessionStorage partition error
-    const isMobileApp = !!(window.Capacitor || (window.location && window.location.protocol === 'capacitor:') || (navigator.userAgent && navigator.userAgent.includes('wv')));
-    if (isMobileApp) {
-      console.log('Mobile App Environment: Using native in-app form instead of external browser popup');
-      return null;
-    }
+  // 1. Android Native Environment: Use AndroidBridge with Google Play Services account picker
+  if (typeof window !== 'undefined' && window.AndroidBridge && typeof window.AndroidBridge.signInWithGoogle === 'function') {
+    return new Promise((resolve, reject) => {
+      window.onNativeGoogleSignInSuccess = (userData) => {
+        try {
+          const user = typeof userData === 'string' ? JSON.parse(userData) : userData;
+          resolve({
+            uid: user.uid || ('google_' + (user.email ? user.email.replace(/[^a-z0-9]/gi, '_') : Date.now())),
+            displayName: user.displayName || user.name || (user.email ? user.email.split('@')[0] : 'Player'),
+            email: user.email,
+            photoURL: user.photoUrl || user.photoURL || 'assets/images/avatar_user.jpg',
+            idToken: user.idToken
+          });
+        } catch (e) {
+          resolve(userData);
+        }
+      };
+
+      window.onNativeGoogleSignInError = (errMsg) => {
+        console.warn('Native Google Sign-In notice:', errMsg);
+        reject(new Error(errMsg || 'Google Sign-In was cancelled'));
+      };
+
+      try {
+        window.AndroidBridge.signInWithGoogle();
+      } catch (err) {
+        reject(err);
+      }
+    });
   }
 
+  // 2. Web Browser Environment: Firebase Web SDK Popup
   if (!isFirebaseInitialized) {
     await initFirebase();
   }
 
   if (!auth || !googleProvider) {
-    console.log('Firebase Auth fallback active');
+    console.warn('Firebase Auth fallback active');
     return null;
   }
 
@@ -63,8 +86,8 @@ export async function signInWithGoogleFirebase() {
       phoneNumber: user.phoneNumber || ''
     };
   } catch (error) {
-    console.warn('Google Sign-In notice:', error.message);
-    return null;
+    console.warn('Google Sign-In error:', error.message);
+    throw error;
   }
 }
 

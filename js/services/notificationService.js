@@ -2,7 +2,20 @@ import { notificationsList } from '../data/mockData.js';
 
 class NotificationService {
   constructor() {
-    this.notifications = [...notificationsList];
+    try {
+      const saved = localStorage.getItem('mobinx_notifications');
+      this.notifications = saved ? JSON.parse(saved) : [...notificationsList];
+    } catch(e) {
+      this.notifications = [...notificationsList];
+    }
+  }
+
+  addNotification(notif) {
+    this.notifications.unshift(notif);
+    try {
+      localStorage.setItem('mobinx_notifications', JSON.stringify(this.notifications));
+    } catch(e) {}
+    return notif;
   }
 
   getAll() {

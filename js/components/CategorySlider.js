@@ -1,5 +1,7 @@
 import { quickCategories } from '../data/mockData.js';
 import { stateManager } from '../services/stateManager.js';
+import { authService } from '../services/authService.js';
+import { openExternalStore } from '../services/browserService.js';
 
 export function renderCategorySlider() {
   const iconSvgs = {
@@ -78,6 +80,16 @@ export function bindCategoryEvents() {
   document.querySelectorAll('.category-shortcut-card').forEach(card => {
     card.addEventListener('click', () => {
       const route = card.getAttribute('data-category');
+      if (route === 'topup') {
+        const urls = authService.getUrls();
+        openExternalStore(urls.topup || 'https://noobtopup.com/', '#0284c7');
+        return;
+      }
+      if (route === 'shop') {
+        const urls = authService.getUrls();
+        openExternalStore(urls.shop || 'https://www.obinshop.com/', '#7c3aed');
+        return;
+      }
       if (route) {
         stateManager.navigate(route);
       }

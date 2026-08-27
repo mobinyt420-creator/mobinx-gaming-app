@@ -1,12 +1,13 @@
 import { stateManager } from '../services/stateManager.js';
 import { authService } from '../services/authService.js';
+import { resetOnboardingStep } from '../views/OnboardingView.js';
+import { openExternalStore } from '../services/browserService.js';
 
 export function renderDrawerMenu(isOpen = false, currentView = 'home') {
   const user = authService.getCurrentUser();
   const isAdmin = authService.isAdmin();
 
   const menuItems = [
-    ...(isAdmin ? [{ id: 'admin', label: '👑 Admin Control Panel', special: true, icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--danger);"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>' }] : []),
     { id: 'home', label: 'Home', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>' },
     { id: 'topup', label: 'Top Up (noobtopup.com)', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="6 3 18 3 22 9 12 22 2 9 6 3"></polygon></svg>' },
     { id: 'shop', label: 'Shop (obinshop.com)', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>' },
@@ -80,7 +81,21 @@ export function bindDrawerEvents() {
   document.querySelectorAll('.drawer-item').forEach(button => {
     button.addEventListener('click', (e) => {
       const route = e.currentTarget.getAttribute('data-route');
+      stateManager.toggleDrawer(false);
+      if (route === 'topup') {
+        const urls = authService.getUrls();
+        openExternalStore(urls.topup || 'https://noobtopup.com/', '#0284c7');
+        return;
+      }
+      if (route === 'shop') {
+        const urls = authService.getUrls();
+        openExternalStore(urls.shop || 'https://www.obinshop.com/', '#7c3aed');
+        return;
+      }
       if (route) {
+        if (route === 'onboarding') {
+          resetOnboardingStep();
+        }
         stateManager.navigate(route);
       }
     });
