@@ -85,10 +85,11 @@ class AuthService {
       // Instant local bridge for same-browser testing
       try {
         if (typeof localStorage !== 'undefined') {
-          const currentList = JSON.parse(localStorage.getItem('mobinx_users_list') || '[]');
+          const currentList = JSON.parse(localStorage.getItem('mobinx_registered_users') || '[]');
           const idx = currentList.findIndex(u => (u.email && u.email.toLowerCase() === cleanEmail) || u.id === docId);
           if (idx >= 0) currentList[idx] = { ...currentList[idx], ...userData };
           else currentList.unshift(userData);
+          localStorage.setItem('mobinx_registered_users', JSON.stringify(currentList));
           localStorage.setItem('mobinx_users_list', JSON.stringify(currentList));
         }
         if (typeof BroadcastChannel !== 'undefined') {

@@ -199,6 +199,8 @@ export const firebaseService = {
   init: initFirebase,
   signInWithGoogle: signInWithGoogleFirebase,
   saveDocument: saveToFirestore,
+  saveToFirestore: saveToFirestore,
+  getFromFirestore: getFromFirestore,
   getCollection: getFromFirestore,
   subscribeCollection: subscribeToCollection,
   subscribeDocument: subscribeToDocument,
