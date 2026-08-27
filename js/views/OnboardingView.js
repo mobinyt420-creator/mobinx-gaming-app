@@ -87,13 +87,17 @@ function renderWelcomeStep() {
       </div>
 
       <!-- Bottom Action Button -->
-      <div>
+      <div style="display: flex; flex-direction: column; gap: 10px; align-items: center; width: 100%;">
         <button id="btn-onboard-start" style="width: 100%; height: 52px; background: linear-gradient(135deg, #0066ff 0%, #0052cc 100%); color: #ffffff; border: none; border-radius: 14px; font-size: 15px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 8px 24px rgba(0, 102, 255, 0.45); transition: transform 0.15s ease;">
           <span>Let's Get Started</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="5" y1="12" x2="19" y2="12"></line>
             <polyline points="12 5 19 12 12 19"></polyline>
           </svg>
+        </button>
+        <button id="btn-onboard-login-direct" style="background: none; border: none; color: #38bdf8; font-size: 13px; font-weight: 700; cursor: pointer; padding: 6px; display: flex; align-items: center; gap: 6px;">
+          <span>Already registered? Sign In with Name & Phone</span>
+          <span style="font-size: 15px;">→</span>
         </button>
       </div>
 
@@ -264,8 +268,13 @@ function renderProfileSetupStep() {
 }
 
 export function bindOnboardingEvents() {
-  // Step 1: Let's Get Started -> Go to Step 2
+  // Step 1: Let's Get Started or Direct Sign-In -> Go to Step 2
   document.getElementById('btn-onboard-start')?.addEventListener('click', () => {
+    onboardStep = 2;
+    stateManager.navigate('onboarding');
+  });
+
+  document.getElementById('btn-onboard-login-direct')?.addEventListener('click', () => {
     onboardStep = 2;
     stateManager.navigate('onboarding');
   });
