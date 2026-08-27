@@ -2,70 +2,43 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
-    function isAuthenticated() {
-      return request.auth != null;
-    }
+    // Mobin X Gaming Ecosystem - Cloud Firestore Security Rules
+    // Dedicated Project: mobin-x
 
-    function isAdmin() {
-      return isAuthenticated() && 
-        (request.auth.token.email.lower() == 'mobinyt420@gmail.com' ||
-         request.auth.token.email.lower() == 'mrmobin1m@gmail.com');
-    }
-
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
-    }
-
-    // Public read collections for app display (Tournaments, Downloads, Banners, Flash Deals, Services)
     match /tournaments/{tournamentId} {
-      allow read: if true;
-      allow write: if isAdmin() || isAuthenticated();
+      allow read, write: if true;
     }
 
     match /downloads/{downloadId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
 
     match /banners/{bannerId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
 
     match /flashDeals/{dealId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
 
     match /services/{serviceId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
 
     match /config/{configId} {
-      allow read: if true;
-      allow write: if true;
+      allow read, write: if true;
     }
 
-    // App Statistics & Downloads Counter
     match /stats/{statId} {
-      allow read: if true;
-      allow write: if true;
+      allow read, write: if true;
     }
 
-    // User profiles: Public read, owner or admin or safe updates
     match /users/{userId} {
-      allow read: if true;
-      allow create: if true;
-      allow update: if isOwner(userId) || isAdmin() || true;
-      allow delete: if isAdmin();
+      allow read, write: if true;
     }
 
-    // Default fallthrough rule: strict protection
     match /{document=**} {
-      allow read: if false;
-      allow write: if false;
+      allow read, write: if false;
     }
   }
 }
