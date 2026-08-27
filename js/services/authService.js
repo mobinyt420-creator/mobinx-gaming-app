@@ -37,6 +37,8 @@ class AuthService {
         this.user.isAdmin = true;
         this.user.role = "System Administrator (Admin)";
       }
+      // Auto-sync existing user session to Firestore
+      setTimeout(() => this.syncUserToFirestore(this.user), 1000);
     }
   }
 
@@ -46,37 +48,74 @@ class AuthService {
     }
   }
 
+  async syncUserToFirestore(user) {
+    if (!user || !user.email) return;
+    try {
+      const cleanEmail = user.email.toLowerCase().trim();
+      const docId = `user_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+      const userData = {
+        id: docId,
+        userId: user.userId || user.playerNumber || 1,
+        playerNumber: user.playerNumber || user.userId || 1,
+        username: user.username || user.fullName || 'Player',
+        fullName: user.fullName || user.username || 'Player',
+        email: cleanEmail,
+        phone: user.phone || user.phoneNumber || '',
+        phoneNumber: user.phoneNumber || user.phone || '',
+        ffUid: user.ffUid || '',
+        role: user.role || (user.isAdmin ? "System Administrator (Admin)" : "Player"),
+        isAdmin: !!user.isAdmin,
+        status: user.status || "Active",
+        walletBalance: user.walletBalance || 0,
+        registeredDate: user.registeredDate || new Date().toISOString().split('T')[0],
+        registeredAtIso: user.registeredAtIso || new Date().toISOString(),
+        lastLoginAt: new Date().toISOString(),
+        platform: typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.includes('Android') ? 'Android Mobile' : 'Web Device',
+        ip: 'Active Online'
+      };
+      await firebaseService.saveToFirestore('users', docId, userData);
+      console.log('✅ User synchronized to Cloud Firestore:', docId);
+    } catch (e) {
+      console.warn('Sync user to Firestore notice:', e.message);
+    }
+  }
+
   async loginWithGoogle(email, username, phone = '', ffUid = '') {
     const cleanEmail = (email || '').toLowerCase().trim();
     const cleanUsername = (username || cleanEmail.split('@')[0] || 'Player').trim();
+    const isAdmin = cleanEmail === MASTER_ADMIN_EMAIL.toLowerCase() || cleanEmail === 'mrmobin1m@gmail.com';
     
-    // Check if user already exists
+    // Check if user already exists in local registered users
     let existing = this.registeredUsers.find(u => u.email && u.email.toLowerCase() === cleanEmail);
     if (!existing) {
       const newPlayerNum = this.registeredUsers.length + 1;
+      const docId = `user_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
       existing = {
-        id: String(newPlayerNum),
+        id: docId,
         userId: newPlayerNum,
         playerNumber: newPlayerNum,
         username: cleanUsername,
         fullName: cleanUsername,
         email: cleanEmail,
         phone: phone || '',
+        phoneNumber: phone || '',
         ffUid: ffUid || '',
         avatar: `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(cleanUsername)}`,
-        role: "Player",
-        isAdmin: cleanEmail === MASTER_ADMIN_EMAIL.toLowerCase(),
+        role: isAdmin ? "System Administrator (Admin)" : "VIP Pro Member",
+        isAdmin: isAdmin,
         status: "Active",
         registeredDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
         registeredAtIso: new Date().toISOString(),
+        lastLoginAt: new Date().toISOString(),
         platform: typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.includes('Android') ? 'Android Mobile' : 'Web Device',
-        ip: 'Connected'
+        ip: 'Active Online'
       };
       this.registeredUsers.push(existing);
       this.saveUsersDatabase();
     } else {
-      if (phone) existing.phone = phone;
+      if (phone) { existing.phone = phone; existing.phoneNumber = phone; }
       if (ffUid) existing.ffUid = ffUid;
+      if (isAdmin) { existing.isAdmin = true; existing.role = "System Administrator (Admin)"; }
       this.saveUsersDatabase();
     }
 
@@ -95,10 +134,8 @@ class AuthService {
       });
     } catch(e) {}
 
-    // Sync to Cloud Firestore
-    try {
-      await firebaseService.saveToFirestore('users', existing.id, existing);
-    } catch(e) {}
+    // Immediately push to Cloud Firestore so Admin sees it in 1 second
+    await this.syncUserToFirestore(this.user);
 
     return this.user;
   }
@@ -202,6 +239,10 @@ class AuthService {
   saveUsersDatabase() {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem('mobinx_registered_users', JSON.stringify(this.registeredUsers));
+    }
+    // Background cloud sync to Cloud Firestore
+    if (this.registeredUsers && this.registeredUsers.length > 0) {
+      this.registeredUsers.forEach(u => this.syncUserToFirestore(u));
     }
   }
 
@@ -360,74 +401,7 @@ class AuthService {
 
 
 
-  persistSession() {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('mobinx_user_session', JSON.stringify(this.user));
-    }
-  }
 
-  // --- AUTHENTICATION & LOGIN ---
-  loginWithGoogle(email, username = '', extra = {}) {
-    const cleanEmail = (email || '').trim().toLowerCase();
-    const hasStorage = typeof localStorage !== 'undefined';
-    const storedAdmin = hasStorage ? localStorage.getItem('mobinx_admin_email') : null;
-    let isAdmin = false;
-
-    const isMasterEmail = cleanEmail === MASTER_ADMIN_EMAIL.toLowerCase() || cleanEmail === 'mrmobin1m@gmail.com';
-    if (isMasterEmail || (storedAdmin && storedAdmin.toLowerCase() === cleanEmail)) {
-      isAdmin = true;
-    }
-
-    const displayName = username || cleanEmail.split('@')[0] || 'Player';
-    const existingIndex = this.registeredUsers.findIndex(u => u.email.toLowerCase() === cleanEmail);
-
-    if (existingIndex !== -1) {
-      // Existing registered user login
-      const existing = this.registeredUsers[existingIndex];
-      this.user = {
-        ...existing,
-        username: displayName || existing.username,
-        email: cleanEmail,
-        isAdmin: isAdmin || existing.isAdmin,
-        phone: extra.phone || existing.phone || '01711223344',
-        ffUid: extra.ffUid || existing.ffUid || '198273918'
-      };
-      this.registeredUsers[existingIndex] = { ...this.user };
-    } else {
-      // New User Registration
-      const newUserId = "MX-" + Math.floor(100000 + Math.random() * 900000);
-      this.user = {
-        id: newUserId,
-        username: displayName,
-        fullName: extra.fullName || displayName,
-        email: cleanEmail,
-        phone: extra.phone || '018' + Math.floor(10000000 + Math.random() * 90000000),
-        ffUid: extra.ffUid || String(Math.floor(1000000000 + Math.random() * 9000000000)),
-        role: isAdmin ? "System Administrator (Admin)" : "VIP Pro Member",
-        isAdmin: isAdmin,
-        status: "Active",
-        avatar: "assets/images/avatar_user.jpg",
-        level: 35,
-        walletBalance: 250,
-        diamonds: 100,
-        referralCode: "MX" + displayName.toUpperCase().substring(0, 5) + "VIP",
-        referralEarnings: 0,
-        registeredDate: new Date().toISOString().split('T')[0],
-        stats: {
-          tournamentsJoined: 0,
-          totalDownloads: 0,
-          savedSensitivities: 0,
-          referralsCount: 0
-        }
-      };
-      this.registeredUsers.unshift({ ...this.user });
-    }
-
-    this.saveUsersDatabase();
-    this.persistSession();
-    this.setOnboardingCompleted(true);
-    return this.user;
-  }
 
   loginWithPhone(fullName, phone, ffUid = '') {
     const cleanPhone = (phone || '').trim();
@@ -479,6 +453,7 @@ class AuthService {
     this.saveUsersDatabase();
     this.persistSession();
     this.setOnboardingCompleted(true);
+    this.syncUserToFirestore(this.user);
     return this.user;
   }
 

@@ -20,7 +20,6 @@ import { renderReferralView, bindReferralEvents } from './views/ReferralView.js'
 import { renderSettingsView, bindSettingsEvents } from './views/SettingsView.js';
 import { renderHelpView, bindHelpEvents } from './views/HelpView.js';
 import { renderAboutView, bindAboutEvents } from './views/AboutView.js';
-import { renderAdminView, bindAdminEvents } from './views/AdminView.js';
 import { realtimeSyncManager } from './services/realtimeSyncManager.js';
 import { openExternalStore } from './services/browserService.js';
 
@@ -213,10 +212,6 @@ class App {
         case 'about':
           mainContent.innerHTML = renderAboutView();
           bindAboutEvents();
-          break;
-        case 'admin':
-          mainContent.innerHTML = renderAdminView();
-          bindAdminEvents();
           break;
         default:
           mainContent.innerHTML = renderHomeView();

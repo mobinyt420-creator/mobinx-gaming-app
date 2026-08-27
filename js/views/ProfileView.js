@@ -53,20 +53,7 @@ export function renderProfileView() {
       <!-- Profile Menu Section -->
       <div class="profile-menu-section">
 
-        ${isAdmin ? `
-          <div class="profile-menu-item" id="p-menu-admin" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; border: 1.5px solid #38bdf8; box-shadow: 0 4px 14px rgba(56, 189, 248, 0.25);">
-            <div class="profile-item-left">
-              <div class="profile-item-icon" style="background: #0284c7; color: #ffffff;">👑</div>
-              <div>
-                <div style="color: #ffffff; font-weight: 800; font-size: 13px;">Master Admin Console</div>
-                <div style="font-size: 10.5px; color: #94a3b8;">Tournaments, downloads, popup, update alerts</div>
-              </div>
-            </div>
-            <span style="background: #0284c7; color: #ffffff; font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px;">
-              OPEN ⚡
-            </span>
-          </div>
-        ` : ''}
+
 
         <div class="profile-menu-item" id="p-menu-tournaments">
           <div class="profile-item-left">
@@ -181,9 +168,7 @@ export function bindProfileEvents() {
     stateManager.navigate('onboarding');
   });
 
-  document.getElementById('p-menu-admin')?.addEventListener('click', () => {
-    stateManager.navigate('admin');
-  });
+
 
   document.getElementById('p-menu-tournaments')?.addEventListener('click', () => {
     stateManager.navigate('tournaments');

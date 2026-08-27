@@ -2,38 +2,66 @@ import { authService } from '../services/authService.js';
 import { stateManager } from '../services/stateManager.js';
 import { openExternalStore } from '../services/browserService.js';
 
+const CURRENT_APP_VERSION = '1.0';
+
+function isVersionHigher(vLatest, vCurrent) {
+  if (!vLatest || !vCurrent) return false;
+  const pLatest = String(vLatest).replace(/[^0-9.]/g, '').split('.').map(Number);
+  const pCurrent = String(vCurrent).replace(/[^0-9.]/g, '').split('.').map(Number);
+  for (let i = 0; i < Math.max(pLatest.length, pCurrent.length); i++) {
+    const l = pLatest[i] || 0;
+    const c = pCurrent[i] || 0;
+    if (l > c) return true;
+    if (l < c) return false;
+  }
+  return false;
+}
+
 export function renderHomeNoticePopup() {
   const popup = authService.getHomeNoticePopup();
   const updateConfig = authService.getAppUpdateConfig();
 
-  // 1. Check if App Update is available
-  const isUpdateAvailable = (updateConfig && updateConfig.latestVersion && updateConfig.latestVersion !== updateConfig.currentVersion);
-  if (isUpdateAvailable) {
+  // 1. Check if App Update is available & enabled
+  const isUpdateEnabled = updateConfig && (updateConfig.enabled !== false);
+  const latestVer = (updateConfig && updateConfig.latestVersion) ? String(updateConfig.latestVersion).trim() : '1.0';
+  const isNewerVer = isVersionHigher(latestVer, CURRENT_APP_VERSION);
+  const isForceUpdate = updateConfig && (updateConfig.forceUpdate === true);
+
+  // If update is enabled and (a newer version is tagged OR admin forced alert)
+  const isUpdateAvailable = isUpdateEnabled && (isNewerVer || (isForceUpdate && latestVer !== '0.0'));
+  
+  // Check if dismissed in this session (only for non-blocking updates)
+  const isUpdateDismissed = !isForceUpdate && typeof sessionStorage !== 'undefined' && sessionStorage.getItem('mobinx_update_dismissed');
+
+  if (isUpdateAvailable && !isUpdateDismissed) {
     return `
-      <div id="home-notice-popup-overlay" style="position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.25s ease;">
-        <div style="background: #ffffff; border-radius: 24px; overflow: hidden; width: 100%; max-width: 340px; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4); text-align: center; border: 1px solid rgba(255, 255, 255, 0.3); animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
+      <div id="home-notice-popup-overlay" data-popup-type="update" style="position: fixed; inset: 0; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.25s ease;">
+        <div style="background: #ffffff; border-radius: 24px; overflow: hidden; width: 100%; max-width: 340px; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5); text-align: center; border: 1.5px solid rgba(2, 132, 199, 0.3); animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
           
           <div style="background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); padding: 28px 20px; color: #ffffff; display: flex; flex-direction: column; align-items: center;">
-            <div style="width: 58px; height: 58px; border-radius: 18px; background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; font-size: 28px; margin-bottom: 12px; border: 1.5px solid rgba(255, 255, 255, 0.4);">
+            <div style="width: 60px; height: 60px; border-radius: 20px; background: rgba(255, 255, 255, 0.22); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; font-size: 30px; margin-bottom: 12px; border: 1.5px solid rgba(255, 255, 255, 0.4); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);">
               🚀
             </div>
-            <h3 style="font-size: 18px; font-weight: 900; margin: 0 0 4px 0; color: #ffffff;">${updateConfig.updateTitle || 'নতুন আপডেট উপলব্ধ!'}</h3>
-            <span style="font-size: 12px; opacity: 0.9; background: rgba(255, 255, 255, 0.2); padding: 2px 10px; border-radius: 12px; font-weight: 700;">Version ${updateConfig.latestVersion}</span>
+            <h3 style="font-size: 19px; font-weight: 900; margin: 0 0 5px 0; color: #ffffff; letter-spacing: -0.3px;">${updateConfig.updateTitle || 'নতুন আপডেট উপলব্ধ!'}</h3>
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <span style="font-size: 11.5px; background: rgba(255, 255, 255, 0.2); padding: 2px 10px; border-radius: 12px; font-weight: 800; color: #ffffff;">v${CURRENT_APP_VERSION} ➔ v${latestVer}</span>
+              ${isForceUpdate ? `<span style="font-size: 10.5px; background: #ef4444; color: #ffffff; padding: 2px 8px; border-radius: 10px; font-weight: 900;">MANDATORY</span>` : ''}
+            </div>
           </div>
 
-          <div style="padding: 18px 20px 22px 20px;">
-            <p style="font-size: 13.5px; font-weight: 600; color: #334155; line-height: 1.5; margin: 0 0 18px 0; text-align: center;">
+          <div style="padding: 20px 22px 24px 22px;">
+            <p style="font-size: 13.5px; font-weight: 600; color: #334155; line-height: 1.55; margin: 0 0 20px 0; text-align: center;">
               ${updateConfig.updateMessage || 'অ্যাপের নতুন ফিচার ও সর্বোত্তম অভিজ্ঞতার জন্য গুগল প্লে স্টোর থেকে এখনই আপডেট করে নিন।'}
             </p>
 
-            <button id="btn-popup-update-now" style="width: 100%; height: 46px; background: linear-gradient(135deg, #0284c7 0%, #0066ff 100%); color: #ffffff; border: none; border-radius: 12px; font-size: 14.5px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 6px 18px rgba(2, 132, 199, 0.35);">
+            <button id="btn-popup-update-now" style="width: 100%; height: 48px; background: linear-gradient(135deg, #0284c7 0%, #0066ff 100%); color: #ffffff; border: none; border-radius: 14px; font-size: 15px; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 6px 20px rgba(2, 132, 199, 0.35); transition: transform 0.15s ease;">
               <span>Play Store থেকে আপডেট করুন</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
             </button>
 
-            ${!updateConfig.forceUpdate ? `
-              <button id="btn-popup-close" style="background: transparent; color: #64748b; border: none; font-size: 12.5px; font-weight: 700; cursor: pointer; margin-top: 14px; padding: 6px 14px;">
-                পরে মনে করিয়ে দিন
+            ${!isForceUpdate ? `
+              <button id="btn-popup-close" style="background: transparent; color: #64748b; border: none; font-size: 13px; font-weight: 700; cursor: pointer; margin-top: 14px; padding: 6px 14px; display: inline-flex; align-items: center; gap: 4px;">
+                <span>পরে মনে করিয়ে দিন</span>
               </button>
             ` : ''}
           </div>
@@ -97,7 +125,11 @@ export function bindHomeNoticePopupEvents() {
 
   function dismissPopup() {
     if (typeof sessionStorage !== 'undefined') {
-      sessionStorage.setItem('mobinx_popup_dismissed', 'true');
+      if (overlay.dataset.popupType === 'update') {
+        sessionStorage.setItem('mobinx_update_dismissed', 'true');
+      } else {
+        sessionStorage.setItem('mobinx_popup_dismissed', 'true');
+      }
     }
     overlay.style.opacity = '0';
     overlay.style.transition = 'opacity 0.2s ease';
