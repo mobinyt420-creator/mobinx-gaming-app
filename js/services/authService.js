@@ -20,7 +20,22 @@ class AuthService {
     const savedDlLogs = hasStorage ? localStorage.getItem('mobinx_download_logs') : null;
 
     // Load registered users (clean, zero fake dummy users)
-    this.registeredUsers = savedUsers ? JSON.parse(savedUsers) : [];
+    const rawUsers = savedUsers ? JSON.parse(savedUsers) : [];
+    const legacyDummyEmails = [
+      'sakib.rusher@gmail.com',
+      'mehedi.ghost@gmail.com',
+      'afsana.queenff@gmail.com',
+      'rifat.booyah99@gmail.com',
+      'tanvir.ff@gmail.com',
+      'shanto.gaming@gmail.com',
+      'mrweb4200@gmail.com',
+      'tanvir.gamer99@gmail.com',
+      'sabbir.ff2026@gmail.com'
+    ];
+    this.registeredUsers = rawUsers.filter(u => !u.email || !legacyDummyEmails.includes(u.email.toLowerCase().trim()));
+    if (hasStorage && this.registeredUsers.length !== rawUsers.length) {
+      localStorage.setItem('mobinx_registered_users', JSON.stringify(this.registeredUsers));
+    }
 
     this.user = savedSession ? JSON.parse(savedSession) : { ...defaultUser };
     this.adminEmail = adminEmail || MASTER_ADMIN_EMAIL;
