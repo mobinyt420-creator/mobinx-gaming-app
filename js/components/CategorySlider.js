@@ -55,8 +55,14 @@ export function renderCategorySlider() {
       </svg>`
   };
 
+  const authSettings = authService.getAuthSettings();
+  const activeCategories = quickCategories.filter(cat => {
+    if (cat.route === 'topup' && authSettings.topUpEnabled === false) return false;
+    return true;
+  });
+
   // Duplicate set to create seamless infinite loop animation
-  const duplicatedList = [...quickCategories, ...quickCategories, ...quickCategories];
+  const duplicatedList = [...activeCategories, ...activeCategories, ...activeCategories];
 
   return `
     <section class="category-section">

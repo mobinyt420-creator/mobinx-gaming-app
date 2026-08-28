@@ -5,8 +5,14 @@ import { notificationService } from './notificationService.js';
 // Master Admin Email
 export const MASTER_ADMIN_EMAIL = "mobinyt420@gmail.com";
 
-// Real registered users list (Zero fake dummy users for Play Store production)
-const initialRegisteredUsers = [];
+// Default Authentication Feature Flags
+export const defaultAuthSettings = {
+  googleSignUpEnabled: true,
+  manualSignUpEnabled: true,
+  googleLoginEnabled: true,
+  manualLoginEnabled: true,
+  topUpEnabled: true
+};
 
 class AuthService {
   constructor() {
@@ -18,10 +24,12 @@ class AuthService {
     const savedPopup = hasStorage ? localStorage.getItem('mobinx_home_popup') : null;
     const savedUpdate = hasStorage ? localStorage.getItem('mobinx_app_update') : null;
     const savedDlLogs = hasStorage ? localStorage.getItem('mobinx_download_logs') : null;
+    const savedAuthSettings = hasStorage ? localStorage.getItem('mobinx_auth_settings') : null;
 
     // Load registered users (clean, zero fake dummy users)
     const rawUsers = savedUsers ? JSON.parse(savedUsers) : [];
     const legacyDummyEmails = [
+      'guest@mobinx.app',
       'sakib.rusher@gmail.com',
       'mehedi.ghost@gmail.com',
       'afsana.queenff@gmail.com',
@@ -44,6 +52,7 @@ class AuthService {
     this.homePopup = savedPopup ? JSON.parse(savedPopup) : { ...defaultHomeNoticePopup };
     this.appUpdateConfig = savedUpdate ? JSON.parse(savedUpdate) : { ...defaultAppUpdateConfig };
     this.downloadLogs = savedDlLogs ? JSON.parse(savedDlLogs) : [];
+    this.authSettings = savedAuthSettings ? JSON.parse(savedAuthSettings) : { ...defaultAuthSettings };
 
     // Check admin status
     if (this.user && this.user.email) {
@@ -63,6 +72,37 @@ class AuthService {
       // Auto-sync existing user session to Firestore
       setTimeout(() => this.syncUserToFirestore(this.user), 1000);
     }
+
+    // Subscribe to Auth Settings from Cloud Firestore
+    this.initAuthSettingsListener();
+  }
+
+  initAuthSettingsListener() {
+    try {
+      firebaseService.subscribeDocument('config', 'auth_settings', (settings) => {
+        if (settings) {
+          this.authSettings = { ...defaultAuthSettings, ...settings };
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('mobinx_auth_settings', JSON.stringify(this.authSettings));
+          }
+        }
+      });
+    } catch(e) {}
+  }
+
+  getAuthSettings() {
+    return this.authSettings || { ...defaultAuthSettings };
+  }
+
+  async saveAuthSettings(newSettings) {
+    this.authSettings = { ...this.authSettings, ...newSettings };
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('mobinx_auth_settings', JSON.stringify(this.authSettings));
+    }
+    try {
+      await firebaseService.saveToFirestore('config', 'auth_settings', this.authSettings);
+    } catch(e) {}
+    return this.authSettings;
   }
 
   persistSession() {
@@ -76,9 +116,11 @@ class AuthService {
     if (user.email.toLowerCase() === 'guest@mobinx.app') return; // Do not write guest placeholders to cloud!
     try {
       const cleanEmail = user.email.toLowerCase().trim();
-      const docId = `user_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+      // Primary UID document ID with legacy fallback
+      const docId = user.uid ? user.uid : `user_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
       const userData = {
         id: docId,
+        uid: user.uid || docId,
         userId: user.userId || user.playerNumber || 1,
         playerNumber: user.playerNumber || user.userId || 1,
         username: user.username || user.fullName || 'Player',
@@ -87,7 +129,8 @@ class AuthService {
         phone: user.phone || user.phoneNumber || '',
         phoneNumber: user.phoneNumber || user.phone || '',
         ffUid: user.ffUid || '',
-        role: user.role || (user.isAdmin ? "System Administrator (Admin)" : "Player"),
+        authProvider: user.authProvider || 'google',
+        role: user.role || (user.isAdmin ? "System Administrator (Admin)" : "VIP Pro Member"),
         isAdmin: !!user.isAdmin,
         status: user.status || "Active",
         walletBalance: user.walletBalance || 0,
@@ -102,7 +145,7 @@ class AuthService {
       try {
         if (typeof localStorage !== 'undefined') {
           const currentList = JSON.parse(localStorage.getItem('mobinx_registered_users') || '[]');
-          const idx = currentList.findIndex(u => (u.email && u.email.toLowerCase() === cleanEmail) || u.id === docId);
+          const idx = currentList.findIndex(u => (u.email && u.email.toLowerCase() === cleanEmail) || u.id === docId || u.uid === user.uid);
           if (idx >= 0) currentList[idx] = { ...currentList[idx], ...userData };
           else currentList.unshift(userData);
           localStorage.setItem('mobinx_registered_users', JSON.stringify(currentList));
@@ -122,19 +165,147 @@ class AuthService {
     }
   }
 
-  async loginWithGoogle(email, username, phone = '', ffUid = '', avatarUrl = '') {
+  // --- MANUAL REGISTRATION WITH EMAIL & PASSWORD ---
+  async registerWithEmailPassword(fullName, email, phone, password) {
+    const cleanEmail = (email || '').toLowerCase().trim();
+    const cleanName = (fullName || cleanEmail.split('@')[0] || 'Player').trim();
+    const cleanPhone = (phone || '').replace(/[^0-9]/g, '');
+
+    // 1. Firebase Authentication User Creation
+    const firebaseUser = await firebaseService.registerWithEmailPassword(cleanEmail, password, cleanName);
+    const uid = firebaseUser.uid;
+    const isAdmin = cleanEmail === MASTER_ADMIN_EMAIL.toLowerCase() || cleanEmail === 'mrmobin1m@gmail.com';
+
+    // 2. Build User Profile Document with UID as Primary Identity
+    const newPlayerNum = this.registeredUsers.length + 1;
+    const userProfile = {
+      id: uid,
+      uid: uid,
+      userId: newPlayerNum,
+      playerNumber: newPlayerNum,
+      username: cleanName,
+      fullName: cleanName,
+      email: cleanEmail,
+      phone: cleanPhone,
+      phoneNumber: cleanPhone,
+      ffUid: '',
+      avatar: 'assets/images/avatar_user.jpg',
+      authProvider: 'password',
+      role: isAdmin ? "System Administrator (Admin)" : "VIP Pro Member",
+      isAdmin: isAdmin,
+      status: "Active",
+      stats: {
+        tournamentsJoined: 0,
+        totalDownloads: 0,
+        savedSensitivities: 0,
+        referralsCount: 0
+      },
+      referralEarnings: 0,
+      walletBalance: 0,
+      registeredDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+      registeredAtIso: new Date().toISOString(),
+      lastLoginAt: new Date().toISOString(),
+      platform: typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.includes('Android') ? 'Android Mobile' : 'Web Device',
+      ip: 'Active Online'
+    };
+
+    // 3. Save to local list & session
+    const existingIndex = this.registeredUsers.findIndex(u => (u.email && u.email.toLowerCase() === cleanEmail) || u.uid === uid);
+    if (existingIndex >= 0) {
+      this.registeredUsers[existingIndex] = { ...this.registeredUsers[existingIndex], ...userProfile };
+    } else {
+      this.registeredUsers.unshift(userProfile);
+    }
+    this.saveUsersDatabase();
+
+    this.user = { ...userProfile };
+    this.persistSession();
+    this.setOnboardingCompleted(true);
+
+    // 4. Push to Cloud Firestore (Never storing password!)
+    await this.syncUserToFirestore(this.user);
+
+    return this.user;
+  }
+
+  // --- MANUAL LOGIN WITH EMAIL & PASSWORD ---
+  async loginWithEmailPassword(email, password) {
+    const cleanEmail = (email || '').toLowerCase().trim();
+
+    // 1. Authenticate with Firebase
+    const firebaseUser = await firebaseService.loginWithEmailPassword(cleanEmail, password);
+    const uid = firebaseUser.uid;
+    const isAdmin = cleanEmail === MASTER_ADMIN_EMAIL.toLowerCase() || cleanEmail === 'mrmobin1m@gmail.com';
+
+    // 2. Restore User Profile by UID or Email
+    let existing = this.registeredUsers.find(u => u.uid === uid || (u.email && u.email.toLowerCase() === cleanEmail));
+    if (!existing) {
+      const newPlayerNum = this.registeredUsers.length + 1;
+      existing = {
+        id: uid,
+        uid: uid,
+        userId: newPlayerNum,
+        playerNumber: newPlayerNum,
+        username: firebaseUser.displayName || cleanEmail.split('@')[0] || 'Player',
+        fullName: firebaseUser.displayName || cleanEmail.split('@')[0] || 'Player',
+        email: cleanEmail,
+        phone: '',
+        phoneNumber: '',
+        ffUid: '',
+        avatar: firebaseUser.photoURL || 'assets/images/avatar_user.jpg',
+        authProvider: 'password',
+        role: isAdmin ? "System Administrator (Admin)" : "VIP Pro Member",
+        isAdmin: isAdmin,
+        status: "Active",
+        stats: { tournamentsJoined: 0, totalDownloads: 0, savedSensitivities: 0, referralsCount: 0 },
+        referralEarnings: 0,
+        walletBalance: 0,
+        registeredDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
+        registeredAtIso: new Date().toISOString(),
+        lastLoginAt: new Date().toISOString()
+      };
+      this.registeredUsers.unshift(existing);
+    } else {
+      existing.uid = uid;
+      existing.lastLoginAt = new Date().toISOString();
+      if (isAdmin) {
+        existing.isAdmin = true;
+        existing.role = "System Administrator (Admin)";
+      }
+    }
+    this.saveUsersDatabase();
+
+    this.user = { ...existing };
+    this.persistSession();
+    this.setOnboardingCompleted(true);
+
+    // Sync to Cloud Firestore
+    await this.syncUserToFirestore(this.user);
+
+    return this.user;
+  }
+
+  // --- PASSWORD RESET ---
+  async sendPasswordReset(email) {
+    const cleanEmail = (email || '').toLowerCase().trim();
+    return await firebaseService.sendPasswordReset(cleanEmail);
+  }
+
+  // --- GOOGLE SIGN IN & LOGIN ---
+  async loginWithGoogle(email, username, phone = '', ffUid = '', avatarUrl = '', uid = null) {
     const cleanEmail = (email || '').toLowerCase().trim();
     const cleanUsername = (username || cleanEmail.split('@')[0] || 'Player').trim();
     const isAdmin = cleanEmail === MASTER_ADMIN_EMAIL.toLowerCase() || cleanEmail === 'mrmobin1m@gmail.com';
     const finalAvatar = avatarUrl || 'assets/images/avatar_user.jpg';
+    const finalUid = uid || (this.user && this.user.uid) || `google_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
     
-    // Check if user already exists in local registered users
-    let existing = this.registeredUsers.find(u => u.email && u.email.toLowerCase() === cleanEmail);
+    // Check if user already exists in registered users
+    let existing = this.registeredUsers.find(u => (u.uid && u.uid === finalUid) || (u.email && u.email.toLowerCase() === cleanEmail));
     if (!existing) {
       const newPlayerNum = this.registeredUsers.length + 1;
-      const docId = `user_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
       existing = {
-        id: docId,
+        id: finalUid,
+        uid: finalUid,
         userId: newPlayerNum,
         playerNumber: newPlayerNum,
         username: cleanUsername,
@@ -144,6 +315,7 @@ class AuthService {
         phoneNumber: phone || '',
         ffUid: ffUid || '',
         avatar: finalAvatar,
+        authProvider: 'google',
         role: isAdmin ? "System Administrator (Admin)" : "VIP Pro Member",
         isAdmin: isAdmin,
         status: "Active",
@@ -161,9 +333,10 @@ class AuthService {
         platform: typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.includes('Android') ? 'Android Mobile' : 'Web Device',
         ip: 'Active Online'
       };
-      this.registeredUsers.push(existing);
+      this.registeredUsers.unshift(existing);
       this.saveUsersDatabase();
     } else {
+      existing.uid = finalUid;
       if (phone) { existing.phone = phone; existing.phoneNumber = phone; }
       if (ffUid) existing.ffUid = ffUid;
       if (cleanUsername && cleanUsername !== 'Player') { existing.username = cleanUsername; existing.fullName = cleanUsername; }
@@ -176,28 +349,70 @@ class AuthService {
         referralsCount: 0
       };
       existing.referralEarnings = existing.referralEarnings ?? 0;
+      existing.lastLoginAt = new Date().toISOString();
       this.saveUsersDatabase();
     }
 
     this.user = { ...existing };
     this.persistSession();
+    this.setOnboardingCompleted(true);
 
-    // Add Welcome Notification to In-App Notification Center
+    // Welcome Notification
     try {
       notificationService.addNotification({
         id: 'notif-welcome-' + Date.now(),
         title: `Welcome to Mobin X, ${cleanUsername}! 👑`,
-        desc: `আমাদের মোবিন এক্সে আপনাকে অনেক অনেক স্বাগতম! এখানে আপনি সবচেয়ে কম মূল্যে মাত্র ৩০ সেকেন্ডে ডায়মন্ড টপআপ, টুর্নামেন্ট এবং ভেরিফাইড গেমিং টুলস পাবেন।`,
+        desc: `আমাদের মোবিন এক্সে আপনাকে স্বাগতম! এখানে আপনি ডায়মন্ড টপআপ, টুর্নামেন্ট এবং ভেরিফাইড গেমিং টুলস পাবেন।`,
         type: 'topup',
         unread: true,
         timeAgo: 'Just now'
       });
     } catch(e) {}
 
-    // Immediately push to Cloud Firestore so Admin sees it in 1 second
+    // Immediately push to Cloud Firestore
     await this.syncUserToFirestore(this.user);
 
     return this.user;
+  }
+
+  // --- ACCOUNT DELETION ---
+  async deleteAccount(passwordForReauth = null) {
+    const currentUser = this.getCurrentUser();
+    const uid = currentUser.uid || currentUser.id;
+    const cleanEmail = (currentUser.email || '').toLowerCase().trim();
+
+    // 1. Delete Firebase Authentication User
+    try {
+      await firebaseService.deleteFirebaseUser(passwordForReauth);
+    } catch(err) {
+      console.warn('Firebase user delete notice:', err.message);
+      // If requires recent login, propagate to UI
+      if (err.message.includes('re-login') || err.message.includes('requires-recent-login')) {
+        throw err;
+      }
+    }
+
+    // 2. Delete Firestore Document(s)
+    try {
+      if (uid) await firebaseService.deleteFromFirestore('users', uid);
+      if (cleanEmail) {
+        const legacyDocId = `user_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+        await firebaseService.deleteFromFirestore('users', legacyDocId);
+      }
+    } catch(e) {
+      console.warn('Firestore doc delete notice:', e.message);
+    }
+
+    // 3. Remove from local registered users
+    const idx = this.registeredUsers.findIndex(u => u.uid === uid || (u.email && u.email.toLowerCase() === cleanEmail));
+    if (idx !== -1) {
+      this.registeredUsers.splice(idx, 1);
+      this.saveUsersDatabase();
+    }
+
+    // 4. Clear local session & cache
+    this.logout();
+    return true;
   }
 
   hasCompletedOnboarding() {

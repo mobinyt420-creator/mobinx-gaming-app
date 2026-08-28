@@ -7,6 +7,9 @@ let countdownTimer = null;
 let remainingSeconds = 2 * 3600 + 35 * 60 + 48; // 02:35:48
 
 export function renderFlashSaleSection() {
+  const authSettings = authService.getAuthSettings();
+  if (authSettings.topUpEnabled === false) return '';
+
   const storedProducts = authService.getFlashDeals();
   const baseProducts = (storedProducts && storedProducts.length > 0) ? storedProducts : [
     { id: "flash-1", diamondAmount: "100 DIAMONDS", price: "৳ 80.00", badge: "100% BONUS", badgeColor: "#ea580c" },

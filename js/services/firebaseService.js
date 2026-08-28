@@ -53,7 +53,7 @@ export async function signInWithGoogleFirebase() {
 
       window.onNativeGoogleSignInError = (errMsg) => {
         console.warn('Native Google Sign-In notice:', errMsg);
-        reject(new Error(errMsg || 'Google Sign-In was cancelled'));
+        reject(new Error(errMsg || 'Google sign-in was cancelled.'));
       };
 
       try {
@@ -87,8 +87,135 @@ export async function signInWithGoogleFirebase() {
     };
   } catch (error) {
     console.warn('Google Sign-In error:', error.message);
-    throw error;
+    throw new Error(getFriendlyErrorMessage(error));
   }
+}
+
+// Manual Registration with Email & Password
+export async function registerWithEmailPasswordFirebase(email, password, displayName) {
+  if (!isFirebaseInitialized) await initFirebase();
+  if (!auth) throw new Error('Authentication service is unavailable. Please check your internet connection.');
+
+  try {
+    const { createUserWithEmailAndPassword, updateProfile } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js');
+    const credential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+    const user = credential.user;
+    if (displayName) {
+      try {
+        await updateProfile(user, { displayName });
+      } catch (e) {}
+    }
+    return {
+      uid: user.uid,
+      email: user.email,
+      displayName: displayName || user.displayName || email.split('@')[0],
+      photoURL: user.photoURL || 'assets/images/avatar_user.jpg'
+    };
+  } catch (error) {
+    console.warn('Manual registration error:', error.code, error.message);
+    throw new Error(getFriendlyErrorMessage(error));
+  }
+}
+
+// Manual Login with Email & Password
+export async function loginWithEmailPasswordFirebase(email, password) {
+  if (!isFirebaseInitialized) await initFirebase();
+  if (!auth) throw new Error('Authentication service is unavailable. Please check your internet connection.');
+
+  try {
+    const { signInWithEmailAndPassword } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js');
+    const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
+    const user = credential.user;
+    return {
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName || email.split('@')[0],
+      photoURL: user.photoURL || 'assets/images/avatar_user.jpg'
+    };
+  } catch (error) {
+    console.warn('Manual login error:', error.code, error.message);
+    throw new Error(getFriendlyErrorMessage(error));
+  }
+}
+
+// Password Reset Email
+export async function sendPasswordResetFirebase(email) {
+  if (!isFirebaseInitialized) await initFirebase();
+  if (!auth) throw new Error('Authentication service is unavailable.');
+
+  try {
+    const { sendPasswordResetEmail } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js');
+    await sendPasswordResetEmail(auth, email.trim());
+    return true;
+  } catch (error) {
+    console.warn('Password reset error:', error.code, error.message);
+    throw new Error(getFriendlyErrorMessage(error));
+  }
+}
+
+// Delete Firebase Authentication User & Re-Authenticate if Needed
+export async function deleteFirebaseUser(passwordForReauth = null) {
+  if (!isFirebaseInitialized) await initFirebase();
+  if (!auth || !auth.currentUser) return true;
+
+  try {
+    const { deleteUser, EmailAuthProvider, reauthenticateWithCredential } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js');
+    const user = auth.currentUser;
+
+    if (passwordForReauth && user.email) {
+      try {
+        const credential = EmailAuthProvider.credential(user.email, passwordForReauth);
+        await reauthenticateWithCredential(user, credential);
+      } catch (reauthErr) {
+        console.warn('Re-auth notice:', reauthErr.message);
+      }
+    }
+
+    await deleteUser(user);
+    return true;
+  } catch (error) {
+    console.warn('Delete user error:', error.code, error.message);
+    if (error.code === 'auth/requires-recent-login') {
+      throw new Error('Please log in again recently to confirm account deletion.');
+    }
+    throw new Error(getFriendlyErrorMessage(error));
+  }
+}
+
+// User-friendly error message translator
+export function getFriendlyErrorMessage(error) {
+  if (!error) return 'An unexpected error occurred. Please try again.';
+  const code = error.code || '';
+  const msg = error.message || '';
+
+  if (code === 'auth/email-already-in-use') {
+    return 'This email address is already registered. Please login instead.';
+  }
+  if (code === 'auth/invalid-email') {
+    return 'Please enter a valid email address.';
+  }
+  if (code === 'auth/user-not-found' || code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+    return 'Incorrect email or password.';
+  }
+  if (code === 'auth/weak-password') {
+    return 'Password must be at least 6 characters long.';
+  }
+  if (code === 'auth/network-request-failed') {
+    return 'Please check your internet connection and try again.';
+  }
+  if (code === 'auth/too-many-requests') {
+    return 'Too many attempts. Please wait a few moments and try again.';
+  }
+  if (code === 'auth/popup-closed-by-user' || msg.includes('cancelled') || msg.includes('closed')) {
+    return 'Google sign-in was cancelled.';
+  }
+  if (code === 'auth/requires-recent-login') {
+    return 'For security, please re-login before deleting your account.';
+  }
+  if (msg && !msg.includes('Firebase:') && msg.length < 120) {
+    return msg;
+  }
+  return 'Authentication service error. Please verify your details and try again.';
 }
 
 // Save or sync document in Firestore
@@ -102,6 +229,21 @@ export async function saveToFirestore(collectionName, docId, data) {
     return true;
   } catch (err) {
     console.warn(`Firestore save error in ${collectionName}:`, err.message);
+    return false;
+  }
+}
+
+// Delete document from Firestore
+export async function deleteFromFirestore(collectionName, docId) {
+  if (!isFirebaseInitialized) await initFirebase();
+  if (!db) return false;
+
+  try {
+    const { doc, deleteDoc } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js');
+    await deleteDoc(doc(db, collectionName, docId));
+    return true;
+  } catch (err) {
+    console.warn(`Firestore delete error in ${collectionName}/${docId}:`, err.message);
     return false;
   }
 }
@@ -198,6 +340,12 @@ export function onBroadcastMessage(callback) {
 export const firebaseService = {
   init: initFirebase,
   signInWithGoogle: signInWithGoogleFirebase,
+  registerWithEmailPassword: registerWithEmailPasswordFirebase,
+  loginWithEmailPassword: loginWithEmailPasswordFirebase,
+  sendPasswordReset: sendPasswordResetFirebase,
+  deleteFirebaseUser,
+  deleteFromFirestore,
+  getFriendlyErrorMessage,
   saveDocument: saveToFirestore,
   saveToFirestore: saveToFirestore,
   getFromFirestore: getFromFirestore,

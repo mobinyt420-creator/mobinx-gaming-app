@@ -137,8 +137,53 @@ export function renderProfileView() {
         <div class="profile-menu-item" id="p-menu-logout" style="border-color: rgba(239, 68, 68, 0.2);">
           <div class="profile-item-left">
             <div class="profile-item-icon" style="background: #fef2f2; color: #ef4444;">🚪</div>
-            <span style="color: var(--danger);">Reset / Logout Session</span>
+            <span style="color: var(--danger); font-weight: 700;">Logout</span>
           </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </div>
+
+        <!-- Destructive Account Deletion (Google Play Compliance) -->
+        <div class="profile-menu-item" id="p-menu-delete-account" style="border-color: rgba(239, 68, 68, 0.35); background: #fff5f5; margin-top: 4px;">
+          <div class="profile-item-left">
+            <div class="profile-item-icon" style="background: #fee2e2; color: #dc2626;">⚠️</div>
+            <div>
+              <span style="color: #dc2626; font-weight: 800;">Delete Account</span>
+              <div style="font-size: 10px; color: #ef4444;">Permanent data wipe</div>
+            </div>
+          </div>
+          <span style="background: #fee2e2; color: #dc2626; font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 8px;">DANGER</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Multi-Step Account Deletion Confirmation Modal -->
+    <div id="modal-delete-account" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(6px); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
+      <div style="background: #ffffff; border-radius: 24px; padding: 24px 20px; width: 100%; max-width: 360px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); text-align: center;">
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: #fee2e2; color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 26px; margin: 0 auto 14px auto;">
+          ⚠️
+        </div>
+        <h3 style="font-size: 18px; font-weight: 900; color: #0f172a; margin: 0 0 8px 0;">Delete your account?</h3>
+        <p style="font-size: 12.5px; color: #64748b; line-height: 1.5; margin: 0 0 18px 0;">
+          Your account and associated data will be permanently deleted. This action cannot be undone.
+        </p>
+
+        <!-- Optional password field for password accounts -->
+        <div id="wrap-reauth-pass" style="display: none; margin-bottom: 14px; text-align: left;">
+          <label style="font-size: 11.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 4px;">Confirm Password</label>
+          <input type="password" id="input-delete-reauth-pass" placeholder="Enter your current password" style="width: 100%; height: 42px; border: 1.5px solid #cbd5e1; border-radius: 12px; padding: 0 12px; font-size: 13px; outline: none; box-sizing: border-box;" />
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+          <button id="btn-cancel-delete" style="flex: 1; height: 46px; background: #f1f5f9; border: none; border-radius: 12px; font-size: 14px; font-weight: 700; color: #475569; cursor: pointer;">
+            Cancel
+          </button>
+          <button id="btn-confirm-delete" style="flex: 1.2; height: 46px; background: #dc2626; border: none; border-radius: 12px; font-size: 14px; font-weight: 800; color: #ffffff; cursor: pointer; box-shadow: 0 6px 16px rgba(220, 38, 38, 0.35);">
+            Delete Account
+          </button>
+        </div>
+
+        <div style="margin-top: 14px;">
+          <a href="javascript:void(0)" id="link-external-delete-info" style="font-size: 11px; color: #0284c7; text-decoration: underline;">Learn more on our Deletion Request page</a>
         </div>
       </div>
     </div>
@@ -217,8 +262,55 @@ export function bindProfileEvents() {
 
   document.getElementById('p-menu-logout')?.addEventListener('click', () => {
     authService.logout();
-    resetOnboardingStep(2);
-    Toast.show('Logged out successfully. Enter details to login.', 'info');
+    resetOnboardingStep('welcome');
+    Toast.show('Logged out successfully. See you soon!', 'info');
     stateManager.navigate('onboarding');
+  });
+
+  // --- DELETE ACCOUNT EVENT HANDLERS ---
+  const modalDelete = document.getElementById('modal-delete-account');
+  const wrapReauth = document.getElementById('wrap-reauth-pass');
+  const user = authService.getCurrentUser();
+
+  document.getElementById('p-menu-delete-account')?.addEventListener('click', () => {
+    if (modalDelete) {
+      modalDelete.style.display = 'flex';
+      if (user.authProvider === 'password' && wrapReauth) {
+        wrapReauth.style.display = 'block';
+      }
+    }
+  });
+
+  document.getElementById('btn-cancel-delete')?.addEventListener('click', () => {
+    if (modalDelete) modalDelete.style.display = 'none';
+  });
+
+  document.getElementById('link-external-delete-info')?.addEventListener('click', () => {
+    window.open('https://mobinx-admin-console.vercel.app/delete-account.html', '_blank');
+  });
+
+  document.getElementById('btn-confirm-delete')?.addEventListener('click', async () => {
+    const confirmBtn = document.getElementById('btn-confirm-delete');
+    const passInput = document.getElementById('input-delete-reauth-pass');
+    const password = passInput ? passInput.value : null;
+
+    if (confirmBtn) {
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'Deleting...';
+    }
+
+    try {
+      await authService.deleteAccount(password);
+      if (modalDelete) modalDelete.style.display = 'none';
+      Toast.show('Your account and data have been permanently deleted.', 'info');
+      resetOnboardingStep('welcome');
+      stateManager.navigate('onboarding');
+    } catch (err) {
+      Toast.show(err.message || 'Unable to delete account right now. Please try again.', 'danger');
+      if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = 'Delete Account';
+      }
+    }
   });
 }
