@@ -94,7 +94,16 @@ class RealtimeSyncManager {
       const unsubNotices = await firebaseService.subscribeDocument('config', 'notices', (data) => {
         if (data && data.pushNotification && (!this.lastPushTime || data.pushNotification.timestamp > this.lastPushTime)) {
           this.lastPushTime = data.pushNotification.timestamp;
-          Toast.show(`📢 ${data.pushNotification.message}`, 'info');
+          const notifTitle = data.pushNotification.title || 'MOBIN X GAMING';
+          const notifMsg = data.pushNotification.message || data.pushNotification.desc || '';
+          Toast.show(`📢 ${notifMsg}`, 'info');
+
+          // Trigger Native Android Status Bar Notification
+          try {
+            if (typeof window !== 'undefined' && window.AndroidBridge && typeof window.AndroidBridge.showNativeNotification === 'function') {
+              window.AndroidBridge.showNativeNotification(notifTitle, notifMsg);
+            }
+          } catch(e) {}
         }
       });
       if (unsubNotices) this.unsubscribers.push(unsubNotices);
@@ -186,6 +195,19 @@ class RealtimeSyncManager {
       case 'FLASH_DEALS_UPDATED':
       case 'SERVICES_UPDATED':
         this.triggerViewUpdate('home');
+        break;
+
+      case 'PUSH_NOTIFICATION_SENT':
+        if (payload) {
+          const notifTitle = payload.title || 'MOBIN X GAMING';
+          const notifMsg = payload.message || payload.desc || '';
+          Toast.show(`📢 ${notifMsg}`, 'info');
+          try {
+            if (typeof window !== 'undefined' && window.AndroidBridge && typeof window.AndroidBridge.showNativeNotification === 'function') {
+              window.AndroidBridge.showNativeNotification(notifTitle, notifMsg);
+            }
+          } catch(e) {}
+        }
         break;
 
       case 'URLS_UPDATED':

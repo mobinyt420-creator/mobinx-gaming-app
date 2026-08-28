@@ -42,6 +42,22 @@ export function renderSensitivityView() {
       ${currentViewMode === 'brands' ? `
         <div class="sens-brand-container">
           
+          <!-- Top Prominent Custom Sensitivity Maker Banner -->
+          <div id="btn-prominent-custom-sens" style="background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: #ffffff; border-radius: var(--radius-xl); padding: 16px 18px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3); margin-bottom: 14px; border: 1.5px solid rgba(255, 255, 255, 0.25); transition: transform 0.15s ease;">
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <div style="width: 44px; height: 44px; border-radius: 14px; background: rgba(255, 255, 255, 0.2); display: flex; align-items: center; justify-content: center; font-size: 22px;">
+                ➕
+              </div>
+              <div>
+                <div style="font-size: 15px; font-weight: 900; letter-spacing: 0.3px;">Custom Sensitivity Maker</div>
+                <div style="font-size: 11.5px; opacity: 0.9; margin-top: 2px;">Build by Phone Model, RAM & Storage</div>
+              </div>
+            </div>
+            <div style="background: #ffffff; color: #0284c7; font-size: 12px; font-weight: 800; padding: 6px 12px; border-radius: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+              BUILD →
+            </div>
+          </div>
+
           <!-- Search Bar -->
           <div class="sens-search-box">
             <span class="search-icon">🔍</span>
@@ -63,7 +79,7 @@ export function renderSensitivityView() {
           <!-- Section Label -->
           <div class="sens-section-label" style="margin-top: 14px;">📱 CHOOSE YOUR DEVICE BRAND</div>
 
-          <!-- 2-Column Brand Grid (Ref: Screenshot 5) -->
+          <!-- 2-Column Brand Grid -->
           <div class="sens-brand-grid">
             ${DEVICE_BRANDS.map(b => `
               <div class="sens-brand-card" data-brand-id="${b.id}">
@@ -76,12 +92,78 @@ export function renderSensitivityView() {
             `).join('')}
           </div>
 
-          <!-- Custom Generator Direct Option -->
-          <div class="sens-generator-footer">
-            <button class="btn-custom-generator" id="btn-open-custom-gen">
-              <span>✨</span>
-              <span>CALCULATE CUSTOM SENSITIVITY (BY RAM & DPI)</span>
-            </button>
+        </div>
+      ` : ''}
+
+      <!-- VIEW 4: DEDICATED CUSTOM SENSITIVITY BUILDER -->
+      ${currentViewMode === 'custom' ? `
+        <div style="padding: 16px; display: flex; flex-direction: column; gap: 16px;">
+          
+          <div style="background: #ffffff; border: 1px solid var(--border-light); border-radius: var(--radius-xl); padding: 18px; box-shadow: 0 4px 16px rgba(0,0,0,0.03);">
+            <div style="font-size: 16px; font-weight: 900; color: var(--text-main); margin-bottom: 4px;">🛠️ Custom Phone Specification Setup</div>
+            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 16px;">Enter your phone hardware specs to calculate calibrated headshot sensitivity & DPI for Free Fire.</div>
+
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+              <div>
+                <label style="display: block; font-size: 12px; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">Device Brand *</label>
+                <select id="custom-spec-brand" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); font-size: 13px; font-weight: 700; background: #ffffff; outline: none;">
+                  <option value="xiaomi">Xiaomi / Redmi / Poco</option>
+                  <option value="samsung">Samsung Galaxy</option>
+                  <option value="realme">Realme</option>
+                  <option value="vivo">Vivo / iQOO</option>
+                  <option value="oppo">Oppo</option>
+                  <option value="infinix">Infinix</option>
+                  <option value="tecno">Tecno</option>
+                  <option value="oneplus">OnePlus</option>
+                  <option value="apple">Apple iPhone</option>
+                  <option value="other">Other Android Device</option>
+                </select>
+              </div>
+
+              <div>
+                <label style="display: block; font-size: 12px; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">Phone Model Name *</label>
+                <input type="text" id="custom-spec-model" placeholder="e.g. Note 12 Pro 5G / Y20 / A14" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); font-size: 13px; font-weight: 600; outline: none;" />
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                  <label style="display: block; font-size: 12px; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">RAM *</label>
+                  <select id="custom-spec-ram" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); font-size: 13px; font-weight: 700; background: #ffffff; outline: none;">
+                    <option value="2">2 GB RAM</option>
+                    <option value="3">3 GB RAM</option>
+                    <option value="4" selected>4 GB RAM</option>
+                    <option value="6">6 GB RAM</option>
+                    <option value="8">8 GB RAM</option>
+                    <option value="12">12 GB+ RAM</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style="display: block; font-size: 12px; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">Internal Storage *</label>
+                  <select id="custom-spec-storage" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); font-size: 13px; font-weight: 700; background: #ffffff; outline: none;">
+                    <option value="32">32 GB</option>
+                    <option value="64">64 GB</option>
+                    <option value="128" selected>128 GB</option>
+                    <option value="256">256 GB</option>
+                    <option value="512">512 GB</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label style="display: block; font-size: 12px; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">Screen Refresh Rate</label>
+                <select id="custom-spec-refresh" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); font-size: 13px; font-weight: 700; background: #ffffff; outline: none;">
+                  <option value="60">60 Hz Standard Display</option>
+                  <option value="90" selected>90 Hz Smooth Display</option>
+                  <option value="120">120 Hz Ultra Fast Display</option>
+                </select>
+              </div>
+
+              <button id="btn-generate-custom-specs-sens" style="margin-top: 8px; width: 100%; height: 50px; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: #ffffff; border: none; border-radius: var(--radius-md); font-size: 14.5px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);">
+                <span>⚡</span>
+                <span>CALCULATE CALIBRATED SENSITIVITY</span>
+              </button>
+            </div>
           </div>
 
         </div>
@@ -281,9 +363,49 @@ export function bindSensitivityEvents() {
   document.getElementById('btn-sens-mode-back')?.addEventListener('click', () => {
     if (currentViewMode === 'result') {
       currentViewMode = 'models';
-    } else if (currentViewMode === 'models') {
+    } else if (currentViewMode === 'models' || currentViewMode === 'custom') {
       currentViewMode = 'brands';
     }
+    stateManager.notify();
+  });
+
+  // Prominent Custom Sens Button
+  document.getElementById('btn-prominent-custom-sens')?.addEventListener('click', () => {
+    currentViewMode = 'custom';
+    stateManager.notify();
+  });
+
+  // Calculate Custom Specs Sens
+  document.getElementById('btn-generate-custom-specs-sens')?.addEventListener('click', () => {
+    const brand = document.getElementById('custom-spec-brand')?.value || 'other';
+    const model = (document.getElementById('custom-spec-model')?.value || '').trim() || 'Custom Phone';
+    const ram = parseInt(document.getElementById('custom-spec-ram')?.value) || 4;
+    const storage = parseInt(document.getElementById('custom-spec-storage')?.value) || 128;
+    const refresh = parseInt(document.getElementById('custom-spec-refresh')?.value) || 90;
+
+    selectedDeviceName = `${model} (${ram}GB/${storage}GB)`;
+    currentSensiData = sensitivityService.generateForDevice(selectedDeviceName, brand);
+
+    if (ram <= 3) {
+      currentSensiData.general = 100;
+      currentSensiData.redDot = 98;
+      currentSensiData.scope2x = 95;
+      currentSensiData.scope4x = 90;
+      currentSensiData.dpi = "Default (No DPI)";
+      currentSensiData.graphics = "Smooth / High FPS";
+    } else if (ram >= 8) {
+      currentSensiData.general = 95;
+      currentSensiData.redDot = 92;
+      currentSensiData.scope2x = 88;
+      currentSensiData.scope4x = 84;
+      currentSensiData.dpi = (refresh >= 120) ? "440 DPI" : "410 DPI";
+      currentSensiData.graphics = "Ultra / High FPS";
+    }
+
+    activePresetIndex = 0;
+    isNoDpiMode = false;
+    currentViewMode = 'result';
+    Toast.show(`🔥 Calibrated Sensitivity generated for ${selectedDeviceName}!`, 'success');
     stateManager.notify();
   });
 

@@ -1,8 +1,13 @@
 package com.mobinx.gaming;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
@@ -10,6 +15,7 @@ import android.webkit.WebView;
 import androidx.annotation.Nullable;
 import androidx.browser.customtabs.CustomTabColorSchemeParams;
 import androidx.browser.customtabs.CustomTabsIntent;
+import androidx.core.app.NotificationCompat;
 import com.getcapacitor.BridgeActivity;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -129,6 +135,55 @@ public class MainActivity extends BridgeActivity {
                 } catch (Exception e) {
                     e.printStackTrace();
                     tryFallbackSignIn();
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void showNativeNotification(String title, String message) {
+            runOnUiThread(() -> {
+                try {
+                    String channelId = "mobinx_notifications";
+                    NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        NotificationChannel channel = new NotificationChannel(
+                                channelId,
+                                "Mobin X Announcements",
+                                NotificationManager.IMPORTANCE_HIGH
+                        );
+                        channel.setDescription("Official match announcements and tournament updates");
+                        channel.enableLights(true);
+                        channel.setLightColor(Color.BLUE);
+                        channel.enableVibration(true);
+                        if (notificationManager != null) {
+                            notificationManager.createNotificationChannel(channel);
+                        }
+                    }
+
+                    Intent intent = new Intent(MainActivity.this, MainActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    PendingIntent pendingIntent = PendingIntent.getActivity(
+                            MainActivity.this,
+                            (int) System.currentTimeMillis(),
+                            intent,
+                            PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M ? PendingIntent.FLAG_IMMUTABLE : 0)
+                    );
+
+                    NotificationCompat.Builder builder = new NotificationCompat.Builder(MainActivity.this, channelId)
+                            .setSmallIcon(R.mipmap.ic_launcher)
+                            .setContentTitle(title != null && !title.isEmpty() ? title : "MOBIN X GAMING")
+                            .setContentText(message != null ? message : "New tournament announcement!")
+                            .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
+                            .setPriority(NotificationCompat.PRIORITY_HIGH)
+                            .setAutoCancel(true)
+                            .setContentIntent(pendingIntent);
+
+                    if (notificationManager != null) {
+                        notificationManager.notify((int) System.currentTimeMillis(), builder.build());
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             });
         }

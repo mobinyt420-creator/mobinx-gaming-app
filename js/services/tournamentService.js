@@ -1,6 +1,7 @@
 import { tournamentsList } from '../data/mockData.js';
 import { authService } from './authService.js';
 import { notificationService } from './notificationService.js';
+import { firebaseService } from './firebaseService.js';
 
 // Real tournaments data store (Clean, zero fake dummy tournaments)
 const initialTournaments = [];

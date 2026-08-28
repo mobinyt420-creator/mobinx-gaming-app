@@ -45,7 +45,14 @@ class AuthService {
       localStorage.setItem('mobinx_registered_users', JSON.stringify(this.registeredUsers));
     }
 
-    this.user = savedSession ? JSON.parse(savedSession) : { ...defaultUser };
+    this.user = savedSession ? JSON.parse(savedSession) : null;
+    if (this.user && (!this.user.email || this.user.email === 'guest@mobinx.app')) {
+      this.user = null;
+      if (hasStorage) {
+        localStorage.removeItem('mobinx_user_session');
+        localStorage.removeItem('mobinx_onboarded');
+      }
+    }
     this.adminEmail = adminEmail || MASTER_ADMIN_EMAIL;
     this.urls = customUrls ? JSON.parse(customUrls) : { ...appUrls };
     this.savedSensitivities = (hasStorage && JSON.parse(localStorage.getItem('mobinx_saved_sens') || '[]')) || [];
@@ -417,8 +424,9 @@ class AuthService {
   }
 
   hasCompletedOnboarding() {
-    if (typeof localStorage === 'undefined') return true;
-    return !!localStorage.getItem('mobinx_onboarded');
+    if (typeof localStorage === 'undefined') return false;
+    const onboarded = localStorage.getItem('mobinx_onboarded');
+    return !!(onboarded && this.user && this.user.email && this.user.email !== 'guest@mobinx.app');
   }
 
   setOnboardingCompleted(completed = true) {
@@ -432,7 +440,20 @@ class AuthService {
   }
 
   getCurrentUser() {
-    return this.user;
+    return this.user || {
+      username: 'Player',
+      fullName: 'Player',
+      email: '',
+      phone: '',
+      avatar: 'assets/images/avatar_user.jpg',
+      role: 'Player',
+      walletBalance: 0,
+      stats: { tournamentsJoined: 0, totalDownloads: 0, savedSensitivities: 0, referralsCount: 0 }
+    };
+  }
+
+  getUser() {
+    return this.getCurrentUser();
   }
 
   isAdmin() {
