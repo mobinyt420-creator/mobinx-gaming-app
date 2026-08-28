@@ -6,7 +6,10 @@ import { firebaseService } from '../services/firebaseService.js';
 import { Toast } from './Toast.js';
 
 export function renderModal(activeModal) {
-  if (!activeModal) return `<div class="modal-overlay" id="global-modal-overlay"></div>`;
+  const currentState = stateManager.getState();
+  if (!activeModal || currentState.currentView === 'onboarding' || !authService.hasCompletedOnboarding()) {
+    return `<div class="modal-overlay" id="global-modal-overlay"></div>`;
+  }
 
   const { type, data } = activeModal;
   let bodyContent = '';

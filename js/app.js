@@ -29,13 +29,13 @@ class App {
   }
 
   init() {
-    // Initialize real-time synchronization with Admin Panel & Firebase
-    realtimeSyncManager.init();
-
     // Check if user has completed first-time onboarding
     if (!authService.hasCompletedOnboarding()) {
-      stateManager.setState({ currentView: 'onboarding' });
+      stateManager.setState({ currentView: 'onboarding', activeModal: null });
     }
+
+    // Initialize real-time synchronization with Admin Panel & Firebase
+    realtimeSyncManager.init();
 
     // Start live clock for status bar
     this.startLiveClock();

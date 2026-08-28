@@ -192,7 +192,7 @@ export function renderProfileView() {
 
 export function bindProfileEvents() {
   document.getElementById('btn-profile-edit-info')?.addEventListener('click', () => {
-    resetOnboardingStep(2);
+    resetOnboardingStep('google-setup');
     stateManager.navigate('onboarding');
   });
 
@@ -225,7 +225,7 @@ export function bindProfileEvents() {
   });
 
   document.getElementById('p-menu-onboarding-preview')?.addEventListener('click', () => {
-    resetOnboardingStep(2);
+    resetOnboardingStep('welcome');
     stateManager.navigate('onboarding');
   });
 

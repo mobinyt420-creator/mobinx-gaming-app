@@ -8,4 +8,10 @@ www/
 android/.gradle/
 android/build/
 android/app/build/
+android/caches/
+android/daemon/
+android/native/
+android/notifications/
+android/android/
 .gradle/
+.vscode/

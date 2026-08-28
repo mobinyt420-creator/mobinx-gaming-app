@@ -4,8 +4,9 @@
 
 class StateManager {
   constructor() {
+    const isOnboarded = typeof localStorage !== 'undefined' && !!localStorage.getItem('mobinx_onboarded');
     this.state = {
-      currentView: 'home',
+      currentView: isOnboarded ? 'home' : 'onboarding',
       viewParams: {},
       drawerOpen: false,
       activeModal: null,
@@ -46,6 +47,11 @@ class StateManager {
   }
 
   openModal(modalType, data = {}) {
+    const isOnboarded = typeof localStorage !== 'undefined' && !!localStorage.getItem('mobinx_onboarded');
+    // Suppress welcome and notice popups during onboarding/welcome view
+    if ((this.state.currentView === 'onboarding' || !isOnboarded) && (modalType === 'welcomeAnnouncement' || modalType === 'notice')) {
+      return;
+    }
     this.setState({
       activeModal: { type: modalType, data }
     });

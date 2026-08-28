@@ -292,5 +292,9 @@ export function bindOnboardingEvents() {
  * Reset onboarding helper
  */
 export function resetOnboardingStep(mode = 'welcome') {
-  activeAuthMode = mode;
+  if (mode === 2 || mode === 'google-setup') {
+    activeAuthMode = 'google-setup';
+  } else {
+    activeAuthMode = 'welcome';
+  }
 }

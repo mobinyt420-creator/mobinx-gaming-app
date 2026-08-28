@@ -92,7 +92,7 @@ class RealtimeSyncManager {
         if (data) {
           if (data.welcomePopup && data.welcomePopup.enabled) {
             const currentView = stateManager.getState().currentView;
-            if (currentView !== 'onboarding' && authService.hasCompletedOnboarding()) {
+            if (currentView === 'home' && authService.hasCompletedOnboarding()) {
               const dismissed = sessionStorage.getItem('mobinx_welcome_dismissed');
               if (!dismissed) {
                 sessionStorage.setItem('mobinx_welcome_dismissed', 'true');

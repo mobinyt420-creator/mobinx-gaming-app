@@ -19,8 +19,8 @@ function isVersionHigher(vLatest, vCurrent) {
 
 export function renderHomeNoticePopup() {
   const currentState = stateManager.getState();
-  // NEVER show popups over onboarding, login, or welcome screens
-  if (currentState.currentView === 'onboarding' || !authService.hasCompletedOnboarding()) {
+  // NEVER show popups over onboarding, login, or non-home views
+  if (currentState.currentView !== 'home' || !authService.hasCompletedOnboarding()) {
     return '';
   }
 
