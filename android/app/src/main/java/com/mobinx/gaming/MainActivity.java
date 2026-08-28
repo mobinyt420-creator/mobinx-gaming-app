@@ -143,7 +143,7 @@ public class MainActivity extends BridgeActivity {
         public void showNativeNotification(String title, String message) {
             runOnUiThread(() -> {
                 try {
-                    String channelId = "mobinx_notifications";
+                    String channelId = "mobinx_push_channel";
                     NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

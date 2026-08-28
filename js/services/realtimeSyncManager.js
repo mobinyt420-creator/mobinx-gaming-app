@@ -92,10 +92,11 @@ class RealtimeSyncManager {
 
       // Live Push Notifications / Global Notices
       const unsubNotices = await firebaseService.subscribeDocument('config', 'notices', (data) => {
-        if (data && data.pushNotification && (!this.lastPushTime || data.pushNotification.timestamp > this.lastPushTime)) {
-          this.lastPushTime = data.pushNotification.timestamp;
-          const notifTitle = data.pushNotification.title || 'MOBIN X GAMING';
-          const notifMsg = data.pushNotification.message || data.pushNotification.desc || '';
+        const notif = data?.pushNotification;
+        if (notif && notif.active !== false && notif.message && (!this.lastPushTime || notif.timestamp > this.lastPushTime)) {
+          this.lastPushTime = notif.timestamp;
+          const notifTitle = notif.title || 'MOBIN X GAMING';
+          const notifMsg = notif.message || notif.desc || '';
           Toast.show(`📢 ${notifMsg}`, 'info');
 
           // Trigger Native Android Status Bar Notification
@@ -107,6 +108,24 @@ class RealtimeSyncManager {
         }
       });
       if (unsubNotices) this.unsubscribers.push(unsubNotices);
+
+      // Live Flash Broadcast Listener
+      const unsubFlash = await firebaseService.subscribeDocument('config', 'flash_broadcast', (notif) => {
+        if (notif && notif.active !== false && notif.message && (!this.lastPushTime || notif.timestamp > this.lastPushTime)) {
+          this.lastPushTime = notif.timestamp;
+          const notifTitle = notif.title || 'MOBIN X GAMING';
+          const notifMsg = notif.message || notif.desc || '';
+          Toast.show(`📢 ${notifMsg}`, 'info');
+
+          // Trigger Native Android Status Bar Notification
+          try {
+            if (typeof window !== 'undefined' && window.AndroidBridge && typeof window.AndroidBridge.showNativeNotification === 'function') {
+              window.AndroidBridge.showNativeNotification(notifTitle, notifMsg);
+            }
+          } catch(e) {}
+        }
+      });
+      if (unsubFlash) this.unsubscribers.push(unsubFlash);
 
       // Live Auth Settings & Feature Flags Listener
       const unsubAuthSettings = await firebaseService.subscribeDocument('config', 'auth_settings', (data) => {

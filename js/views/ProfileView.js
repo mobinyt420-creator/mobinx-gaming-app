@@ -3,6 +3,7 @@ import { firebaseService } from '../services/firebaseService.js';
 import { stateManager } from '../services/stateManager.js';
 import { Toast } from '../components/Toast.js';
 import { resetOnboardingStep } from './OnboardingView.js';
+import { openExternalStore } from '../services/browserService.js';
 
 export function renderProfileView() {
   const user = authService.getCurrentUser() || {};
@@ -270,7 +271,7 @@ export function bindProfileEvents() {
   // --- DELETE ACCOUNT EVENT HANDLERS ---
   const modalDelete = document.getElementById('modal-delete-account');
   const wrapReauth = document.getElementById('wrap-reauth-pass');
-  const user = authService.getCurrentUser();
+  const user = authService.getCurrentUser() || {};
 
   document.getElementById('p-menu-delete-account')?.addEventListener('click', () => {
     if (modalDelete) {
@@ -286,7 +287,7 @@ export function bindProfileEvents() {
   });
 
   document.getElementById('link-external-delete-info')?.addEventListener('click', () => {
-    window.open('https://mobinx-admin-console.vercel.app/delete-account.html', '_blank');
+    openExternalStore('https://mobinx-admin-console.vercel.app/delete-account.html', '#ef4444');
   });
 
   document.getElementById('btn-confirm-delete')?.addEventListener('click', async () => {

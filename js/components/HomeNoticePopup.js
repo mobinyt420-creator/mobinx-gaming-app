@@ -41,7 +41,7 @@ export function renderHomeNoticePopup() {
 
   if (isUpdateAvailable && !isUpdateDismissed) {
     return `
-      <div id="home-notice-popup-overlay" data-popup-type="update" style="position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 10000; display: flex; align-items: flex-end; justify-content: center; padding: 0 16px calc(16px + var(--safe-bottom)) 16px; animation: fadeIn 0.25s ease;">
+      <div id="home-notice-popup-overlay" data-popup-type="update" style="position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 10000; display: flex; align-items: flex-end; justify-content: center; padding: 0 16px calc(16px + var(--safe-bottom)) 16px; animation: fadeIn 0.25s ease;">
         <div style="background: #ffffff; border-radius: 28px; overflow: hidden; width: 100%; max-width: 380px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25); text-align: center; border: 1.5px solid rgba(2, 132, 199, 0.2); animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);">
           
           <div style="background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); padding: 24px 20px 20px 20px; color: #ffffff; display: flex; flex-direction: column; align-items: center;">
@@ -78,7 +78,7 @@ export function renderHomeNoticePopup() {
   }
 
   // 2. Check if Home Promotional / Notice Popup is enabled
-  if (!popup || !popup.enabled) return '';
+  if (!popup || popup.enabled === false || popup.active === false) return '';
 
   // Check if dismissed this session
   if (popup.showOncePerSession && typeof sessionStorage !== 'undefined' && sessionStorage.getItem('mobinx_popup_dismissed')) {
@@ -86,7 +86,7 @@ export function renderHomeNoticePopup() {
   }
 
   return `
-    <div id="home-notice-popup-overlay" style="position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.25s ease;">
+    <div id="home-notice-popup-overlay" style="position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.25s ease;">
       <div style="background: #ffffff; border-radius: 20px; overflow: hidden; width: 100%; max-width: 340px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25); text-align: center; border: 1px solid rgba(255, 255, 255, 0.25); animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
         
         <!-- Top Image Banner (if provided) -->
