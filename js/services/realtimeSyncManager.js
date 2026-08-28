@@ -9,6 +9,7 @@ class RealtimeSyncManager {
   constructor() {
     this.isInitialized = false;
     this.unsubscribers = [];
+    this.debounceTimers = {};
   }
 
   init() {
@@ -47,8 +48,10 @@ class RealtimeSyncManager {
 
       // Live Tournaments Listener (Handles additions, updates, and deletions immediately)
       const unsubTournaments = await firebaseService.subscribeCollection('tournaments', (items) => {
-        tournamentService.setAll(items || []);
-        this.triggerViewUpdate('tournaments');
+        if (items) {
+          tournamentService.setAll(items);
+          this.triggerViewUpdate('tournaments');
+        }
       });
       if (unsubTournaments) this.unsubscribers.push(unsubTournaments);
 
@@ -87,23 +90,11 @@ class RealtimeSyncManager {
       });
       if (unsubConfig) this.unsubscribers.push(unsubConfig);
 
-      // Live Notices & Welcome Popup Listener
+      // Live Push Notifications / Global Notices
       const unsubNotices = await firebaseService.subscribeDocument('config', 'notices', (data) => {
-        if (data) {
-          if (data.welcomePopup && data.welcomePopup.enabled) {
-            const currentView = stateManager.getState().currentView;
-            if (currentView === 'home' && authService.hasCompletedOnboarding()) {
-              const dismissed = sessionStorage.getItem('mobinx_welcome_dismissed');
-              if (!dismissed) {
-                sessionStorage.setItem('mobinx_welcome_dismissed', 'true');
-                stateManager.openModal('welcomeAnnouncement', data.welcomePopup);
-              }
-            }
-          }
-          if (data.pushNotification && (!this.lastPushTime || data.pushNotification.timestamp > this.lastPushTime)) {
-            this.lastPushTime = data.pushNotification.timestamp;
-            Toast.show(`📢 ${data.pushNotification.message}`, 'info');
-          }
+        if (data && data.pushNotification && (!this.lastPushTime || data.pushNotification.timestamp > this.lastPushTime)) {
+          this.lastPushTime = data.pushNotification.timestamp;
+          Toast.show(`📢 ${data.pushNotification.message}`, 'info');
         }
       });
       if (unsubNotices) this.unsubscribers.push(unsubNotices);
@@ -114,19 +105,9 @@ class RealtimeSyncManager {
           authService.saveAuthSettings(data);
           this.triggerViewUpdate('onboarding');
           this.triggerViewUpdate('home');
-          this.triggerViewUpdate('drawer');
         }
       });
       if (unsubAuthSettings) this.unsubscribers.push(unsubAuthSettings);
-
-      // Live Home Notice Popup Listener (Screenshot Modal)
-      const unsubHomePopup = await firebaseService.subscribeDocument('config', 'home_popup', (data) => {
-        if (data) {
-          authService.saveHomeNoticePopup(data);
-          this.triggerViewUpdate('home');
-        }
-      });
-      if (unsubHomePopup) this.unsubscribers.push(unsubHomePopup);
 
       // Live Google Play Store App Update Listener
       const unsubAppUpdate = await firebaseService.subscribeDocument('config', 'app_update', (data) => {
@@ -151,14 +132,6 @@ class RealtimeSyncManager {
           authService.saveAuthSettings(payload);
           this.triggerViewUpdate('onboarding');
           this.triggerViewUpdate('home');
-          this.triggerViewUpdate('drawer');
-        }
-        break;
-
-      case 'HOME_POPUP_UPDATED':
-        if (payload) {
-          authService.saveHomeNoticePopup(payload);
-          this.triggerViewUpdate('home');
         }
         break;
 
@@ -175,9 +148,8 @@ class RealtimeSyncManager {
         } else {
           tournamentService.reloadFromStorage();
         }
-        if (currentView === 'tournaments' || currentView === 'home') {
-          stateManager.setState({ currentView });
-        }
+        this.triggerViewUpdate('tournaments');
+        this.triggerViewUpdate('home');
         break;
 
       case 'ROOM_RELEASED':
@@ -185,24 +157,19 @@ class RealtimeSyncManager {
         if (showNotice && type === 'ROOM_RELEASED') {
           Toast.show(`🔥 Room ID & Password released for: ${payload?.title || 'Tournament'}!`, 'success');
         }
-        if (currentView === 'tournaments' || currentView === 'home') {
-          stateManager.setState({ currentView });
-        }
+        this.triggerViewUpdate('tournaments');
+        this.triggerViewUpdate('home');
         break;
 
       case 'DOWNLOADS_UPDATED':
         downloadService.reloadFromStorage();
-        if (currentView === 'downloads') {
-          stateManager.setState({ currentView });
-        }
+        this.triggerViewUpdate('downloads');
         break;
 
       case 'BANNERS_UPDATED':
       case 'FLASH_DEALS_UPDATED':
       case 'SERVICES_UPDATED':
-        if (currentView === 'home') {
-          stateManager.setState({ currentView });
-        }
+        this.triggerViewUpdate('home');
         break;
 
       case 'URLS_UPDATED':
@@ -217,10 +184,19 @@ class RealtimeSyncManager {
   triggerViewUpdate(targetView) {
     const currentView = stateManager.getState().currentView;
     if (currentView === targetView || (targetView === 'home' && currentView === 'home')) {
-      // Re-trigger render in current view
-      stateManager.setState({ currentView });
+      // Debounce the re-render by 120ms to prevent screen flicker and micro-jumps
+      if (this.debounceTimers[targetView]) {
+        clearTimeout(this.debounceTimers[targetView]);
+      }
+      this.debounceTimers[targetView] = setTimeout(() => {
+        const activeState = stateManager.getState();
+        if (activeState.currentView === currentView) {
+          stateManager.setState({ currentView });
+        }
+      }, 120);
     }
   }
 }
 
 export const realtimeSyncManager = new RealtimeSyncManager();
+

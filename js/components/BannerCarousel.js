@@ -6,8 +6,11 @@ let carouselTimer = null;
 let currentSlideIndex = 0;
 
 export function renderBannerCarousel() {
-  const heroBanners = authService.getHeroBanners();
+  const allBanners = authService.getHeroBanners();
+  const heroBanners = allBanners.filter(b => b.isActive !== false && b.status !== 'inactive');
   currentSlideIndex = 0;
+
+  if (heroBanners.length === 0) return '';
 
   return `
     <section class="hero-banner-section">
@@ -31,12 +34,14 @@ export function renderBannerCarousel() {
 }
 
 export function initBannerCarousel() {
-  const heroBanners = authService.getHeroBanners();
+  const allBanners = authService.getHeroBanners();
+  const heroBanners = allBanners.filter(b => b.isActive !== false && b.status !== 'inactive');
   const track = document.getElementById('carousel-slides-track');
   const dots = document.querySelectorAll('.carousel-dot');
   const slides = document.querySelectorAll('.carousel-slide');
 
   if (!track || slides.length === 0) return;
+
 
   function goToSlide(index) {
     if (heroBanners.length === 0) return;

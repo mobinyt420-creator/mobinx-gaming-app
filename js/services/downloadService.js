@@ -25,7 +25,7 @@ class DownloadService {
   }
 
   getAll() {
-    return this.catalog;
+    return this.catalog.filter(item => item.isActive !== false && item.status !== 'inactive');
   }
 
   setCatalog(items) {
@@ -42,9 +42,11 @@ class DownloadService {
   }
 
   getByCategory(category) {
-    if (!category || category === 'All') return this.catalog;
-    return this.catalog.filter(item => item.category.toLowerCase() === category.toLowerCase());
+    const active = this.getAll();
+    if (!category || category === 'All') return active;
+    return active.filter(item => item.category && item.category.toLowerCase() === category.toLowerCase());
   }
+
 
   getById(id) {
     return this.catalog.find(item => item.id === id);

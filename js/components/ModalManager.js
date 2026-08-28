@@ -176,7 +176,9 @@ export function renderModal(activeModal) {
       break;
 
     case 'welcomeAnnouncement':
-      modalTitle = data.title || 'Official Announcement';
+      modalTitle = (data.title && data.title !== data.message) ? data.title : 'Official Announcement';
+      const showTitle = data.title && data.title !== data.message;
+      const messageContent = data.message || data.title || data.description || '';
       bodyContent = `
         <div style="display: flex; flex-direction: column; gap: 14px; text-align: center;">
           ${data.imageUrl ? `
@@ -184,8 +186,8 @@ export function renderModal(activeModal) {
               <img src="${data.imageUrl}" alt="Notice" style="width: 100%; height: 100%; object-fit: cover;" />
             </div>
           ` : ''}
-          <div style="font-size: 16px; font-weight: 900; color: var(--text-main); line-height: 1.3;">${data.title || 'Welcome to Mobin X!'}</div>
-          <div style="font-size: 12.5px; color: var(--text-secondary); line-height: 1.5;">${data.message || ''}</div>
+          ${showTitle ? `<div style="font-size: 16px; font-weight: 900; color: var(--text-main); line-height: 1.3;">${data.title}</div>` : ''}
+          <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; font-weight: 600;">${messageContent}</div>
           <div style="display: flex; gap: 10px; margin-top: 6px;">
             <button class="btn-secondary" id="btn-modal-cancel" style="flex: 1;">Dismiss</button>
             ${data.actionUrl ? `
@@ -198,6 +200,7 @@ export function renderModal(activeModal) {
         </div>
       `;
       break;
+
 
     case 'sensitivityGuide':
       modalTitle = data.title || 'Sensitivity Guide';

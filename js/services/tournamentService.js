@@ -34,10 +34,16 @@ class TournamentService {
     }
   }
 
-  getByStatus(status) {
-    if (!status || status === 'ALL') return this.tournaments;
-    return this.tournaments.filter(t => t.status.toUpperCase() === status.toUpperCase());
+  getAll() {
+    return this.tournaments.filter(t => t.isActive !== false && t.status !== 'inactive' && t.status !== 'INACTIVE');
   }
+
+  getByStatus(status) {
+    const active = this.getAll();
+    if (!status || status === 'ALL') return active;
+    return active.filter(t => t.status && t.status.toUpperCase() === status.toUpperCase());
+  }
+
 
   getById(id) {
     return this.tournaments.find(t => t.id === id);

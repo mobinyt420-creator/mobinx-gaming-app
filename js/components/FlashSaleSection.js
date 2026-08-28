@@ -11,15 +11,19 @@ export function renderFlashSaleSection() {
   if (authSettings.topUpEnabled === false) return '';
 
   const storedProducts = authService.getFlashDeals();
-  const baseProducts = (storedProducts && storedProducts.length > 0) ? storedProducts : [
-    { id: "flash-1", diamondAmount: "100 DIAMONDS", price: "৳ 80.00", badge: "100% BONUS", badgeColor: "#ea580c" },
-    { id: "flash-2", diamondAmount: "310 DIAMONDS", price: "৳ 270.00", badge: "POPULAR", badgeColor: "#2563eb" },
-    { id: "flash-3", diamondAmount: "520 DIAMONDS", price: "৳ 420.00", badge: "BEST VALUE", badgeColor: "#16a34a" },
-    { id: "flash-4", diamondAmount: "1060 DIAMONDS", price: "৳ 820.00", badge: "VIP BONUS", badgeColor: "#9333ea" }
+  const rawProducts = (storedProducts && storedProducts.length > 0) ? storedProducts : [
+    { id: "flash-1", diamondAmount: "100 DIAMONDS", price: "৳ 80.00", badge: "100% BONUS", badgeColor: "#ea580c", isActive: true },
+    { id: "flash-2", diamondAmount: "310 DIAMONDS", price: "৳ 270.00", badge: "POPULAR", badgeColor: "#2563eb", isActive: true },
+    { id: "flash-3", diamondAmount: "520 DIAMONDS", price: "৳ 420.00", badge: "BEST VALUE", badgeColor: "#16a34a", isActive: true },
+    { id: "flash-4", diamondAmount: "1060 DIAMONDS", price: "৳ 820.00", badge: "VIP BONUS", badgeColor: "#9333ea", isActive: true }
   ];
+
+  const baseProducts = rawProducts.filter(p => p.isActive !== false && p.status !== 'inactive');
+  if (baseProducts.length === 0) return '';
 
   // Repeat for continuous seamless infinite glide
   const duplicatedProducts = [...baseProducts, ...baseProducts, ...baseProducts, ...baseProducts];
+
 
   return `
     <section class="flash-diamond-section">
