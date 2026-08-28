@@ -101,6 +101,7 @@ class AuthService {
     }
     try {
       await firebaseService.saveToFirestore('config', 'auth_settings', this.authSettings);
+      firebaseService.broadcastChange('AUTH_SETTINGS_UPDATED', this.authSettings);
     } catch(e) {}
     return this.authSettings;
   }

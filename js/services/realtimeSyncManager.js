@@ -91,10 +91,13 @@ class RealtimeSyncManager {
       const unsubNotices = await firebaseService.subscribeDocument('config', 'notices', (data) => {
         if (data) {
           if (data.welcomePopup && data.welcomePopup.enabled) {
-            const dismissed = sessionStorage.getItem('mobinx_welcome_dismissed');
-            if (!dismissed) {
-              sessionStorage.setItem('mobinx_welcome_dismissed', 'true');
-              stateManager.openModal('welcomeAnnouncement', data.welcomePopup);
+            const currentView = stateManager.getState().currentView;
+            if (currentView !== 'onboarding' && authService.hasCompletedOnboarding()) {
+              const dismissed = sessionStorage.getItem('mobinx_welcome_dismissed');
+              if (!dismissed) {
+                sessionStorage.setItem('mobinx_welcome_dismissed', 'true');
+                stateManager.openModal('welcomeAnnouncement', data.welcomePopup);
+              }
             }
           }
           if (data.pushNotification && (!this.lastPushTime || data.pushNotification.timestamp > this.lastPushTime)) {
@@ -104,6 +107,17 @@ class RealtimeSyncManager {
         }
       });
       if (unsubNotices) this.unsubscribers.push(unsubNotices);
+
+      // Live Auth Settings & Feature Flags Listener
+      const unsubAuthSettings = await firebaseService.subscribeDocument('config', 'auth_settings', (data) => {
+        if (data) {
+          authService.saveAuthSettings(data);
+          this.triggerViewUpdate('onboarding');
+          this.triggerViewUpdate('home');
+          this.triggerViewUpdate('drawer');
+        }
+      });
+      if (unsubAuthSettings) this.unsubscribers.push(unsubAuthSettings);
 
       // Live Home Notice Popup Listener (Screenshot Modal)
       const unsubHomePopup = await firebaseService.subscribeDocument('config', 'home_popup', (data) => {
@@ -132,6 +146,15 @@ class RealtimeSyncManager {
     const currentView = stateManager.getState().currentView;
 
     switch (type) {
+      case 'AUTH_SETTINGS_UPDATED':
+        if (payload) {
+          authService.saveAuthSettings(payload);
+          this.triggerViewUpdate('onboarding');
+          this.triggerViewUpdate('home');
+          this.triggerViewUpdate('drawer');
+        }
+        break;
+
       case 'HOME_POPUP_UPDATED':
         if (payload) {
           authService.saveHomeNoticePopup(payload);

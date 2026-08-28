@@ -13,8 +13,14 @@ export function renderOnboardingView() {
 
   switch (activeAuthMode) {
     case 'manual-signup':
+      if (authSettings.manualSignUpEnabled === false) {
+        return renderGoogleProfileSetupView(authSettings);
+      }
       return renderManualSignUpView(authSettings);
     case 'login':
+      if (authSettings.manualLoginEnabled === false) {
+        return renderGoogleProfileSetupView(authSettings);
+      }
       return renderLoginView(authSettings);
     case 'forgot-password':
       return renderForgotPasswordView();
@@ -22,14 +28,16 @@ export function renderOnboardingView() {
       return renderGoogleProfileSetupView(authSettings);
     case 'welcome':
     default:
-      return renderWelcomeStep();
+      return renderWelcomeStep(authSettings);
   }
 }
 
 /**
  * Screen 1: Welcome to Mobin X
  */
-function renderWelcomeStep() {
+function renderWelcomeStep(authSettings = {}) {
+  const isManualLoginOn = authSettings.manualLoginEnabled !== false;
+
   return `
     <div class="view-container onboarding-view onboarding-step-1" style="min-height: 100%; height: 100%; box-sizing: border-box; background: radial-gradient(circle at 50% 25%, #061e4f 0%, #030d24 60%, #010614 100%); color: #ffffff; padding: 24px 20px calc(24px + var(--safe-bottom)) 20px; display: flex; flex-direction: column; justify-content: space-between; overflow-y: auto;">
       
@@ -102,9 +110,11 @@ function renderWelcomeStep() {
             <polyline points="12 5 19 12 12 19"></polyline>
           </svg>
         </button>
-        <button id="btn-onboard-login-direct" style="background: none; border: none; color: #38bdf8; font-size: 13px; font-weight: 700; cursor: pointer; padding: 6px; display: flex; align-items: center; gap: 6px;">
-          <span>Already have an account? <strong style="text-decoration: underline;">Login</strong></span>
-        </button>
+        ${isManualLoginOn ? `
+          <button id="btn-onboard-login-direct" style="background: none; border: none; color: #38bdf8; font-size: 13px; font-weight: 700; cursor: pointer; padding: 6px; display: flex; align-items: center; gap: 6px;">
+            <span>Already have an account? <strong style="text-decoration: underline;">Login</strong></span>
+          </button>
+        ` : ''}
       </div>
 
     </div>
@@ -114,8 +124,10 @@ function renderWelcomeStep() {
 /**
  * Screen 2: Google Profile Setup (Matches Reference Image 2)
  */
-function renderGoogleProfileSetupView(authSettings) {
-  const isManualLoginOn = authSettings.manualLoginEnabled !== false;
+function renderGoogleProfileSetupView(authSettings = {}) {
+  const isManualLoginOn = authSettings.manualLoginEnabled === true;
+  const isManualSignUpOn = authSettings.manualSignUpEnabled === true;
+  const isAnyManualOn = isManualLoginOn || isManualSignUpOn;
   const isGoogleSignUpOn = authSettings.googleSignUpEnabled !== false;
 
   return `
@@ -138,21 +150,21 @@ function renderGoogleProfileSetupView(authSettings) {
         <!-- 3-Step Indicator: Name -> Phone -> Google (Image 2) -->
         <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 18px;">
           <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-            <div id="stepper-circle-1" style="width: 32px; height: 32px; border-radius: 50%; background: #ffffff; border: 2px solid #0066ff; display: flex; align-items: center; justify-content: center; color: #0066ff; font-weight: 800; font-size: 13px; box-shadow: 0 2px 8px rgba(0, 102, 255, 0.2);">
+            <div id="stepper-circle-1" style="width: 32px; height: 32px; border-radius: 50%; background: #0066ff; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; box-shadow: 0 2px 8px rgba(0, 102, 255, 0.25);">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
             </div>
-            <span style="font-size: 10px; font-weight: 700; color: #0f172a;">Name</span>
+            <span style="font-size: 10px; font-weight: 700; color: #0066ff;">Name</span>
           </div>
-          <div style="width: 28px; height: 2px; background: #0066ff; margin-bottom: 14px;"></div>
+          <div id="line-google-1" style="width: 28px; height: 2px; background: #cbd5e1; margin-bottom: 14px; transition: background 0.3s ease;"></div>
           <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-            <div id="stepper-circle-2" style="width: 32px; height: 32px; border-radius: 50%; background: #ffffff; border: 2px solid #cbd5e1; display: flex; align-items: center; justify-content: center; color: #64748b; font-weight: 800; font-size: 13px;">
+            <div id="stepper-circle-2" style="width: 32px; height: 32px; border-radius: 50%; background: #ffffff; border: 2px solid #cbd5e1; display: flex; align-items: center; justify-content: center; color: #64748b; font-weight: 800; font-size: 13px; transition: all 0.3s ease;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.43-3.9-6.63-6.49l1.97-1.57c.26-.26.35-.65.24-1.01A11.36 11.36 0 0 1 8.92 4c0-.55-.45-1-1-1H4.5c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.62c0-.55-.45-1-1-.02z"/></svg>
             </div>
-            <span style="font-size: 10px; font-weight: 700; color: #64748b;">Phone</span>
+            <span id="label-google-phone" style="font-size: 10px; font-weight: 700; color: #64748b;">Phone</span>
           </div>
-          <div style="width: 28px; height: 2px; background: #cbd5e1; margin-bottom: 14px;"></div>
+          <div id="line-google-2" style="width: 28px; height: 2px; background: #cbd5e1; margin-bottom: 14px; transition: background 0.3s ease;"></div>
           <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-            <div id="stepper-circle-3" style="width: 32px; height: 32px; border-radius: 50%; background: #ffffff; border: 2px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: 14px;">
+            <div id="stepper-circle-3" style="width: 32px; height: 32px; border-radius: 50%; background: #ffffff; border: 2px solid #cbd5e1; display: flex; align-items: center; justify-content: center; font-size: 14px; transition: all 0.3s ease;">
               <svg width="15" height="15" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
             </div>
             <span style="font-size: 10px; font-weight: 700; color: #64748b;">Google</span>
@@ -194,13 +206,15 @@ function renderGoogleProfileSetupView(authSettings) {
 
         </div>
 
-        <div style="text-align: center; margin-top: 14px;">
-          <span style="font-size: 12px; color: #64748b;">Already have an account? </span>
-          <a href="javascript:void(0)" id="link-goto-login" style="font-size: 12.5px; font-weight: 800; color: #0066ff; text-decoration: none;">Login</a>
-        </div>
-
-        <!-- Optional Bottom Switch (Visible ONLY when MANUAL LOGIN ON as specified in Image 2) -->
         ${isManualLoginOn ? `
+          <div style="text-align: center; margin-top: 14px;">
+            <span style="font-size: 12px; color: #64748b;">Already have an account? </span>
+            <a href="javascript:void(0)" id="link-goto-login" style="font-size: 12.5px; font-weight: 800; color: #0066ff; text-decoration: none;">Login</a>
+          </div>
+        ` : ''}
+
+        <!-- Optional Bottom Switch (Visible ONLY when MANUAL LOGIN / SIGNUP is ON in Admin Panel) -->
+        ${isAnyManualOn ? `
           <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin: 12px 0 8px 0;">
             <div style="height: 1px; flex: 1; background: #e2e8f0;"></div>
             <span style="font-size: 11px; color: #94a3b8; font-weight: 600;">or</span>
@@ -208,15 +222,19 @@ function renderGoogleProfileSetupView(authSettings) {
           </div>
 
           <div style="background: #ffffff; border: 1.5px solid #eef2f6; border-radius: 16px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-around; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);">
-            <button id="btn-switch-manual-signup" style="background: none; border: none; font-size: 12.5px; font-weight: 700; color: #0f172a; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 6px 10px;">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-              <span>Manual Login / Sign Up</span>
-            </button>
-            <div style="width: 1px; height: 22px; background: #e2e8f0;"></div>
-            <button id="btn-switch-google-direct" style="background: none; border: none; font-size: 12.5px; font-weight: 700; color: #0f172a; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 6px 10px;">
-              <svg width="14" height="14" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-              <span>Google Login</span>
-            </button>
+            ${isManualSignUpOn ? `
+              <button id="btn-switch-manual-signup" style="background: none; border: none; font-size: 12.5px; font-weight: 700; color: #0f172a; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 6px 10px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                <span>Manual Sign Up</span>
+              </button>
+            ` : ''}
+            ${isManualSignUpOn && isManualLoginOn ? `<div style="width: 1px; height: 22px; background: #e2e8f0;"></div>` : ''}
+            ${isManualLoginOn ? `
+              <button id="btn-switch-manual-login" style="background: none; border: none; font-size: 12.5px; font-weight: 700; color: #0f172a; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 6px 10px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                <span>Manual Login</span>
+              </button>
+            ` : ''}
           </div>
         ` : ''}
 
@@ -242,7 +260,7 @@ function renderGoogleProfileSetupView(authSettings) {
 /**
  * Screen 3: Manual Sign Up (Matches Reference Image 1 Left)
  */
-function renderManualSignUpView(authSettings) {
+function renderManualSignUpView(authSettings = {}) {
   const isGoogleSignUpOn = authSettings.googleSignUpEnabled !== false;
 
   return `
@@ -272,21 +290,21 @@ function renderManualSignUpView(authSettings) {
             <div id="signup-step-2" style="width: 30px; height: 30px; border-radius: 50%; background: #ffffff; border: 2px solid #cbd5e1; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; transition: all 0.3s ease;">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
             </div>
-            <span style="font-size: 9.5px; font-weight: 700; color: #64748b;">Email</span>
+            <span id="label-step-email" style="font-size: 9.5px; font-weight: 700; color: #64748b;">Email</span>
           </div>
           <div id="line-step-2" style="width: 22px; height: 2px; background: #cbd5e1; margin-bottom: 12px; transition: background 0.3s ease;"></div>
           <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
             <div id="signup-step-3" style="width: 30px; height: 30px; border-radius: 50%; background: #ffffff; border: 2px solid #cbd5e1; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; transition: all 0.3s ease;">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.43-3.9-6.63-6.49l1.97-1.57c.26-.26.35-.65.24-1.01A11.36 11.36 0 0 1 8.92 4c0-.55-.45-1-1-1H4.5c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.62c0-.55-.45-1-1-.02z"/></svg>
             </div>
-            <span style="font-size: 9.5px; font-weight: 700; color: #64748b;">Phone</span>
+            <span id="label-step-phone" style="font-size: 9.5px; font-weight: 700; color: #64748b;">Phone</span>
           </div>
           <div id="line-step-3" style="width: 22px; height: 2px; background: #cbd5e1; margin-bottom: 12px; transition: background 0.3s ease;"></div>
           <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
             <div id="signup-step-4" style="width: 30px; height: 30px; border-radius: 50%; background: #ffffff; border: 2px solid #cbd5e1; color: #64748b; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; transition: all 0.3s ease;">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
             </div>
-            <span style="font-size: 9.5px; font-weight: 700; color: #64748b;">Password</span>
+            <span id="label-step-pass" style="font-size: 9.5px; font-weight: 700; color: #64748b;">Password</span>
           </div>
         </div>
 
@@ -307,7 +325,7 @@ function renderManualSignUpView(authSettings) {
             <label style="display: block; font-size: 12px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">Email Address</label>
             <div class="input-field-wrap" style="display: flex; align-items: center; border: 1.5px solid #e2e8f0; border-radius: 12px; background: #ffffff; padding: 0 12px; height: 44px;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-              <input type="email" id="manual-signup-email" placeholder="Enter your email" style="border: none; outline: none; background: transparent; width: 100%; height: 100%; font-size: 13px; color: #0f172a; font-weight: 600; padding-left: 8px;" />
+              <input type="email" id="manual-signup-email" placeholder="name@gmail.com" style="border: none; outline: none; background: transparent; width: 100%; height: 100%; font-size: 13px; color: #0f172a; font-weight: 600; padding-left: 8px;" />
             </div>
           </div>
 
@@ -366,10 +384,12 @@ function renderManualSignUpView(authSettings) {
           </button>
         ` : ''}
 
-        <div style="text-align: center; margin-top: 14px;">
-          <span style="font-size: 12px; color: #64748b;">Already have an account? </span>
-          <a href="javascript:void(0)" id="link-manual-to-login" style="font-size: 12.5px; font-weight: 800; color: #0066ff; text-decoration: none;">Login</a>
-        </div>
+        ${authSettings.manualLoginEnabled !== false ? `
+          <div style="text-align: center; margin-top: 14px;">
+            <span style="font-size: 12px; color: #64748b;">Already have an account? </span>
+            <a href="javascript:void(0)" id="link-manual-to-login" style="font-size: 12.5px; font-weight: 800; color: #0066ff; text-decoration: none;">Login</a>
+          </div>
+        ` : ''}
 
       </div>
 
@@ -380,7 +400,7 @@ function renderManualSignUpView(authSettings) {
 /**
  * Screen 4: Welcome Back / Login (Matches Reference Image 1 Right)
  */
-function renderLoginView(authSettings) {
+function renderLoginView(authSettings = {}) {
   const isManualLoginOn = authSettings.manualLoginEnabled !== false;
   const isGoogleLoginOn = authSettings.googleLoginEnabled !== false;
 
@@ -430,7 +450,7 @@ function renderLoginView(authSettings) {
               <label style="display: block; font-size: 13px; font-weight: 800; color: #0f172a; margin-bottom: 6px;">Email Address / Name</label>
               <div style="display: flex; align-items: center; border: 1.5px solid #e2e8f0; border-radius: 14px; background: #ffffff; padding: 0 14px; height: 48px;">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                <input type="email" id="input-login-email" placeholder="Enter your email" style="border: none; outline: none; background: transparent; width: 100%; height: 100%; font-size: 13.5px; color: #0f172a; font-weight: 600; padding-left: 10px;" />
+                <input type="email" id="input-login-email" placeholder="name@gmail.com" style="border: none; outline: none; background: transparent; width: 100%; height: 100%; font-size: 13.5px; color: #0f172a; font-weight: 600; padding-left: 10px;" />
               </div>
             </div>
 
@@ -474,10 +494,12 @@ function renderLoginView(authSettings) {
           </button>
         ` : ''}
 
-        <div style="text-align: center; margin-top: 18px;">
-          <span style="font-size: 12px; color: #64748b;">Don't have an account? </span>
-          <a href="javascript:void(0)" id="link-login-to-signup" style="font-size: 12.5px; font-weight: 800; color: #0066ff; text-decoration: none;">Create Account</a>
-        </div>
+        ${authSettings.manualSignUpEnabled !== false ? `
+          <div style="text-align: center; margin-top: 18px;">
+            <span style="font-size: 12px; color: #64748b;">Don't have an account? </span>
+            <a href="javascript:void(0)" id="link-login-to-signup" style="font-size: 12.5px; font-weight: 800; color: #0066ff; text-decoration: none;">Create Account</a>
+          </div>
+        ` : ''}
 
       </div>
 
@@ -540,13 +562,21 @@ export function bindOnboardingEvents() {
   });
 
   document.getElementById('btn-onboard-login-direct')?.addEventListener('click', () => {
-    activeAuthMode = 'login';
+    if (authSettings.manualLoginEnabled !== false) {
+      activeAuthMode = 'login';
+    } else {
+      activeAuthMode = 'google-setup';
+    }
     stateManager.navigate('onboarding');
   });
 
   // Switch Links
   document.getElementById('link-goto-login')?.addEventListener('click', () => {
-    activeAuthMode = 'login';
+    if (authSettings.manualLoginEnabled !== false) {
+      activeAuthMode = 'login';
+    } else {
+      activeAuthMode = 'google-setup';
+    }
     stateManager.navigate('onboarding');
   });
 
@@ -555,13 +585,17 @@ export function bindOnboardingEvents() {
     stateManager.navigate('onboarding');
   });
 
-  document.getElementById('btn-switch-google-direct')?.addEventListener('click', () => {
-    activeAuthMode = 'google-setup';
+  document.getElementById('btn-switch-manual-login')?.addEventListener('click', () => {
+    activeAuthMode = 'login';
     stateManager.navigate('onboarding');
   });
 
   document.getElementById('link-manual-to-login')?.addEventListener('click', () => {
-    activeAuthMode = 'login';
+    if (authSettings.manualLoginEnabled !== false) {
+      activeAuthMode = 'login';
+    } else {
+      activeAuthMode = 'google-setup';
+    }
     stateManager.navigate('onboarding');
   });
 
@@ -621,8 +655,9 @@ export function bindOnboardingEvents() {
       nameInput?.focus();
       return;
     }
-    if (!email || !email.includes('@') || !email.includes('.')) {
-      Toast.show('Please enter a valid email address.', 'warning');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+    if (!email || !emailRegex.test(email)) {
+      Toast.show('Please enter a valid email address (e.g. name@gmail.com)', 'warning');
       emailInput?.focus();
       return;
     }
@@ -734,7 +769,7 @@ export function bindOnboardingEvents() {
       const avatar = googleUser.photoURL || 'assets/images/avatar_user.jpg';
       const uid = googleUser.uid;
 
-      const user = await authService.loginWithGoogle(email, displayName, phoneVal, '', avatar, uid);
+      const user = await authService.loginWithGoogle(email, displayName, phoneVal || '', '', avatar, uid);
       Toast.show(`🎉 Welcome to Mobin X, ${user.username}!`, 'success');
       stateManager.navigate('home');
     } catch (err) {
@@ -763,16 +798,6 @@ export function bindOnboardingEvents() {
     const fullName = nameInput?.value.trim();
     const phone = phoneInput?.value.trim();
 
-    if (!fullName) {
-      Toast.show('Please enter your Full Name to proceed.', 'warning');
-      nameInput?.focus();
-      return;
-    }
-    if (!phone || phone.length < 10) {
-      Toast.show('Please enter your Phone Number (01XXXXXXXXX).', 'warning');
-      phoneInput?.focus();
-      return;
-    }
     handleGoogleAuth(fullName, phone);
   });
 
@@ -789,26 +814,61 @@ export function bindOnboardingEvents() {
     const l1 = document.getElementById('line-step-1');
     const l2 = document.getElementById('line-step-2');
     const l3 = document.getElementById('line-step-3');
+    const lblEmail = document.getElementById('label-step-email');
+    const lblPhone = document.getElementById('label-step-phone');
+    const lblPass = document.getElementById('label-step-pass');
 
     if (nameVal && l1 && s2) {
       l1.style.background = '#0066ff';
+      s2.style.background = '#0066ff';
       s2.style.borderColor = '#0066ff';
-      s2.style.color = '#0066ff';
+      s2.style.color = '#ffffff';
+      if (lblEmail) lblEmail.style.color = '#0066ff';
     }
     if (emailVal && l2 && s3) {
       l2.style.background = '#0066ff';
+      s3.style.background = '#0066ff';
       s3.style.borderColor = '#0066ff';
-      s3.style.color = '#0066ff';
+      s3.style.color = '#ffffff';
+      if (lblPhone) lblPhone.style.color = '#0066ff';
     }
     if (phoneVal && l3 && s4) {
       l3.style.background = '#0066ff';
+      s4.style.background = '#0066ff';
       s4.style.borderColor = '#0066ff';
-      s4.style.color = '#0066ff';
+      s4.style.color = '#ffffff';
+      if (lblPass) lblPass.style.color = '#0066ff';
     }
   };
 
   ['manual-signup-fullname', 'manual-signup-email', 'manual-signup-phone', 'manual-signup-pass'].forEach(id => {
     document.getElementById(id)?.addEventListener('input', syncManualStepProgress);
+  });
+
+  // Dynamic 3-step indicator progress in Google Setup
+  const syncGoogleStepProgress = () => {
+    const nameVal = document.getElementById('input-onboard-fullname')?.value.trim();
+    const phoneVal = document.getElementById('input-onboard-phone-num')?.value.trim();
+    const s2 = document.getElementById('stepper-circle-2');
+    const s3 = document.getElementById('stepper-circle-3');
+    const l1 = document.getElementById('line-google-1');
+    const l2 = document.getElementById('line-google-2');
+    const lblPhone = document.getElementById('label-google-phone');
+
+    if (nameVal && l1 && s2) {
+      l1.style.background = '#0066ff';
+      s2.style.background = '#0066ff';
+      s2.style.borderColor = '#0066ff';
+      s2.style.color = '#ffffff';
+      if (lblPhone) lblPhone.style.color = '#0066ff';
+    }
+    if (phoneVal && l2 && s3) {
+      l2.style.background = '#0066ff';
+    }
+  };
+
+  ['input-onboard-fullname', 'input-onboard-phone-num'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', syncGoogleStepProgress);
   });
 
   // Privacy Policy Link Click
