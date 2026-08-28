@@ -146,17 +146,17 @@ export function renderModal(activeModal) {
           </div>
 
           <div style="display: flex; flex-direction: column; gap: 6px;">
-            <label style="font-size: 11.5px; font-weight: 700; color: var(--text-main);">Your In-Game Gamer Tag (IGN) *</label>
-            <input type="text" id="input-player-ign" placeholder="Enter your Free Fire IGN" value="${hasRealName ? currentUserObj.username : ''}" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); outline: none; font-size: 12.5px; font-weight: 600;" />
+            <label style="font-size: 11.5px; font-weight: 700; color: var(--text-main);">Your In-Game Name (IGN) *</label>
+            <input type="text" id="input-player-ign" placeholder="e.g. ★MOBIN_YT★" value="${hasRealName ? currentUserObj.username : ''}" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); outline: none; font-size: 12.5px; font-weight: 600;" />
           </div>
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
             <div>
               <label style="font-size: 11px; font-weight: 700; color: var(--text-main);">Free Fire UID *</label>
-              <input type="text" id="input-player-uid" placeholder="Enter your FF UID" value="${currentUserObj.ffUid || ''}" style="width: 100%; padding: 9px 10px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); outline: none; font-size: 12px; font-weight: 600;" />
+              <input type="text" id="input-player-uid" placeholder="e.g. 248591829" value="${currentUserObj.ffUid || ''}" style="width: 100%; padding: 9px 10px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); outline: none; font-size: 12px; font-weight: 600;" />
             </div>
             <div>
-              <label style="font-size: 11px; font-weight: 700; color: var(--text-main);">Phone (Prize bKash) *</label>
+              <label style="font-size: 11px; font-weight: 700; color: var(--text-main);">WhatsApp / Telegram *</label>
               <input type="tel" id="input-player-phone" placeholder="01XXXXXXXXX" value="${currentUserObj.phone || ''}" style="width: 100%; padding: 9px 10px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); outline: none; font-size: 12px; font-weight: 600;" />
             </div>
           </div>
@@ -338,9 +338,19 @@ export function bindModalEvents(activeModal) {
   if (type === 'tournamentJoin') {
     document.getElementById('btn-confirm-join-tournament')?.addEventListener('click', () => {
       try {
-        const ign = document.getElementById('input-player-ign')?.value;
-        const ffUid = document.getElementById('input-player-uid')?.value;
-        const phone = document.getElementById('input-player-phone')?.value;
+        const ign = (document.getElementById('input-player-ign')?.value || '').trim();
+        const ffUid = (document.getElementById('input-player-uid')?.value || '').trim();
+        const phone = (document.getElementById('input-player-phone')?.value || '').trim();
+
+        if (ign.length < 2) {
+          throw new Error('Please enter your In-Game Name (IGN)');
+        }
+        if (ffUid.length < 5) {
+          throw new Error('Please enter a valid Free Fire UID (at least 5 digits)');
+        }
+        if (phone.length < 8) {
+          throw new Error('Please enter your WhatsApp / Telegram phone number');
+        }
 
         const result = tournamentService.joinTournament(data.id, {
           playerName: ign,
@@ -348,7 +358,7 @@ export function bindModalEvents(activeModal) {
           phone: phone
         });
         
-        Toast.show(`Successfully joined match! Reserved Slot #${result.assignedSlot}`, 'success');
+        Toast.show(`🎉 Successfully joined match! Reserved Slot #${result.assignedSlot}`, 'success');
         stateManager.closeModal();
         stateManager.navigate('tournaments');
       } catch (err) {
@@ -356,4 +366,5 @@ export function bindModalEvents(activeModal) {
       }
     });
   }
+
 }

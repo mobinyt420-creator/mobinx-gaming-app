@@ -173,6 +173,12 @@ class TournamentService {
 
     authService.recordTournamentJoin(tournamentId);
 
+    // Instant bi-directional Cloud Firestore sync
+    try {
+      firebaseService.saveToFirestore('tournaments', tournamentId, tournament);
+      firebaseService.broadcastChange('TOURNAMENTS_UPDATED', tournament);
+    } catch(e) {}
+
     return {
       success: true,
       tournament,

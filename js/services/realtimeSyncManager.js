@@ -109,6 +109,15 @@ class RealtimeSyncManager {
       });
       if (unsubAuthSettings) this.unsubscribers.push(unsubAuthSettings);
 
+      // Live Home Promotional / Notice Popup Listener
+      const unsubHomePopup = await firebaseService.subscribeDocument('config', 'home_popup', (data) => {
+        if (data) {
+          authService.saveHomeNoticePopup(data);
+          this.triggerViewUpdate('home');
+        }
+      });
+      if (unsubHomePopup) this.unsubscribers.push(unsubHomePopup);
+
       // Live Google Play Store App Update Listener
       const unsubAppUpdate = await firebaseService.subscribeDocument('config', 'app_update', (data) => {
         if (data) {
@@ -138,6 +147,13 @@ class RealtimeSyncManager {
       case 'APP_UPDATE_CONFIG_UPDATED':
         if (payload) {
           authService.saveAppUpdateConfig(payload);
+          this.triggerViewUpdate('home');
+        }
+        break;
+
+      case 'HOME_POPUP_UPDATED':
+        if (payload) {
+          authService.saveHomeNoticePopup(payload);
           this.triggerViewUpdate('home');
         }
         break;
