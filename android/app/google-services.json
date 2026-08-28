@@ -22,6 +22,14 @@
           }
         },
         {
+          "client_id": "219633934545-g5pri629bmq922vnsimr7r4ma8t0hhnr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mobinx.gaming",
+            "certificate_hash": "dc42f2c31665f5a617f19dbc0a6ea81220cbbc94"
+          }
+        },
+        {
           "client_id": "219633934545-3rh1evb9ofahg5p46vm2souq9vr64368.apps.googleusercontent.com",
           "client_type": 3
         }

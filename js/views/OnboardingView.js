@@ -247,14 +247,45 @@ export function bindOnboardingEvents() {
     handleGoogleAuth(nameInput?.value.trim(), phoneInput?.value.trim());
   });
 
-  document.getElementById('btn-complete-profile')?.addEventListener('click', () => {
+  document.getElementById('btn-complete-profile')?.addEventListener('click', async () => {
     const nameInput = document.getElementById('input-onboard-fullname');
     const phoneInput = document.getElementById('input-onboard-phone-num');
-    const fullName = nameInput?.value.trim();
-    const phone = phoneInput?.value.trim();
+    const fullName = nameInput?.value.trim() || '';
+    const phone = phoneInput?.value.trim() || '';
 
-    handleGoogleAuth(fullName, phone);
+    if (fullName.length < 2) {
+      Toast.show('Please enter your full name to continue', 'info');
+      nameInput?.focus();
+      return;
+    }
+
+    const btnComplete = document.getElementById('btn-complete-profile');
+    if (btnComplete) {
+      btnComplete.disabled = true;
+      btnComplete.innerHTML = `<span>Creating your profile...</span>`;
+    }
+
+    try {
+      const generatedEmail = `${fullName.toLowerCase().replace(/[^a-z0-9]/g, '')}_${Date.now().toString().slice(-4)}@mobinx.app`;
+      const user = await authService.loginWithGoogle(
+        generatedEmail,
+        fullName,
+        phone,
+        '',
+        'assets/images/avatar_user.jpg',
+        'uid_' + Date.now()
+      );
+      Toast.show(`🎉 Welcome to Mobin X, ${user.username}!`, 'success');
+      stateManager.navigate('home');
+    } catch (e) {
+      Toast.show('Failed to complete profile. Please try again.', 'danger');
+      if (btnComplete) {
+        btnComplete.disabled = false;
+        btnComplete.innerHTML = `<span>Complete Your Profile</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>`;
+      }
+    }
   });
+
 
   // Dynamic 3-step indicator progress in Google Setup
   const syncGoogleStepProgress = () => {
