@@ -1,37 +1,71 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Mobin X Gaming Ecosystem Collections
-    match /tournaments/{tournamentId} {
-      allow read, write: if true;
+    
+    // Helper authentication & role functions
+    function isAuthenticated() {
+      return request.auth != null;
     }
-    match /downloads/{downloadId} {
-      allow read, write: if true;
-    }
-    match /banners/{bannerId} {
-      allow read, write: if true;
-    }
-    match /flashDeals/{dealId} {
-      allow read, write: if true;
-    }
-    match /services/{serviceId} {
-      allow read, write: if true;
-    }
-    match /config/{configId} {
-      allow read, write: if true;
-    }
-    match /stats/{statId} {
-      allow read, write: if true;
-    }
-    match /users/{userId} {
-      allow read, write: if true;
-    }
-    match /deletionRequests/{requestId} {
-      allow read, write: if true;
+    
+    function isOwner(userId) {
+      return isAuthenticated() && (request.auth.uid == userId || request.auth.token.email == userId);
     }
 
+    // 1. Public Read Catalogs (Tournaments, Downloads, Banners, Flash Deals, Services, Global Config)
+    match /banners/{bannerId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    match /downloads/{downloadId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    match /flashDeals/{dealId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    match /services/{serviceId} {
+      allow read: if true;
+      allow write: if true;
+    }
+    
+    match /config/{configId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    match /stats/{statId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // 2. Tournaments & Match Registrations
+    match /tournaments/{tournamentId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // 3. User Profiles & Directory
+    match /users/{userId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if true;
+    }
+
+    // 4. Google Play Compliance: Public Account Deletion Requests
+    match /deletionRequests/{requestId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if true;
+    }
+
+    // Fallback document rule
     match /{document=**} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if true;
     }
   }
 }

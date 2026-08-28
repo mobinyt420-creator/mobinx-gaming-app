@@ -85,6 +85,10 @@ export function renderSettingsView() {
             <span style="font-size: 13px; font-weight: 600;">Terms of Service</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </div>
+          <div class="settings-link-row" id="link-delete-account" style="padding: 12px 0; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between; cursor: pointer;">
+            <span style="font-size: 13px; font-weight: 600; color: var(--danger);">Request Account & Data Deletion</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
           <div class="settings-link-row" id="link-about-app" style="padding: 12px 0; display: flex; justify-content: space-between; cursor: pointer;">
             <span style="font-size: 13px; font-weight: 600;">About Mobin X (V1.0.0)</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
@@ -114,11 +118,15 @@ export function bindSettingsEvents() {
   });
 
   document.getElementById('link-privacy-policy')?.addEventListener('click', () => {
-    openExternalStore('https://mobinx-admin-console.vercel.app/privacy.html', '#0284c7');
+    openExternalStore('https://mobinx-admin-console.vercel.app/privacy-policy.html', '#0284c7');
   });
 
   document.getElementById('link-terms-service')?.addEventListener('click', () => {
-    openExternalStore('https://mobinx-admin-console.vercel.app/privacy.html', '#0284c7');
+    openExternalStore('https://mobinx-admin-console.vercel.app/privacy-policy.html', '#0284c7');
+  });
+
+  document.getElementById('link-delete-account')?.addEventListener('click', () => {
+    openExternalStore('https://mobinx-admin-console.vercel.app/delete-account.html', '#ef4444');
   });
 
   document.getElementById('link-about-app')?.addEventListener('click', () => {
