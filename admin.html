@@ -92,6 +92,59 @@ body {
   background: var(--primary);
 }
 
+/* Custom Toggle Switch Styles */
+.custom-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 26px;
+  cursor: pointer;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.custom-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.custom-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #334155;
+  transition: background-color 0.25s ease, box-shadow 0.25s ease;
+  border-radius: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.custom-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 2px;
+  background-color: #ffffff;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 50%;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35);
+}
+
+.custom-switch input:checked + .custom-slider {
+  background-color: #10b981;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+
+.custom-switch input:checked + .custom-slider:before {
+  transform: translateX(22px);
+}
+
 /* Master Admin App Layout */
 .admin-layout {
   display: flex;
@@ -3101,9 +3154,9 @@ function renderAuthSettings() {
                 <div style="font-size: 13px; font-weight: 700;">Authentication System</div>
                 <div style="font-size: 11.5px; color: var(--text-muted);">Master switch for entire user login & registration subsystem</div>
               </div>
-              <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+              <label class="custom-switch">
                 <input type="checkbox" id="auth-adm-system" ${s.authSystemEnabled !== false ? 'checked' : ''}>
-                <span class="slider round" style="position: absolute; cursor: pointer; inset: 0; background-color: ${s.authSystemEnabled !== false ? '#10b981' : '#cbd5e1'}; border-radius: 24px;"></span>
+                <span class="custom-slider"></span>
               </label>
             </div>
           </div>
@@ -3117,9 +3170,9 @@ function renderAuthSettings() {
                 <div style="font-size: 13px; font-weight: 700;">Google Login</div>
                 <div style="font-size: 11.5px; color: var(--text-muted);">Enable/disable primary Google Authentication</div>
               </div>
-              <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+              <label class="custom-switch">
                 <input type="checkbox" id="auth-adm-google" ${s.googleLoginEnabled !== false ? 'checked' : ''}>
-                <span class="slider round" style="position: absolute; cursor: pointer; inset: 0; background-color: ${s.googleLoginEnabled !== false ? '#10b981' : '#cbd5e1'}; border-radius: 24px;"></span>
+                <span class="custom-slider"></span>
               </label>
             </div>
 
@@ -3128,9 +3181,9 @@ function renderAuthSettings() {
                 <div style="font-size: 13px; font-weight: 700;">Google Phone Verification (OTP)</div>
                 <div style="font-size: 11.5px; color: var(--text-muted);">If OFF, phone number is collected without requiring 6-digit OTP code</div>
               </div>
-              <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+              <label class="custom-switch">
                 <input type="checkbox" id="auth-adm-google-phone-ver" ${s.googlePhoneVerificationEnabled === true ? 'checked' : ''}>
-                <span class="slider round" style="position: absolute; cursor: pointer; inset: 0; background-color: ${s.googlePhoneVerificationEnabled === true ? '#10b981' : '#cbd5e1'}; border-radius: 24px;"></span>
+                <span class="custom-slider"></span>
               </label>
             </div>
           </div>
@@ -3144,9 +3197,9 @@ function renderAuthSettings() {
                 <div style="font-size: 13px; font-weight: 700;">Manual Login</div>
                 <div style="font-size: 11.5px; color: var(--text-muted);">Allow email/password manual login</div>
               </div>
-              <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+              <label class="custom-switch">
                 <input type="checkbox" id="auth-adm-manual-login" ${s.manualLoginEnabled !== false ? 'checked' : ''}>
-                <span class="slider round" style="position: absolute; cursor: pointer; inset: 0; background-color: ${s.manualLoginEnabled !== false ? '#10b981' : '#cbd5e1'}; border-radius: 24px;"></span>
+                <span class="custom-slider"></span>
               </label>
             </div>
 
@@ -3155,9 +3208,9 @@ function renderAuthSettings() {
                 <div style="font-size: 13px; font-weight: 700;">Manual Registration</div>
                 <div style="font-size: 11.5px; color: var(--text-muted);">Allow creating new accounts with email/password form</div>
               </div>
-              <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+              <label class="custom-switch">
                 <input type="checkbox" id="auth-adm-manual-reg" ${s.manualRegistrationEnabled !== false ? 'checked' : ''}>
-                <span class="slider round" style="position: absolute; cursor: pointer; inset: 0; background-color: ${s.manualRegistrationEnabled !== false ? '#10b981' : '#cbd5e1'}; border-radius: 24px;"></span>
+                <span class="custom-slider"></span>
               </label>
             </div>
 
@@ -3166,9 +3219,9 @@ function renderAuthSettings() {
                 <div style="font-size: 13px; font-weight: 700;">Email Verification</div>
                 <div style="font-size: 11.5px; color: var(--text-muted);">Require email link confirmation</div>
               </div>
-              <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+              <label class="custom-switch">
                 <input type="checkbox" id="auth-adm-email-ver" ${s.manualEmailVerificationEnabled === true ? 'checked' : ''}>
-                <span class="slider round" style="position: absolute; cursor: pointer; inset: 0; background-color: ${s.manualEmailVerificationEnabled === true ? '#10b981' : '#cbd5e1'}; border-radius: 24px;"></span>
+                <span class="custom-slider"></span>
               </label>
             </div>
 
@@ -3177,9 +3230,9 @@ function renderAuthSettings() {
                 <div style="font-size: 13px; font-weight: 700;">Phone Verification (OTP)</div>
                 <div style="font-size: 11.5px; color: var(--text-muted);">Require 6-digit OTP verification code on registration</div>
               </div>
-              <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+              <label class="custom-switch">
                 <input type="checkbox" id="auth-adm-phone-ver" ${s.manualPhoneVerificationEnabled === true ? 'checked' : ''}>
-                <span class="slider round" style="position: absolute; cursor: pointer; inset: 0; background-color: ${s.manualPhoneVerificationEnabled === true ? '#10b981' : '#cbd5e1'}; border-radius: 24px;"></span>
+                <span class="custom-slider"></span>
               </label>
             </div>
           </div>
@@ -4402,9 +4455,8 @@ function bindCurrentTabEvents() {
     });
   });
 
-  // Auth Settings: Save form
-  document.getElementById('form-auth-settings')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
+  // Auth Settings: Live auto-save on toggle change + form submit
+  const saveAuthSettings = async (showToastNotice = true) => {
     const authSystemEnabled = document.getElementById('auth-adm-system')?.checked ?? true;
     const googleLoginEnabled = document.getElementById('auth-adm-google')?.checked ?? true;
     const googlePhoneVerificationEnabled = document.getElementById('auth-adm-google-phone-ver')?.checked ?? false;
@@ -4425,11 +4477,24 @@ function bindCurrentTabEvents() {
     };
 
     setStorage('mobinx_auth_settings', state.authSettings);
-    showToast('🔐 Authentication switches saved and broadcasted!', 'success');
-    renderCurrentTab();
+    if (showToastNotice) {
+      showToast('🔐 Auth switch saved & broadcasted live!', 'success');
+    }
 
     await syncToFirestore('config', 'auth_settings', state.authSettings);
     broadcastSync('AUTH_SETTINGS_UPDATED', state.authSettings);
+  };
+
+  ['auth-adm-system', 'auth-adm-google', 'auth-adm-google-phone-ver', 'auth-adm-manual-login', 'auth-adm-manual-reg', 'auth-adm-email-ver', 'auth-adm-phone-ver'].forEach(switchId => {
+    document.getElementById(switchId)?.addEventListener('change', () => {
+      saveAuthSettings(true);
+    });
+  });
+
+  document.getElementById('form-auth-settings')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    await saveAuthSettings(true);
+    showToast('🔐 All authentication settings saved successfully!', 'success');
   });
 
   // Dynamic Products: Add form
