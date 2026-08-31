@@ -244,10 +244,10 @@ public class MainActivity extends BridgeActivity {
                 if (e.getStatusCode() == 12501) {
                     notifyJsAuthError("Google Sign-In was cancelled");
                 } else {
-                    notifyJsAuthError("Sign-in error: " + e.getStatusCode());
+                    notifyJsAuthError("Google Sign-In notice (" + e.getStatusCode() + ")");
                 }
             } catch (Exception e) {
-                notifyJsAuthError("Error: " + e.getMessage());
+                notifyJsAuthError("Notice: " + e.getMessage());
             }
         }
     }

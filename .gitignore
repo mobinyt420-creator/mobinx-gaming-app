@@ -15,3 +15,8 @@ android/notifications/
 android/android/
 .gradle/
 .vscode/
+.idea/
+*.apk
+*.aab
+*.idsig
+*.jks

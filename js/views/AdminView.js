@@ -20,6 +20,7 @@ let editingFlashDeal = null;
 let editingService = null;
 let editingDownload = null;
 let editingBanner = null;
+let editingProduct = null;
 
 export function renderAdminView() {
   const user = authService.getCurrentUser();
@@ -30,6 +31,8 @@ export function renderAdminView() {
   const flashDeals = authService.getFlashDeals();
   const popularServices = authService.getPopularServices();
   const heroBanners = authService.getHeroBanners();
+  const authSettings = authService.getAuthSettings();
+  const dynamicProducts = authService.getDynamicProducts();
 
   if (!authService.isAdmin()) {
     return `
@@ -68,6 +71,8 @@ export function renderAdminView() {
 
   const tabs = [
     { id: 'dashboard', label: '📊 Dashboard', badge: 'Live' },
+    { id: 'auth', label: '🔐 Authentication', badge: 'Control' },
+    { id: 'products', label: '🛍️ Products', badge: `${dynamicProducts.length}` },
     { id: 'users', label: '👥 Users', badge: `${totalUsersCount}` },
     { id: 'tournaments', label: '🏆 Tournaments', badge: `${totalTournaments}` },
     { id: 'downloads', label: '📥 Downloads', badge: `${downloads.length}` },
@@ -115,7 +120,7 @@ export function renderAdminView() {
 
       <!-- Tab Content Area -->
       <div class="admin-content-body" style="padding: 14px;">
-        ${renderActiveAdminTabContent(activeAdminTab, { user, urls, tournaments, downloads, allUsers, flashDeals, popularServices, heroBanners, totalUsersCount, activeTodayCount, monthlyUsersCount, totalTournaments, totalParticipants, totalWalletSum, downloadMetrics, userMetrics, homePopup, appUpdateConfig })}
+        ${renderActiveAdminTabContent(activeAdminTab, { user, urls, tournaments, downloads, allUsers, flashDeals, popularServices, heroBanners, authSettings, dynamicProducts, totalUsersCount, activeTodayCount, monthlyUsersCount, totalTournaments, totalParticipants, totalWalletSum, downloadMetrics, userMetrics, homePopup, appUpdateConfig })}
       </div>
     </div>
   `;
@@ -125,6 +130,10 @@ function renderActiveAdminTabContent(tab, data) {
   switch (tab) {
     case 'dashboard':
       return renderDashboardTab(data);
+    case 'auth':
+      return renderAuthControlTab(data);
+    case 'products':
+      return renderProductsTab(data);
     case 'users':
       return renderUsersTab(data);
     case 'tournaments':
@@ -1155,6 +1164,227 @@ function renderUrlsTab(data) {
 }
 
 // ==========================================
+// 10. AUTHENTICATION CONTROL CENTER TAB
+// ==========================================
+function renderAuthControlTab(data) {
+  const s = data.authSettings || authService.getAuthSettings();
+
+  return `
+    <div class="admin-tab-pane">
+      <div style="background: #ffffff; padding: 18px; border-radius: 14px; border: 1.5px solid #e2e8f0; margin-bottom: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
+          <div>
+            <h3 style="font-size: 15px; font-weight: 800; color: #0f172a; margin: 0;">🔐 Authentication Control Center</h3>
+            <p style="font-size: 11.5px; color: #64748b; margin: 2px 0 0 0;">Real-time remote switches for login, registration & verification systems</p>
+          </div>
+          <span style="background: #e0f2fe; color: #0284c7; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 20px;">
+            Live Sync
+          </span>
+        </div>
+
+        <!-- 1. GENERAL MASTER SWITCH -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 14px;">
+          <div style="font-size: 13px; font-weight: 800; color: #0f172a; margin-bottom: 8px;">1. GENERAL</div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 12.5px; font-weight: 700; color: #1e293b;">Authentication System</div>
+              <div style="font-size: 11px; color: #64748b;">Master switch for all login & registration</div>
+            </div>
+            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+              <input type="checkbox" id="auth-sw-system" ${s.authSystemEnabled !== false ? 'checked' : ''} style="opacity: 0; width: 0; height: 0;">
+              <span class="slider round" style="position: absolute; cursor: pointer; inset: 0; background-color: ${s.authSystemEnabled !== false ? '#10b981' : '#cbd5e1'}; transition: .3s; border-radius: 24px;"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 2. GOOGLE LOGIN -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 14px;">
+          <div style="font-size: 13px; font-weight: 800; color: #0f172a; margin-bottom: 10px;">2. GOOGLE LOGIN</div>
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #e2e8f0;">
+            <div>
+              <div style="font-size: 12.5px; font-weight: 700; color: #1e293b;">Google Login</div>
+              <div style="font-size: 11px; color: #64748b;">Primary one-tap Google authentication</div>
+            </div>
+            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+              <input type="checkbox" id="auth-sw-google" ${s.googleLoginEnabled !== false ? 'checked' : ''} style="opacity: 0; width: 0; height: 0;">
+              <span class="slider round" style="position: absolute; cursor: pointer; inset: 0; background-color: ${s.googleLoginEnabled !== false ? '#10b981' : '#cbd5e1'}; transition: .3s; border-radius: 24px;"></span>
+            </label>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 12.5px; font-weight: 700; color: #1e293b;">Google Phone Verification (OTP)</div>
+              <div style="font-size: 11px; color: #64748b;">If OFF, phone number is collected without requiring OTP</div>
+            </div>
+            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+              <input type="checkbox" id="auth-sw-google-phone-ver" ${s.googlePhoneVerificationEnabled === true ? 'checked' : ''} style="opacity: 0; width: 0; height: 0;">
+              <span class="slider round" style="position: absolute; cursor: pointer; inset: 0; background-color: ${s.googlePhoneVerificationEnabled === true ? '#10b981' : '#cbd5e1'}; transition: .3s; border-radius: 24px;"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 3. MANUAL AUTHENTICATION -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 16px;">
+          <div style="font-size: 13px; font-weight: 800; color: #0f172a; margin-bottom: 10px;">3. MANUAL AUTHENTICATION</div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #e2e8f0;">
+            <div>
+              <div style="font-size: 12.5px; font-weight: 700; color: #1e293b;">Manual Login (Email/Password)</div>
+              <div style="font-size: 11px; color: #64748b;">Fallback login with email and password</div>
+            </div>
+            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+              <input type="checkbox" id="auth-sw-manual-login" ${s.manualLoginEnabled !== false ? 'checked' : ''} style="opacity: 0; width: 0; height: 0;">
+              <span class="slider round" style="position: absolute; cursor: pointer; inset: 0; background-color: ${s.manualLoginEnabled !== false ? '#10b981' : '#cbd5e1'}; transition: .3s; border-radius: 24px;"></span>
+            </label>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #e2e8f0;">
+            <div>
+              <div style="font-size: 12.5px; font-weight: 700; color: #1e293b;">Manual Registration</div>
+              <div style="font-size: 11px; color: #64748b;">Allow new accounts via manual form</div>
+            </div>
+            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+              <input type="checkbox" id="auth-sw-manual-reg" ${s.manualRegistrationEnabled !== false ? 'checked' : ''} style="opacity: 0; width: 0; height: 0;">
+              <span class="slider round" style="position: absolute; cursor: pointer; inset: 0; background-color: ${s.manualRegistrationEnabled !== false ? '#10b981' : '#cbd5e1'}; transition: .3s; border-radius: 24px;"></span>
+            </label>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #e2e8f0;">
+            <div>
+              <div style="font-size: 12.5px; font-weight: 700; color: #1e293b;">Email Verification</div>
+              <div style="font-size: 11px; color: #64748b;">Send Firebase verification link to email</div>
+            </div>
+            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+              <input type="checkbox" id="auth-sw-email-ver" ${s.manualEmailVerificationEnabled === true ? 'checked' : ''} style="opacity: 0; width: 0; height: 0;">
+              <span class="slider round" style="position: absolute; cursor: pointer; inset: 0; background-color: ${s.manualEmailVerificationEnabled === true ? '#10b981' : '#cbd5e1'}; transition: .3s; border-radius: 24px;"></span>
+            </label>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 12.5px; font-weight: 700; color: #1e293b;">Phone Verification (OTP)</div>
+              <div style="font-size: 11px; color: #64748b;">Require 6-digit OTP code on manual registration</div>
+            </div>
+            <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+              <input type="checkbox" id="auth-sw-phone-ver" ${s.manualPhoneVerificationEnabled === true ? 'checked' : ''} style="opacity: 0; width: 0; height: 0;">
+              <span class="slider round" style="position: absolute; cursor: pointer; inset: 0; background-color: ${s.manualPhoneVerificationEnabled === true ? '#10b981' : '#cbd5e1'}; transition: .3s; border-radius: 24px;"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- SAVE BUTTON -->
+        <button id="btn-save-auth-settings" style="width: 100%; height: 46px; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: #ffffff; font-weight: 800; font-size: 13.5px; border: none; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);">
+          💾 Save & Deploy Authentication Settings
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+// ==========================================
+// 11. DYNAMIC PRODUCTS TAB
+// ==========================================
+function renderProductsTab(data) {
+  const products = data.dynamicProducts || authService.getDynamicProducts();
+
+  return `
+    <div class="admin-tab-pane">
+      
+      <!-- Add / Edit Dynamic Product Form -->
+      <div style="background: #ffffff; padding: 16px; border-radius: 14px; border: 1.5px solid #e2e8f0; margin-bottom: 16px;">
+        <div style="font-size: 14px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">
+          ${editingProduct ? '✏️ Edit Dynamic Product / External Service' : '➕ Add Dynamic Product / External Service'}
+        </div>
+        <p style="font-size: 11px; color: #64748b; margin: 0 0 12px 0;">Add external websites, gaming services, or partner products without rebuilding the app</p>
+
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px;">
+          <div>
+            <label style="font-size: 11px; font-weight: 700; color: #475569;">Product Name *</label>
+            <input type="text" id="prod-name-input" value="${editingProduct?.name || ''}" placeholder="e.g. Gaming Top Up / Partner Store" style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px; margin-top: 2px;" />
+          </div>
+
+          <div>
+            <label style="font-size: 11px; font-weight: 700; color: #475569;">Product Image URL *</label>
+            <div style="display: flex; gap: 6px; margin-top: 2px;">
+              <input type="text" id="prod-img-input" value="${editingProduct?.image || ''}" placeholder="Image link or upload file" style="flex: 1; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px;" />
+              <label for="prod-file-input" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 8px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; color: #475569; cursor: pointer; white-space: nowrap;">
+                📁 Upload
+              </label>
+              <input type="file" id="prod-file-input" accept="image/*" style="display: none;" />
+            </div>
+          </div>
+
+          <div>
+            <label style="font-size: 11px; font-weight: 700; color: #475569;">Website URL *</label>
+            <input type="text" id="prod-url-input" value="${editingProduct?.url || ''}" placeholder="https://example.com" style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px; margin-top: 2px;" />
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <label style="font-size: 11px; font-weight: 700; color: #475569;">Status</label>
+              <select id="prod-status-input" style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px; margin-top: 2px;">
+                <option value="ON" ${editingProduct?.enabled !== false ? 'selected' : ''}>ON (Active)</option>
+                <option value="OFF" ${editingProduct?.enabled === false ? 'selected' : ''}>OFF (Disabled)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size: 11px; font-weight: 700; color: #475569;">Sort Order</label>
+              <input type="number" id="prod-sort-input" value="${editingProduct?.sortOrder || (products.length + 1)}" style="width: 100%; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12px; margin-top: 2px;" />
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          ${editingProduct ? `
+            <button id="btn-cancel-edit-prod" style="flex: 1; background: #e2e8f0; color: #475569; font-weight: 700; padding: 10px; border-radius: 8px; border: none; font-size: 12px; cursor: pointer;">
+              Cancel
+            </button>
+          ` : ''}
+          <button id="btn-save-prod-item" style="flex: 2; background: #0284c7; color: #ffffff; font-weight: 800; padding: 10px; border-radius: 8px; border: none; font-size: 12.5px; cursor: pointer; box-shadow: 0 4px 10px rgba(2,132,199,0.3);">
+            ${editingProduct ? '💾 Update Product' : '➕ Add & Publish Product'}
+          </button>
+        </div>
+      </div>
+
+      <!-- Products List -->
+      <div style="background: #ffffff; padding: 16px; border-radius: 14px; border: 1.5px solid #e2e8f0;">
+        <div style="font-size: 13.5px; font-weight: 800; color: #0f172a; margin-bottom: 10px;">📦 Active Dynamic Products (${products.length})</div>
+        ${products.length === 0 ? `
+          <div style="text-align: center; padding: 24px; color: #94a3b8; font-size: 12px;">No dynamic products added yet. Use the form above to add products.</div>
+        ` : `
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            ${products.map(p => `
+              <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <img src="${p.image}" alt="${p.name}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover; border: 1px solid #e2e8f0;" onerror="this.src='assets/images/service_topup.jpg';" />
+                  <div>
+                    <div style="font-size: 12.5px; font-weight: 800; color: #0f172a;">${p.name}</div>
+                    <div style="font-size: 10.5px; color: #64748b;">${p.url}</div>
+                    <span style="font-size: 9.5px; font-weight: 700; padding: 1px 6px; border-radius: 6px; ${p.enabled !== false ? 'background: #dcfce7; color: #059669;' : 'background: #fee2e2; color: #dc2626;'}">
+                      ${p.enabled !== false ? '● Active' : '● Disabled'}
+                    </span>
+                  </div>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                  <button class="btn-edit-prod" data-prod-id="${p.id}" style="background: #e0f2fe; color: #0284c7; border: none; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer;">
+                    Edit
+                  </button>
+                  <button class="btn-delete-prod" data-prod-id="${p.id}" style="background: #fee2e2; color: #dc2626; border: none; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer;">
+                    Delete
+                  </button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `}
+      </div>
+
+    </div>
+  `;
+}
+
+// ==========================================
 // EVENT BINDINGS
 // ==========================================
 export function bindAdminEvents() {
@@ -1758,5 +1988,117 @@ export function bindAdminEvents() {
     authService.updateUrls({ topup, shop, telegram });
     Toast.show('System URLs updated successfully!', 'success');
     reRender();
+  });
+
+  // --- AUTHENTICATION CONTROL TAB EVENTS ---
+  document.getElementById('btn-save-auth-settings')?.addEventListener('click', async () => {
+    const authSystemEnabled = document.getElementById('auth-sw-system')?.checked ?? true;
+    const googleLoginEnabled = document.getElementById('auth-sw-google')?.checked ?? true;
+    const googlePhoneVerificationEnabled = document.getElementById('auth-sw-google-phone-ver')?.checked ?? false;
+    const manualLoginEnabled = document.getElementById('auth-sw-manual-login')?.checked ?? true;
+    const manualRegistrationEnabled = document.getElementById('auth-sw-manual-reg')?.checked ?? true;
+    const manualEmailVerificationEnabled = document.getElementById('auth-sw-email-ver')?.checked ?? false;
+    const manualPhoneVerificationEnabled = document.getElementById('auth-sw-phone-ver')?.checked ?? false;
+
+    const newSettings = {
+      authSystemEnabled,
+      googleLoginEnabled,
+      googlePhoneVerificationEnabled,
+      manualLoginEnabled,
+      manualRegistrationEnabled,
+      manualEmailVerificationEnabled,
+      manualPhoneVerificationEnabled,
+      topUpEnabled: true
+    };
+
+    await authService.saveAuthSettings(newSettings);
+    Toast.show('🔐 Authentication switches saved and broadcasted live!', 'success');
+    reRender();
+  });
+
+  // --- DYNAMIC PRODUCTS TAB EVENTS ---
+  document.getElementById('prod-file-input')?.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      Toast.show('Processing image...', 'info');
+      try {
+        const { uploadImageToFreeCdn } = await import('../services/imageUploadService.js');
+        const cdnUrl = await uploadImageToFreeCdn(file);
+        const imgInput = document.getElementById('prod-img-input');
+        if (imgInput && cdnUrl) {
+          imgInput.value = cdnUrl;
+          Toast.show('Product image uploaded!', 'success');
+        }
+      } catch (err) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const dataUrl = event.target.result;
+          const imgInput = document.getElementById('prod-img-input');
+          if (imgInput) imgInput.value = dataUrl;
+          Toast.show('Product image loaded!', 'success');
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+  });
+
+  document.getElementById('btn-save-prod-item')?.addEventListener('click', async () => {
+    const name = document.getElementById('prod-name-input')?.value.trim();
+    const image = document.getElementById('prod-img-input')?.value.trim();
+    const url = document.getElementById('prod-url-input')?.value.trim();
+    const enabled = document.getElementById('prod-status-input')?.value === 'ON';
+    const sortOrder = parseInt(document.getElementById('prod-sort-input')?.value, 10) || 1;
+
+    if (!name || !url) {
+      Toast.show('Please enter product name and website URL', 'warning');
+      return;
+    }
+
+    if (editingProduct) {
+      await authService.updateDynamicProduct(editingProduct.id, {
+        name,
+        image: image || 'assets/images/service_topup.jpg',
+        url,
+        enabled,
+        sortOrder
+      });
+      Toast.show(`Product "${name}" updated successfully!`, 'success');
+      editingProduct = null;
+    } else {
+      await authService.addDynamicProduct({
+        name,
+        image: image || 'assets/images/service_topup.jpg',
+        url,
+        enabled,
+        sortOrder
+      });
+      Toast.show(`Dynamic product "${name}" published!`, 'success');
+    }
+    reRender();
+  });
+
+  document.getElementById('btn-cancel-edit-prod')?.addEventListener('click', () => {
+    editingProduct = null;
+    reRender();
+  });
+
+  document.querySelectorAll('.btn-edit-prod').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const pId = e.currentTarget.getAttribute('data-prod-id');
+      const prods = authService.getDynamicProducts();
+      editingProduct = prods.find(p => p.id === pId);
+      reRender();
+    });
+  });
+
+  document.querySelectorAll('.btn-delete-prod').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const pId = e.currentTarget.getAttribute('data-prod-id');
+      if (confirm('Delete this dynamic product?')) {
+        await authService.deleteDynamicProduct(pId);
+        Toast.show('Product removed', 'info');
+        reRender();
+      }
+    });
   });
 }

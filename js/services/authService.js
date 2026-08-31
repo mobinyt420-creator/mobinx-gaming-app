@@ -7,10 +7,13 @@ export const MASTER_ADMIN_EMAIL = "mobinyt420@gmail.com";
 
 // Default Authentication Feature Flags
 export const defaultAuthSettings = {
-  googleSignUpEnabled: true,
-  manualSignUpEnabled: true,
+  authSystemEnabled: true,
   googleLoginEnabled: true,
+  googlePhoneVerificationEnabled: false,
   manualLoginEnabled: true,
+  manualRegistrationEnabled: true,
+  manualEmailVerificationEnabled: false,
+  manualPhoneVerificationEnabled: false,
   topUpEnabled: true
 };
 
@@ -25,6 +28,7 @@ class AuthService {
     const savedUpdate = hasStorage ? localStorage.getItem('mobinx_app_update') : null;
     const savedDlLogs = hasStorage ? localStorage.getItem('mobinx_download_logs') : null;
     const savedAuthSettings = hasStorage ? localStorage.getItem('mobinx_auth_settings') : null;
+    const savedDynamicProducts = hasStorage ? localStorage.getItem('mobinx_dynamic_products') : null;
 
     // Load registered users (clean, zero fake dummy users)
     const rawUsers = savedUsers ? JSON.parse(savedUsers) : [];
@@ -60,6 +64,7 @@ class AuthService {
     this.appUpdateConfig = savedUpdate ? JSON.parse(savedUpdate) : { ...defaultAppUpdateConfig };
     this.downloadLogs = savedDlLogs ? JSON.parse(savedDlLogs) : [];
     this.authSettings = savedAuthSettings ? JSON.parse(savedAuthSettings) : { ...defaultAuthSettings };
+    this.dynamicProducts = savedDynamicProducts ? JSON.parse(savedDynamicProducts) : [];
 
     // Check admin status
     if (this.user && this.user.email) {
@@ -80,8 +85,22 @@ class AuthService {
       setTimeout(() => this.syncUserToFirestore(this.user), 1000);
     }
 
-    // Subscribe to Auth Settings from Cloud Firestore
+    // Subscribe to Auth Settings & Dynamic Products from Cloud Firestore
     this.initAuthSettingsListener();
+    this.initDynamicProductsListener();
+  }
+
+  initDynamicProductsListener() {
+    try {
+      firebaseService.subscribeDocument('config', 'dynamic_products', (data) => {
+        if (data && Array.isArray(data.list)) {
+          this.dynamicProducts = data.list;
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('mobinx_dynamic_products', JSON.stringify(this.dynamicProducts));
+          }
+        }
+      });
+    } catch(e) {}
   }
 
   initAuthSettingsListener() {
@@ -124,26 +143,26 @@ class AuthService {
     if (user.email.toLowerCase() === 'guest@mobinx.app') return; // Do not write guest placeholders to cloud!
     try {
       const cleanEmail = user.email.toLowerCase().trim();
-      // Primary UID document ID with legacy fallback
       const docId = user.uid ? user.uid : `user_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
       const userData = {
         id: docId,
         uid: user.uid || docId,
-        userId: user.userId || user.playerNumber || 1,
-        playerNumber: user.playerNumber || user.userId || 1,
-        username: user.username || user.fullName || 'Player',
-        fullName: user.fullName || user.username || 'Player',
+        name: user.fullName || user.username || user.name || 'Player',
+        fullName: user.fullName || user.username || user.name || 'Player',
+        username: user.username || user.fullName || user.name || 'Player',
         email: cleanEmail,
+        emailVerified: typeof user.emailVerified === 'boolean' ? user.emailVerified : false,
         phone: user.phone || user.phoneNumber || '',
         phoneNumber: user.phoneNumber || user.phone || '',
-        ffUid: user.ffUid || '',
+        phoneVerified: typeof user.phoneVerified === 'boolean' ? user.phoneVerified : false,
         authProvider: user.authProvider || 'google',
         role: user.role || (user.isAdmin ? "System Administrator (Admin)" : "VIP Pro Member"),
         isAdmin: !!user.isAdmin,
         status: user.status || "Active",
         walletBalance: user.walletBalance || 0,
+        createdAt: user.createdAt || user.registeredAtIso || new Date().toISOString(),
         registeredDate: user.registeredDate || new Date().toISOString().split('T')[0],
-        registeredAtIso: user.registeredAtIso || new Date().toISOString(),
+        registeredAtIso: user.registeredAtIso || user.createdAt || new Date().toISOString(),
         lastLoginAt: new Date().toISOString(),
         platform: typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.includes('Android') ? 'Android Mobile' : 'Web Device',
         ip: 'Active Online'
@@ -174,7 +193,7 @@ class AuthService {
   }
 
   // --- MANUAL REGISTRATION WITH EMAIL & PASSWORD ---
-  async registerWithEmailPassword(fullName, email, phone, password) {
+  async registerWithEmailPassword(fullName, email, phone, password, options = {}) {
     const cleanEmail = (email || '').toLowerCase().trim();
     const cleanName = (fullName || cleanEmail.split('@')[0] || 'Player').trim();
     const cleanPhone = (phone || '').replace(/[^0-9]/g, '');
@@ -191,14 +210,17 @@ class AuthService {
       uid: uid,
       userId: newPlayerNum,
       playerNumber: newPlayerNum,
+      name: cleanName,
       username: cleanName,
       fullName: cleanName,
       email: cleanEmail,
+      emailVerified: !!options.emailVerified,
       phone: cleanPhone,
       phoneNumber: cleanPhone,
+      phoneVerified: !!options.phoneVerified,
       ffUid: '',
       avatar: 'assets/images/avatar_user.jpg',
-      authProvider: 'password',
+      authProvider: 'manual',
       role: isAdmin ? "System Administrator (Admin)" : "VIP Pro Member",
       isAdmin: isAdmin,
       status: "Active",
@@ -210,6 +232,7 @@ class AuthService {
       },
       referralEarnings: 0,
       walletBalance: 0,
+      createdAt: new Date().toISOString(),
       registeredDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
       registeredAtIso: new Date().toISOString(),
       lastLoginAt: new Date().toISOString(),
@@ -254,20 +277,24 @@ class AuthService {
         uid: uid,
         userId: newPlayerNum,
         playerNumber: newPlayerNum,
+        name: firebaseUser.displayName || cleanEmail.split('@')[0] || 'Player',
         username: firebaseUser.displayName || cleanEmail.split('@')[0] || 'Player',
         fullName: firebaseUser.displayName || cleanEmail.split('@')[0] || 'Player',
         email: cleanEmail,
+        emailVerified: firebaseUser.emailVerified || false,
         phone: '',
         phoneNumber: '',
+        phoneVerified: false,
         ffUid: '',
         avatar: firebaseUser.photoURL || 'assets/images/avatar_user.jpg',
-        authProvider: 'password',
+        authProvider: 'manual',
         role: isAdmin ? "System Administrator (Admin)" : "VIP Pro Member",
         isAdmin: isAdmin,
         status: "Active",
         stats: { tournamentsJoined: 0, totalDownloads: 0, savedSensitivities: 0, referralsCount: 0 },
         referralEarnings: 0,
         walletBalance: 0,
+        createdAt: new Date().toISOString(),
         registeredDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
         registeredAtIso: new Date().toISOString(),
         lastLoginAt: new Date().toISOString()
@@ -275,6 +302,7 @@ class AuthService {
       this.registeredUsers.unshift(existing);
     } else {
       existing.uid = uid;
+      if (firebaseUser.emailVerified) existing.emailVerified = true;
       existing.lastLoginAt = new Date().toISOString();
       if (isAdmin) {
         existing.isAdmin = true;
@@ -300,7 +328,7 @@ class AuthService {
   }
 
   // --- GOOGLE SIGN IN & LOGIN ---
-  async loginWithGoogle(email, username, phone = '', ffUid = '', avatarUrl = '', uid = null) {
+  async loginWithGoogle(email, username, phone = '', ffUid = '', avatarUrl = '', uid = null, options = {}) {
     const cleanEmail = (email || '').toLowerCase().trim();
     const cleanUsername = (username || cleanEmail.split('@')[0] || 'Player').trim();
     const isAdmin = cleanEmail === MASTER_ADMIN_EMAIL.toLowerCase() || cleanEmail === 'mrmobin1m@gmail.com';
@@ -316,11 +344,14 @@ class AuthService {
         uid: finalUid,
         userId: newPlayerNum,
         playerNumber: newPlayerNum,
+        name: cleanUsername,
         username: cleanUsername,
         fullName: cleanUsername,
         email: cleanEmail,
+        emailVerified: true, // Google accounts come pre-verified from Google identity
         phone: phone || '',
         phoneNumber: phone || '',
+        phoneVerified: !!options.phoneVerified,
         ffUid: ffUid || '',
         avatar: finalAvatar,
         authProvider: 'google',
@@ -335,6 +366,7 @@ class AuthService {
         },
         referralEarnings: 0,
         walletBalance: 0,
+        createdAt: new Date().toISOString(),
         registeredDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }),
         registeredAtIso: new Date().toISOString(),
         lastLoginAt: new Date().toISOString(),
@@ -345,10 +377,17 @@ class AuthService {
       this.saveUsersDatabase();
     } else {
       existing.uid = finalUid;
-      if (phone) { existing.phone = phone; existing.phoneNumber = phone; }
+      if (phone) { 
+        existing.phone = phone; 
+        existing.phoneNumber = phone; 
+      }
+      if (typeof options.phoneVerified === 'boolean') {
+        existing.phoneVerified = options.phoneVerified;
+      }
       if (ffUid) existing.ffUid = ffUid;
-      if (cleanUsername && cleanUsername !== 'Player') { existing.username = cleanUsername; existing.fullName = cleanUsername; }
+      if (cleanUsername && cleanUsername !== 'Player') { existing.username = cleanUsername; existing.fullName = cleanUsername; existing.name = cleanUsername; }
       if (avatarUrl) existing.avatar = avatarUrl;
+      existing.emailVerified = true;
       if (isAdmin) { existing.isAdmin = true; existing.role = "System Administrator (Admin)"; }
       existing.stats = existing.stats || {
         tournamentsJoined: 0,
@@ -637,6 +676,73 @@ class AuthService {
     services = services.filter(s => s.id !== id);
     this.savePopularServices(services);
     return services;
+  }
+
+  // --- DYNAMIC PRODUCTS / EXTERNAL SERVICES MANAGEMENT ---
+  getDynamicProducts() {
+    if (typeof localStorage !== 'undefined') {
+      const stored = localStorage.getItem('mobinx_dynamic_products');
+      if (stored) {
+        try { return JSON.parse(stored); } catch (e) {}
+      }
+    }
+    return this.dynamicProducts || [];
+  }
+
+  saveDynamicProducts(products) {
+    this.dynamicProducts = products || [];
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('mobinx_dynamic_products', JSON.stringify(this.dynamicProducts));
+    }
+    try {
+      firebaseService.saveToFirestore('config', 'dynamic_products', { list: this.dynamicProducts });
+      firebaseService.broadcastChange('DYNAMIC_PRODUCTS_UPDATED', this.dynamicProducts);
+    } catch(e) {}
+  }
+
+  addDynamicProduct(prod) {
+    const products = this.getDynamicProducts();
+    const newProd = {
+      id: `prod-${Date.now()}`,
+      name: prod.name || prod.title || 'New Product',
+      title: prod.name || prod.title || 'New Product',
+      image: prod.image || 'assets/images/service_topup.jpg',
+      url: prod.url || prod.websiteUrl || 'https://noobtopup.com/',
+      websiteUrl: prod.url || prod.websiteUrl || 'https://noobtopup.com/',
+      enabled: prod.enabled !== false,
+      status: prod.enabled !== false ? 'ON' : 'OFF',
+      sortOrder: Number(prod.sortOrder) || (products.length + 1)
+    };
+    products.push(newProd);
+    this.saveDynamicProducts(products);
+    return products;
+  }
+
+  updateDynamicProduct(id, updatedData) {
+    const products = this.getDynamicProducts();
+    const idx = products.findIndex(p => p.id === id);
+    if (idx !== -1) {
+      const isEnabled = typeof updatedData.enabled === 'boolean' ? updatedData.enabled : (updatedData.status === 'ON' || products[idx].enabled);
+      products[idx] = {
+        ...products[idx],
+        ...updatedData,
+        name: updatedData.name || updatedData.title || products[idx].name,
+        title: updatedData.name || updatedData.title || products[idx].title,
+        url: updatedData.url || updatedData.websiteUrl || products[idx].url,
+        websiteUrl: updatedData.url || updatedData.websiteUrl || products[idx].websiteUrl,
+        enabled: isEnabled,
+        status: isEnabled ? 'ON' : 'OFF'
+      };
+      this.saveDynamicProducts(products);
+    }
+    return products;
+  }
+
+  deleteDynamicProduct(id) {
+    let products = this.getDynamicProducts();
+    products = products.filter(p => p.id !== id);
+    this.saveDynamicProducts(products);
+    return products;
   }
 
   // --- HERO BANNERS MANAGEMENT ---

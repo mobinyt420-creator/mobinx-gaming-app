@@ -193,7 +193,7 @@ export function renderProfileView() {
 
 export function bindProfileEvents() {
   document.getElementById('btn-profile-edit-info')?.addEventListener('click', () => {
-    resetOnboardingStep('google-setup');
+    resetOnboardingStep('auth-hub');
     stateManager.navigate('onboarding');
   });
 
@@ -207,7 +207,8 @@ export function bindProfileEvents() {
           googleUser.displayName, 
           '', 
           '', 
-          googleUser.photoURL || ''
+          googleUser.photoURL || '',
+          googleUser.uid
         );
         Toast.show(`Welcome back, ${user.username}!`, 'success');
         stateManager.navigate('profile');

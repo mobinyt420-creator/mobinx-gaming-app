@@ -155,6 +155,15 @@ class RealtimeSyncManager {
       });
       if (unsubAppUpdate) this.unsubscribers.push(unsubAppUpdate);
 
+      // Live Dynamic Products Listener
+      const unsubDynamicProducts = await firebaseService.subscribeDocument('config', 'dynamic_products', (data) => {
+        if (data && Array.isArray(data.products)) {
+          authService.saveDynamicProducts(data.products);
+          this.triggerViewUpdate('home');
+        }
+      });
+      if (unsubDynamicProducts) this.unsubscribers.push(unsubDynamicProducts);
+
     } catch (e) {
       console.warn('Real-time Firestore listener notice:', e.message);
     }
@@ -168,6 +177,13 @@ class RealtimeSyncManager {
         if (payload) {
           authService.saveAuthSettings(payload);
           this.triggerViewUpdate('onboarding');
+          this.triggerViewUpdate('home');
+        }
+        break;
+
+      case 'DYNAMIC_PRODUCTS_UPDATED':
+        if (payload && Array.isArray(payload)) {
+          authService.saveDynamicProducts(payload);
           this.triggerViewUpdate('home');
         }
         break;

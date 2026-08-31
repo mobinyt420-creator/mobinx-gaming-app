@@ -4,13 +4,14 @@ import { openExternalStore } from '../services/browserService.js';
 
 export function renderPopularServicesGrid() {
   const services = authService.getPopularServices();
+  const dynamicProducts = (authService.getDynamicProducts() || []).filter(p => p.enabled !== false);
 
   return `
     <section class="popular-services-section">
       <div class="section-header-row">
         <div class="section-title-clean">
           <span style="font-size: 16px;">👑</span>
-          <span>Popular Services</span>
+          <span>Popular Services & Products</span>
         </div>
         <div class="section-link-all" id="btn-view-all-services" role="button" tabindex="0">
           <span>View All</span>
@@ -29,6 +30,17 @@ export function renderPopularServicesGrid() {
             </div>
           </div>
         `).join('')}
+
+        ${dynamicProducts.map(prod => `
+          <div class="popular-service-card dynamic-product-card" data-external-url="${prod.url}" id="product-card-${prod.id}">
+            <div class="service-image-box">
+              <img src="${prod.image}" alt="${prod.name}" class="service-card-img" onerror="this.src='assets/images/service_topup.jpg';" />
+            </div>
+            <div class="service-label-container">
+              <span class="service-title-uppercase">${prod.name}</span>
+            </div>
+          </div>
+        `).join('')}
       </div>
     </section>
   `;
@@ -37,6 +49,12 @@ export function renderPopularServicesGrid() {
 export function bindPopularServicesEvents() {
   document.querySelectorAll('.popular-service-card').forEach(card => {
     card.addEventListener('click', () => {
+      const extUrl = card.getAttribute('data-external-url');
+      if (extUrl) {
+        openExternalStore(extUrl, '#0284c7');
+        return;
+      }
+
       const route = card.getAttribute('data-service');
       if (route === 'topup') {
         const urls = authService.getUrls();
