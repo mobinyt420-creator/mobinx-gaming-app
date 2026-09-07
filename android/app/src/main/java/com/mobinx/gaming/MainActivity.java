@@ -1,10 +1,12 @@
 package com.mobinx.gaming;
 
+import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
@@ -12,10 +14,13 @@ import android.os.Bundle;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.browser.customtabs.CustomTabColorSchemeParams;
 import androidx.browser.customtabs.CustomTabsIntent;
+import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 import com.getcapacitor.BridgeActivity;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -28,6 +33,7 @@ import org.json.JSONObject;
 public class MainActivity extends BridgeActivity {
     private static final int RC_SIGN_IN = 9001;
     private static final int RC_FALLBACK_SIGN_IN = 9002;
+    private static final int RC_NOTIFICATION_PERMISSION = 9003;
     private GoogleSignInClient googleSignInClient;
     private GoogleSignInClient fallbackSignInClient;
 
@@ -68,6 +74,8 @@ public class MainActivity extends BridgeActivity {
                 // Add Native Android Bridge for Chrome Custom Tabs and Google Auth
                 webView.addJavascriptInterface(new AndroidBridge(), "AndroidBridge");
             }
+
+            handleNotificationIntent(getIntent());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -140,7 +148,40 @@ public class MainActivity extends BridgeActivity {
         }
 
         @JavascriptInterface
+        public void requestNotificationPermission() {
+            runOnUiThread(() -> {
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, RC_NOTIFICATION_PERMISSION);
+                        } else {
+                            notifyJsNotificationPermission(true);
+                        }
+                    } else {
+                        notifyJsNotificationPermission(true);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    notifyJsNotificationPermission(false);
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public boolean isNotificationPermissionGranted() {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                return ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
+            }
+            return true;
+        }
+
+        @JavascriptInterface
         public void showNativeNotification(String title, String message) {
+            showNativeNotificationWithAction(title, message, "general", "");
+        }
+
+        @JavascriptInterface
+        public void showNativeNotificationWithAction(String title, String message, String type, String actionUrl) {
             runOnUiThread(() -> {
                 try {
                     String channelId = "mobinx_push_channel";
@@ -152,10 +193,11 @@ public class MainActivity extends BridgeActivity {
                                 "Mobin X Announcements",
                                 NotificationManager.IMPORTANCE_HIGH
                         );
-                        channel.setDescription("Official match announcements and tournament updates");
+                        channel.setDescription("Official match announcements, top-ups and tournament updates");
                         channel.enableLights(true);
-                        channel.setLightColor(Color.BLUE);
+                        channel.setLightColor(Color.parseColor("#3b82f6"));
                         channel.enableVibration(true);
+                        channel.setShowBadge(true);
                         if (notificationManager != null) {
                             notificationManager.createNotificationChannel(channel);
                         }
@@ -163,6 +205,13 @@ public class MainActivity extends BridgeActivity {
 
                     Intent intent = new Intent(MainActivity.this, MainActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    if (actionUrl != null && !actionUrl.isEmpty()) {
+                        intent.putExtra("target_url", actionUrl);
+                    }
+                    if (type != null && !type.isEmpty()) {
+                        intent.putExtra("notif_type", type);
+                    }
+
                     PendingIntent pendingIntent = PendingIntent.getActivity(
                             MainActivity.this,
                             (int) System.currentTimeMillis(),
@@ -173,9 +222,10 @@ public class MainActivity extends BridgeActivity {
                     NotificationCompat.Builder builder = new NotificationCompat.Builder(MainActivity.this, channelId)
                             .setSmallIcon(R.mipmap.ic_launcher)
                             .setContentTitle(title != null && !title.isEmpty() ? title : "MOBIN X GAMING")
-                            .setContentText(message != null ? message : "New tournament announcement!")
+                            .setContentText(message != null ? message : "New notification received!")
                             .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
                             .setPriority(NotificationCompat.PRIORITY_HIGH)
+                            .setDefaults(NotificationCompat.DEFAULT_ALL)
                             .setAutoCancel(true)
                             .setContentIntent(pendingIntent);
 
@@ -286,5 +336,46 @@ public class MainActivity extends BridgeActivity {
                 webView.evaluateJavascript(script, null);
             }
         });
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleNotificationIntent(intent);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == RC_NOTIFICATION_PERMISSION) {
+            boolean granted = grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED;
+            notifyJsNotificationPermission(granted);
+        }
+    }
+
+    private void notifyJsNotificationPermission(boolean granted) {
+        runOnUiThread(() -> {
+            WebView webView = getBridge().getWebView();
+            if (webView != null) {
+                String script = "if (window.onNativeNotificationPermissionResult) { window.onNativeNotificationPermissionResult(" + granted + "); }";
+                webView.evaluateJavascript(script, null);
+            }
+        });
+    }
+
+    private void handleNotificationIntent(Intent intent) {
+        if (intent != null && intent.hasExtra("target_url")) {
+            String targetUrl = intent.getStringExtra("target_url");
+            if (targetUrl != null && !targetUrl.isEmpty()) {
+                runOnUiThread(() -> {
+                    WebView webView = getBridge().getWebView();
+                    if (webView != null) {
+                        String script = "if (window.handleNotificationClick) { window.handleNotificationClick('" + targetUrl.replace("'", "\\'") + "'); }";
+                        webView.evaluateJavascript(script, null);
+                    }
+                });
+            }
+        }
     }
 }

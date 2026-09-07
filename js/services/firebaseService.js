@@ -249,6 +249,27 @@ export async function sendEmailVerificationFirebase() {
   }
 }
 
+// Check Email Verification Status (Reloads Firebase currentUser)
+export async function checkEmailVerificationFirebase() {
+  if (!isFirebaseInitialized) await initFirebase();
+  if (!auth || !auth.currentUser) return false;
+
+  try {
+    const { reload } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js');
+    await reload(auth.currentUser);
+    return auth.currentUser.emailVerified === true;
+  } catch (error) {
+    console.warn('Check email verification error:', error.code, error.message);
+    try {
+      if (auth.currentUser && typeof auth.currentUser.reload === 'function') {
+        await auth.currentUser.reload();
+        return auth.currentUser.emailVerified === true;
+      }
+    } catch (e) {}
+    return auth.currentUser ? auth.currentUser.emailVerified === true : false;
+  }
+}
+
 // Phone Verification with Firebase Recaptcha / OTP
 let confirmationResultRef = null;
 
@@ -488,6 +509,37 @@ export function onBroadcastMessage(callback) {
   }
 }
 
+export async function sendPushBroadcast({ title, message, type = 'general', targetUrl = '', imageUrl = '' }) {
+  const notifId = `notif_${Date.now()}`;
+  const notifData = {
+    id: notifId,
+    title,
+    message,
+    desc: message,
+    type,
+    targetUrl,
+    actionUrl: targetUrl,
+    imageUrl,
+    createdAt: Date.now(),
+    timestamp: Date.now(),
+    active: true
+  };
+
+  // 1. Save to notifications collection
+  await saveToFirestore('notifications', notifId, notifData);
+
+  // 2. Update config/notices for real-time live trigger
+  await saveToFirestore('config', 'notices', {
+    pushNotification: notifData,
+    lastUpdated: Date.now()
+  });
+
+  // 3. Broadcast locally
+  broadcastChange('PUSH_NOTIFICATION_SENT', notifData);
+
+  return notifData;
+}
+
 export const firebaseService = {
   init: initFirebase,
   signInWithGoogle: signInWithGoogleFirebase,
@@ -495,6 +547,7 @@ export const firebaseService = {
   loginWithEmailPassword: loginWithEmailPasswordFirebase,
   sendPasswordReset: sendPasswordResetFirebase,
   sendEmailVerification: sendEmailVerificationFirebase,
+  checkEmailVerification: checkEmailVerificationFirebase,
   sendPhoneOtp: sendPhoneOtpFirebase,
   verifyPhoneOtp: verifyPhoneOtpFirebase,
   deleteFirebaseUser,
@@ -507,6 +560,7 @@ export const firebaseService = {
   subscribeCollection: subscribeToCollection,
   subscribeDocument: subscribeToDocument,
   broadcastChange,
-  onBroadcastMessage
+  onBroadcastMessage,
+  sendPushBroadcast
 };
 

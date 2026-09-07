@@ -22,14 +22,6 @@
           }
         },
         {
-          "client_id": "219633934545-s2kr4r0fjggr8obnp1pjreokrf4u8c6f.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.mobinx.gaming",
-            "certificate_hash": "0b7f0626229047be44a1ea08d7d78ca7d9c2ac9c"
-          }
-        },
-        {
           "client_id": "219633934545-6jisgkjl5d1sp5nna3t21ar8k8kiv6jf.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
@@ -38,11 +30,35 @@
           }
         },
         {
+          "client_id": "219633934545-egh4m85qgjnao91696d0vpje2umjlepa.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mobinx.gaming",
+            "certificate_hash": "c0baa54ced6a98c2b972bf6f31a59b79f0a0e2b5"
+          }
+        },
+        {
           "client_id": "219633934545-g5pri629bmq922vnsimr7r4ma8t0hhnr.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.mobinx.gaming",
             "certificate_hash": "dc42f2c31665f5a617f19dbc0a6ea81220cbbc94"
+          }
+        },
+        {
+          "client_id": "219633934545-qmk8fgmug605ji4f8s7132o7nindbn6v.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mobinx.gaming",
+            "certificate_hash": "e213abb45f9fa1cdac842e4dda2c3674e4ee76eb"
+          }
+        },
+        {
+          "client_id": "219633934545-s2kr4r0fjggr8obnp1pjreokrf4u8c6f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.mobinx.gaming",
+            "certificate_hash": "0b7f0626229047be44a1ea08d7d78ca7d9c2ac9c"
           }
         },
         {

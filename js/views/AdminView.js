@@ -2,10 +2,11 @@ import { authService } from '../services/authService.js';
 import { tournamentService } from '../services/tournamentService.js';
 import { downloadService } from '../services/downloadService.js';
 import { notificationService } from '../services/notificationService.js';
+import { firebaseService } from '../services/firebaseService.js';
 import { stateManager } from '../services/stateManager.js';
 import { Toast } from '../components/Toast.js';
 
-let activeAdminTab = 'dashboard'; // 'dashboard', 'users', 'tournaments', 'downloads', 'flash', 'services', 'banners', 'notices', 'urls'
+let activeAdminTab = 'dashboard'; // 'dashboard', 'users', 'tournaments', 'downloads', 'flash', 'services', 'banners', 'notices', 'urls', 'notifications'
 let userSearchQuery = '';
 let userRoleFilter = 'ALL';
 
@@ -80,6 +81,7 @@ export function renderAdminView() {
     { id: 'services', label: '👑 Services', badge: `${popularServices.length}` },
     { id: 'banners', label: '🖼️ Banners', badge: `${heroBanners.length}` },
     { id: 'notices', label: '📢 Notices & Popup', badge: homePopup.enabled ? 'ON' : 'OFF' },
+    { id: 'notifications', label: '🔔 Notifications', badge: 'Push' },
     { id: 'urls', label: '🌐 System URLs', badge: 'Config' }
   ];
 
@@ -148,6 +150,8 @@ function renderActiveAdminTabContent(tab, data) {
       return renderBannersTab(data);
     case 'notices':
       return renderNoticesTab(data);
+    case 'notifications':
+      return renderNotificationsTab(data);
     case 'urls':
       return renderUrlsTab(data);
     default:
@@ -1385,6 +1389,102 @@ function renderProductsTab(data) {
 }
 
 // ==========================================
+// 12. PUSH NOTIFICATIONS BROADCASTER TAB
+// ==========================================
+function renderNotificationsTab(data) {
+  const notifs = notificationService.getAll();
+  return `
+    <div class="admin-tab-pane">
+      
+      <!-- Top Overview Card -->
+      <div style="background: linear-gradient(135deg, #1e3a8a 0%, #0284c7 100%); border-radius: 16px; padding: 18px; color: #ffffff; margin-bottom: 16px; box-shadow: 0 4px 15px rgba(2, 132, 199, 0.25);">
+        <div style="display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 22px;">
+              🔔
+            </div>
+            <div>
+              <h3 style="font-size: 16px; font-weight: 800; margin: 0;">Push Notifications Broadcaster</h3>
+              <p style="font-size: 11.5px; opacity: 0.9; margin: 2px 0 0 0;">Broadcast alerts to all active app users instantly</p>
+            </div>
+          </div>
+          <span style="font-size: 10px; font-weight: 800; background: rgba(16, 185, 129, 0.3); color: #a7f3d0; padding: 4px 8px; border-radius: 12px;">
+            LIVE FCM
+          </span>
+        </div>
+      </div>
+
+      <!-- Broadcaster Form -->
+      <div style="background: #ffffff; border-radius: 16px; padding: 18px; border: 1px solid #e2e8f0; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
+        <h4 style="font-size: 14px; font-weight: 800; color: #0f172a; margin: 0 0 14px 0;">📢 নতুন পুশ নোটিফিকেশন পাঠান</h4>
+        
+        <form id="form-inapp-broadcast" style="display: flex; flex-direction: column; gap: 12px;">
+          <div>
+            <label style="display: block; font-size: 11.5px; font-weight: 700; color: #64748b; margin-bottom: 4px;">নোটিফিকেশন টাইটেল *</label>
+            <input type="text" id="inapp-notif-title" placeholder="যেমন: 🔥 নতুন স্কোয়াড টুর্নামেন্ট!" required style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 13px; outline: none;" />
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 11.5px; font-weight: 700; color: #64748b; margin-bottom: 4px;">মেসেজ বা বিস্তারিত *</label>
+            <textarea id="inapp-notif-desc" placeholder="যেমন: রাত ৯টায় কাস্টম ম্যাচ শুরু। এখনই রুম কোড দেখে নিন।" required style="width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 13px; outline: none; min-height: 70px;"></textarea>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div>
+              <label style="display: block; font-size: 11.5px; font-weight: 700; color: #64748b; margin-bottom: 4px;">ক্যাটাগরি</label>
+              <select id="inapp-notif-type" style="width: 100%; box-sizing: border-box; padding: 10px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 12.5px;">
+                <option value="tournament">🏆 Tournament</option>
+                <option value="deal">💎 Top-Up Deal</option>
+                <option value="system" selected>📢 Announcement</option>
+                <option value="shop">🛍️ Shop Product</option>
+                <option value="update">🚀 App Update</option>
+              </select>
+            </div>
+
+            <div>
+              <label style="display: block; font-size: 11.5px; font-weight: 700; color: #64748b; margin-bottom: 4px;">টার্গেট ভিউ</label>
+              <select id="inapp-notif-view" style="width: 100%; box-sizing: border-box; padding: 10px; border: 1.5px solid #cbd5e1; border-radius: 10px; font-size: 12.5px;">
+                <option value="tournaments">Tournaments Tab</option>
+                <option value="topup">Top-Up Tab</option>
+                <option value="shop">Shop Tab</option>
+                <option value="downloads">Downloads Tab</option>
+                <option value="home" selected>Home View</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" id="btn-inapp-send-notif" style="width: 100%; margin-top: 6px; padding: 12px; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: #ffffff; border: none; border-radius: 12px; font-size: 13.5px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);">
+            🚀 Send Notification to All Users
+          </button>
+        </form>
+      </div>
+
+      <!-- Sent History in App -->
+      <div style="background: #ffffff; border-radius: 16px; padding: 18px; border: 1px solid #e2e8f0;">
+        <h4 style="font-size: 14px; font-weight: 800; color: #0f172a; margin: 0 0 12px 0;">📜 রিসেন্ট নোটিফিকেশন হিস্ট্রি (${notifs.length})</h4>
+        
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          ${notifs.length === 0 ? `
+            <div style="text-align: center; padding: 30px 10px; color: #94a3b8; font-size: 12.5px;">
+              📭 কোনো নোটিফিকেশন হিস্ট্রি নেই।
+            </div>
+          ` : notifs.slice(0, 15).map(n => `
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;">
+              <div>
+                <div style="font-size: 11px; font-weight: 800; color: #0284c7; text-transform: uppercase;">${n.type || 'Notice'} • ${n.time || 'Recent'}</div>
+                <div style="font-size: 13px; font-weight: 800; color: #0f172a; margin: 3px 0;">${n.title || ''}</div>
+                <div style="font-size: 12px; color: #64748b; line-height: 1.4;">${n.desc || n.message || ''}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+    </div>
+  `;
+}
+
+// ==========================================
 // EVENT BINDINGS
 // ==========================================
 export function bindAdminEvents() {
@@ -2113,5 +2213,45 @@ export function bindAdminEvents() {
         reRender();
       }
     });
+  });
+
+  // Push Notifications: In-App Broadcast Form Submit
+  const formInAppNotif = document.getElementById('form-inapp-broadcast');
+  formInAppNotif?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btnSubmit = document.getElementById('btn-inapp-send-notif');
+    if (btnSubmit) {
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = '⏳ Sending broadcast...';
+    }
+
+    const title = document.getElementById('inapp-notif-title')?.value.trim();
+    const desc = document.getElementById('inapp-notif-desc')?.value.trim();
+    const type = document.getElementById('inapp-notif-type')?.value || 'system';
+    const view = document.getElementById('inapp-notif-view')?.value || 'home';
+
+    try {
+      await firebaseService.sendPushBroadcast({
+        title,
+        message: desc,
+        type,
+        targetUrl: view
+      });
+
+      // Also trigger on native android if running on this device
+      if (typeof window !== 'undefined' && window.AndroidBridge) {
+        if (typeof window.AndroidBridge.showNativeNotificationWithAction === 'function') {
+          window.AndroidBridge.showNativeNotificationWithAction(title, desc, type, view);
+        } else if (typeof window.AndroidBridge.showNativeNotification === 'function') {
+          window.AndroidBridge.showNativeNotification(title, desc);
+        }
+      }
+
+      Toast.show('🚀 Push Notification successfully sent to all users!', 'success');
+    } catch (err) {
+      Toast.show('Notice: Broadcast queued & sent locally', 'info');
+    }
+
+    reRender();
   });
 }

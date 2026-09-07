@@ -2,6 +2,7 @@ import { firebaseService } from './firebaseService.js';
 import { tournamentService } from './tournamentService.js';
 import { downloadService } from './downloadService.js';
 import { authService } from './authService.js';
+import { notificationService } from './notificationService.js';
 import { stateManager } from './stateManager.js';
 import { Toast } from '../components/Toast.js';
 
@@ -97,13 +98,32 @@ class RealtimeSyncManager {
           this.lastPushTime = notif.timestamp;
           const notifTitle = notif.title || 'MOBIN X GAMING';
           const notifMsg = notif.message || notif.desc || '';
-          Toast.show(`📢 ${notifMsg}`, 'info');
+          Toast.show(`📢 ${notifTitle}: ${notifMsg}`, 'info');
 
           // Trigger Native Android Status Bar Notification
           try {
-            if (typeof window !== 'undefined' && window.AndroidBridge && typeof window.AndroidBridge.showNativeNotification === 'function') {
-              window.AndroidBridge.showNativeNotification(notifTitle, notifMsg);
+            if (typeof window !== 'undefined' && window.AndroidBridge) {
+              if (typeof window.AndroidBridge.showNativeNotificationWithAction === 'function') {
+                window.AndroidBridge.showNativeNotificationWithAction(notifTitle, notifMsg, notif.type || 'general', notif.actionUrl || notif.targetUrl || '');
+              } else if (typeof window.AndroidBridge.showNativeNotification === 'function') {
+                window.AndroidBridge.showNativeNotification(notifTitle, notifMsg);
+              }
             }
+          } catch(e) {}
+
+          // Add to In-App Notification Center
+          try {
+            notificationService.addNotification({
+              id: notif.id || `notif_${Date.now()}`,
+              title: notifTitle,
+              desc: notifMsg,
+              time: 'Just now',
+              type: notif.type || 'system',
+              unread: true,
+              actionUrl: notif.actionUrl || notif.targetUrl || ''
+            });
+            this.triggerViewUpdate('notifications');
+            this.triggerViewUpdate('header');
           } catch(e) {}
         }
       });
@@ -115,17 +135,76 @@ class RealtimeSyncManager {
           this.lastPushTime = notif.timestamp;
           const notifTitle = notif.title || 'MOBIN X GAMING';
           const notifMsg = notif.message || notif.desc || '';
-          Toast.show(`📢 ${notifMsg}`, 'info');
+          Toast.show(`⚡ ${notifTitle}: ${notifMsg}`, 'info');
 
           // Trigger Native Android Status Bar Notification
           try {
-            if (typeof window !== 'undefined' && window.AndroidBridge && typeof window.AndroidBridge.showNativeNotification === 'function') {
-              window.AndroidBridge.showNativeNotification(notifTitle, notifMsg);
+            if (typeof window !== 'undefined' && window.AndroidBridge) {
+              if (typeof window.AndroidBridge.showNativeNotificationWithAction === 'function') {
+                window.AndroidBridge.showNativeNotificationWithAction(notifTitle, notifMsg, 'flash', notif.actionUrl || 'flash');
+              } else if (typeof window.AndroidBridge.showNativeNotification === 'function') {
+                window.AndroidBridge.showNativeNotification(notifTitle, notifMsg);
+              }
             }
+          } catch(e) {}
+
+          // Add to In-App Notification Center
+          try {
+            notificationService.addNotification({
+              id: notif.id || `notif_${Date.now()}`,
+              title: notifTitle,
+              desc: notifMsg,
+              time: 'Just now',
+              type: 'deal',
+              unread: true,
+              actionUrl: notif.actionUrl || 'flash'
+            });
+            this.triggerViewUpdate('notifications');
+            this.triggerViewUpdate('header');
           } catch(e) {}
         }
       });
       if (unsubFlash) this.unsubscribers.push(unsubFlash);
+
+      // Live Full Notifications Collection Listener
+      const unsubNotificationsCollection = await firebaseService.subscribeCollection('notifications', (items) => {
+        if (items && items.length > 0) {
+          items.sort((a, b) => (b.timestamp || b.createdAt || 0) - (a.timestamp || a.createdAt || 0));
+          const latest = items[0];
+          const latestTime = latest.timestamp || latest.createdAt || 0;
+          if (latest && (!this.lastPushTime || latestTime > this.lastPushTime)) {
+            this.lastPushTime = latestTime;
+            const notifTitle = latest.title || 'MOBIN X GAMING';
+            const notifMsg = latest.message || latest.desc || '';
+            Toast.show(`📢 ${notifTitle}: ${notifMsg}`, 'info');
+
+            try {
+              if (typeof window !== 'undefined' && window.AndroidBridge) {
+                if (typeof window.AndroidBridge.showNativeNotificationWithAction === 'function') {
+                  window.AndroidBridge.showNativeNotificationWithAction(notifTitle, notifMsg, latest.type || 'general', latest.actionUrl || latest.targetUrl || '');
+                } else if (typeof window.AndroidBridge.showNativeNotification === 'function') {
+                  window.AndroidBridge.showNativeNotification(notifTitle, notifMsg);
+                }
+              }
+            } catch(e) {}
+
+            try {
+              notificationService.addNotification({
+                id: latest.id || `notif_${Date.now()}`,
+                title: notifTitle,
+                desc: notifMsg,
+                time: 'Just now',
+                type: latest.type || 'system',
+                unread: true,
+                actionUrl: latest.actionUrl || latest.targetUrl || ''
+              });
+              this.triggerViewUpdate('notifications');
+              this.triggerViewUpdate('header');
+            } catch(e) {}
+          }
+        }
+      });
+      if (unsubNotificationsCollection) this.unsubscribers.push(unsubNotificationsCollection);
 
       // Live Auth Settings & Feature Flags Listener
       const unsubAuthSettings = await firebaseService.subscribeDocument('config', 'auth_settings', (data) => {

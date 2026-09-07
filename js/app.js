@@ -22,6 +22,7 @@ import { renderHelpView, bindHelpEvents } from './views/HelpView.js';
 import { renderAboutView, bindAboutEvents } from './views/AboutView.js';
 import { realtimeSyncManager } from './services/realtimeSyncManager.js';
 import { openExternalStore } from './services/browserService.js';
+import { NotificationPermissionModal } from './components/NotificationPermissionModal.js';
 
 class App {
   constructor() {
@@ -72,6 +73,21 @@ class App {
 
     // Bind desktop frame toggles
     this.bindDesktopControls();
+
+    // Setup Notification Click Routing Handler
+    window.handleNotificationClick = (targetUrl) => {
+      if (targetUrl) {
+        if (targetUrl.startsWith('http://') || targetUrl.startsWith('https://')) {
+          openExternalStore(targetUrl);
+        } else {
+          const cleanView = targetUrl.replace('/', '').toLowerCase();
+          stateManager.navigate(cleanView);
+        }
+      }
+    };
+
+    // Check & trigger smart notification permission prompt (respects 2-launch skip on deny)
+    NotificationPermissionModal.checkAndPrompt(1600);
   }
 
   startLiveClock() {
