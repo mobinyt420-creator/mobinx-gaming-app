@@ -3,7 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/services/storage_service.dart';
+import '../../core/services/auth_service.dart';
 import '../home/home_screen.dart';
+import '../auth/onboarding_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -36,12 +38,16 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   Future<void> _initializeApp() async {
     await StorageService.init();
-    await Future.delayed(const Duration(milliseconds: 1800));
+    await AuthService.instance.init();
+    await Future.delayed(const Duration(milliseconds: 1600));
 
     if (!mounted) return;
+    final bool isOnboardingDone = StorageService.isOnboardingDone();
+    final Widget targetScreen = isOnboardingDone ? const HomeScreen() : const OnboardingScreen();
+
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) => const HomeScreen(),
+        pageBuilder: (context, animation, secondaryAnimation) => targetScreen,
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },

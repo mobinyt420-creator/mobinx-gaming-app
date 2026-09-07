@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/widgets/gamer_components.dart';
+import '../../core/services/auth_service.dart';
+import '../profile/profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -102,133 +104,47 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          const SizedBox(width: 8),
+          // User Avatar Button -> Profile
+          ValueListenableBuilder(
+            valueListenable: AuthService.instance.userNotifier,
+            builder: (context, user, _) {
+              return GestureDetector(
+                onTap: () {
+                  setState(() => _currentNavIndex = 4);
+                },
+                child: Container(
+                  margin: const EdgeInsets.only(left: 4, right: 14),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: _currentNavIndex == 4 ? AppColors.cyanLight : AppColors.borderLight,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: CircleAvatar(
+                    radius: 16,
+                    backgroundColor: AppColors.surfaceCard,
+                    backgroundImage: (user != null && user.avatar.isNotEmpty && user.avatar.startsWith('http'))
+                        ? NetworkImage(user.avatar)
+                        : null,
+                    child: (user == null || user.avatar.isEmpty || !user.avatar.startsWith('http'))
+                        ? Text(
+                            (user != null && user.name.isNotEmpty ? user.name[0] : 'U').toUpperCase(),
+                            style: GoogleFonts.outfit(
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.cyanLight,
+                              fontSize: 13,
+                            ),
+                          )
+                        : null,
+                  ),
+                ),
+              );
+            },
+          ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Step 1 Success Banner
-            GamerCard(
-              gradient: LinearGradient(
-                colors: [
-                  AppColors.primary.withValues(alpha: 0.25),
-                  AppColors.cyan.withValues(alpha: 0.15),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderColor: AppColors.cyan.withValues(alpha: 0.4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const GamerBadge(
-                        text: 'STEP 1 COMPLETED ✅',
-                        color: AppColors.emerald,
-                        icon: Icons.check_circle_rounded,
-                      ),
-                      const Spacer(),
-                      Text(
-                        'Flutter 3.47.2',
-                        style: GoogleFonts.outfit(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    '⚡ Flutter Architecture & Gamer Theme Ready!',
-                    style: GoogleFonts.outfit(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Package com.mobinx.gaming, Cyberpunk Dark Gamer theme, Outfit & Inter fonts, local storage, asset pipelines, and core models have been successfully initialized.',
-                    style: GoogleFonts.inter(
-                      fontSize: 12.5,
-                      color: AppColors.textMuted,
-                      height: 1.45,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  GamerButton(
-                    label: 'Next Step: Auth & Screens 🚀',
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('🎉 Step 1 is 100% verified and ready for Step 2!'),
-                          behavior: SnackBarBehavior.floating,
-                          backgroundColor: AppColors.primary,
-                        ),
-                      );
-                    },
-                    height: 42,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Section: Live Theme Palette Preview
-            Text(
-              '🎨 Cyberpunk Gamer Theme System',
-              style: GoogleFonts.outfit(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                _buildColorSwatch('Electric Blue', AppColors.primary),
-                const SizedBox(width: 8),
-                _buildColorSwatch('Cyber Cyan', AppColors.cyanLight),
-                const SizedBox(width: 8),
-                _buildColorSwatch('Gold Amber', AppColors.gold),
-                const SizedBox(width: 8),
-                _buildColorSwatch('Emerald', AppColors.emerald),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // Section: Quick Services Mock Preview
-            Text(
-              '🎮 High-Density Gaming Services',
-              style: GoogleFonts.outfit(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 10),
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 1.5,
-              children: [
-                _buildServiceCard('🏆 Tournaments', 'Free Fire Custom Rooms', AppColors.gold),
-                _buildServiceCard('💎 Top-Up Deals', 'Instant BD Diamond Shop', AppColors.cyanLight),
-                _buildServiceCard('🚀 APK Downloads', 'VIP Tools & Boosters', AppColors.emerald),
-                _buildServiceCard('🎯 Sensitivity', 'Custom Headshot Tools', AppColors.purple),
-              ],
-            ),
-          ],
-        ),
-      ),
+      body: _buildBody(),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentNavIndex,
         onDestinationSelected: (idx) {
@@ -259,6 +175,185 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icon(Icons.person_outline_rounded),
             selectedIcon: Icon(Icons.person_rounded),
             label: 'Profile',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    switch (_currentNavIndex) {
+      case 0:
+        return _buildHomeTab();
+      case 1:
+        return _buildPlaceholderTab('🏆 Tournaments & Matches', 'Free Fire Custom Tournaments will launch in Step 4!');
+      case 2:
+        return _buildPlaceholderTab('💎 Diamond Top-Up Shop', 'Instant bKash/Nagad Diamond Top-Up will launch in Step 5!');
+      case 3:
+        return _buildPlaceholderTab('🚀 APK Tools & Sensitivity', 'Secure Downloader & Sensitivity Generator will launch in Step 6!');
+      case 4:
+        return const ProfileScreen();
+      default:
+        return _buildHomeTab();
+    }
+  }
+
+  Widget _buildPlaceholderTab(String title, String desc) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: GamerCard(
+          padding: const EdgeInsets.all(24),
+          borderColor: AppColors.cyanLight.withValues(alpha: 0.3),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.outfit(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                desc,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: AppColors.textMuted,
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 18),
+              const GamerBadge(
+                text: 'COMING IN NEXT STEPS',
+                color: AppColors.cyanLight,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHomeTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Step 1 Success Banner
+          GamerCard(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.primary.withValues(alpha: 0.25),
+                AppColors.cyan.withValues(alpha: 0.15),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderColor: AppColors.cyan.withValues(alpha: 0.4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const GamerBadge(
+                      text: 'STEP 1 & 2 COMPLETED ✅',
+                      color: AppColors.emerald,
+                      icon: Icons.check_circle_rounded,
+                    ),
+                    const Spacer(),
+                    Text(
+                      'Flutter 3.47.2',
+                      style: GoogleFonts.outfit(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '⚡ Flutter Architecture & Gamer Theme Ready!',
+                  style: GoogleFonts.outfit(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Package com.mobinx.gaming, Cyberpunk Dark Gamer theme, Outfit & Inter fonts, local storage, asset pipelines, and core models have been successfully initialized.',
+                  style: GoogleFonts.inter(
+                    fontSize: 12.5,
+                    color: AppColors.textMuted,
+                    height: 1.45,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                GamerButton(
+                  label: 'View My Player Profile 👤',
+                  onPressed: () {
+                    setState(() => _currentNavIndex = 4);
+                  },
+                  height: 42,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Section: Live Theme Palette Preview
+          Text(
+            '🎨 Cyberpunk Gamer Theme System',
+            style: GoogleFonts.outfit(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              _buildColorSwatch('Electric Blue', AppColors.primary),
+              const SizedBox(width: 8),
+              _buildColorSwatch('Cyber Cyan', AppColors.cyanLight),
+              const SizedBox(width: 8),
+              _buildColorSwatch('Gold Amber', AppColors.gold),
+              const SizedBox(width: 8),
+              _buildColorSwatch('Emerald', AppColors.emerald),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Section: Quick Services Mock Preview
+          Text(
+            '🎮 High-Density Gaming Services',
+            style: GoogleFonts.outfit(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 10),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.5,
+            children: [
+              _buildServiceCard('🏆 Tournaments', 'Free Fire Custom Rooms', AppColors.gold),
+              _buildServiceCard('💎 Top-Up Deals', 'Instant BD Diamond Shop', AppColors.cyanLight),
+              _buildServiceCard('🚀 APK Downloads', 'VIP Tools & Boosters', AppColors.emerald),
+              _buildServiceCard('🎯 Sensitivity', 'Custom Headshot Tools', AppColors.purple),
+            ],
           ),
         ],
       ),
