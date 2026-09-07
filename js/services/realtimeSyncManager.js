@@ -11,6 +11,66 @@ class RealtimeSyncManager {
     this.isInitialized = false;
     this.unsubscribers = [];
     this.debounceTimers = {};
+    this.processedBroadcastIds = new Set();
+    this.isNotificationListenerReady = false;
+  }
+
+  handleIncomingPushNotification(notif, forceAlert = false) {
+    if (!notif || notif.active === false) return;
+    const notifMsg = notif.message || notif.desc || '';
+    if (!notifMsg) return;
+
+    const notifTitle = notif.title || 'MOBIN X GAMING';
+    const notifId = notif.id || `notif_${notif.timestamp || Date.now()}`;
+    const broadcastId = notif.broadcastId || `${notifId}_${notif.timestamp || Date.now()}`;
+
+    // Deduplicate: Don't show the exact same broadcast multiple times
+    if (this.processedBroadcastIds.has(broadcastId)) {
+      return;
+    }
+    this.processedBroadcastIds.add(broadcastId);
+
+    // If it's the initial snapshot on app boot and not a force alert, just register the ID without alert
+    if (!this.isNotificationListenerReady && !forceAlert) {
+      return;
+    }
+
+    // Trigger In-App Toast
+    Toast.show(`📢 ${notifTitle}: ${notifMsg}`, 'info');
+
+    // Trigger Native Android Status Bar Notification
+    try {
+      if (typeof window !== 'undefined' && window.AndroidBridge) {
+        if (typeof window.AndroidBridge.showNativeNotificationWithAction === 'function') {
+          window.AndroidBridge.showNativeNotificationWithAction(
+            notifTitle,
+            notifMsg,
+            notif.type || 'general',
+            notif.actionUrl || notif.targetUrl || notif.extraUrl || ''
+          );
+        } else if (typeof window.AndroidBridge.showNativeNotification === 'function') {
+          window.AndroidBridge.showNativeNotification(notifTitle, notifMsg);
+        }
+      }
+    } catch(e) {
+      console.warn('Native notification bridge notice:', e);
+    }
+
+    // Add to In-App Notification Center
+    try {
+      notificationService.addNotification({
+        id: notifId,
+        title: notifTitle,
+        desc: notifMsg,
+        time: 'Just now',
+        type: notif.type || 'system',
+        unread: true,
+        actionUrl: notif.actionUrl || notif.targetUrl || notif.extraUrl || '',
+        imageUrl: notif.imageUrl || notif.extraUrl || ''
+      });
+      this.triggerViewUpdate('notifications');
+      this.triggerViewUpdate('header');
+    } catch(e) {}
   }
 
   init() {
@@ -19,7 +79,11 @@ class RealtimeSyncManager {
 
     // 1. Cross-tab / Local BroadcastChannel listener (Instant <10ms sync)
     firebaseService.onBroadcastMessage((msg) => {
-      this.handleIncomingSync(msg.type, msg.payload, true);
+      if (msg.type === 'PUSH_NOTIFICATION_SENT' && msg.payload) {
+        this.handleIncomingPushNotification(msg.payload, true);
+      } else {
+        this.handleIncomingSync(msg.type, msg.payload, true);
+      }
     });
 
     // 2. Storage event listener (Fallback cross-tab sync)
@@ -94,74 +158,17 @@ class RealtimeSyncManager {
       // Live Push Notifications / Global Notices
       const unsubNotices = await firebaseService.subscribeDocument('config', 'notices', (data) => {
         const notif = data?.pushNotification;
-        if (notif && notif.active !== false && notif.message && (!this.lastPushTime || notif.timestamp > this.lastPushTime)) {
-          this.lastPushTime = notif.timestamp;
-          const notifTitle = notif.title || 'MOBIN X GAMING';
-          const notifMsg = notif.message || notif.desc || '';
-          Toast.show(`📢 ${notifTitle}: ${notifMsg}`, 'info');
-
-          // Trigger Native Android Status Bar Notification
-          try {
-            if (typeof window !== 'undefined' && window.AndroidBridge) {
-              if (typeof window.AndroidBridge.showNativeNotificationWithAction === 'function') {
-                window.AndroidBridge.showNativeNotificationWithAction(notifTitle, notifMsg, notif.type || 'general', notif.actionUrl || notif.targetUrl || '');
-              } else if (typeof window.AndroidBridge.showNativeNotification === 'function') {
-                window.AndroidBridge.showNativeNotification(notifTitle, notifMsg);
-              }
-            }
-          } catch(e) {}
-
-          // Add to In-App Notification Center
-          try {
-            notificationService.addNotification({
-              id: notif.id || `notif_${Date.now()}`,
-              title: notifTitle,
-              desc: notifMsg,
-              time: 'Just now',
-              type: notif.type || 'system',
-              unread: true,
-              actionUrl: notif.actionUrl || notif.targetUrl || ''
-            });
-            this.triggerViewUpdate('notifications');
-            this.triggerViewUpdate('header');
-          } catch(e) {}
+        if (notif) {
+          this.handleIncomingPushNotification(notif);
         }
+        this.isNotificationListenerReady = true;
       });
       if (unsubNotices) this.unsubscribers.push(unsubNotices);
 
       // Live Flash Broadcast Listener
       const unsubFlash = await firebaseService.subscribeDocument('config', 'flash_broadcast', (notif) => {
-        if (notif && notif.active !== false && notif.message && (!this.lastPushTime || notif.timestamp > this.lastPushTime)) {
-          this.lastPushTime = notif.timestamp;
-          const notifTitle = notif.title || 'MOBIN X GAMING';
-          const notifMsg = notif.message || notif.desc || '';
-          Toast.show(`⚡ ${notifTitle}: ${notifMsg}`, 'info');
-
-          // Trigger Native Android Status Bar Notification
-          try {
-            if (typeof window !== 'undefined' && window.AndroidBridge) {
-              if (typeof window.AndroidBridge.showNativeNotificationWithAction === 'function') {
-                window.AndroidBridge.showNativeNotificationWithAction(notifTitle, notifMsg, 'flash', notif.actionUrl || 'flash');
-              } else if (typeof window.AndroidBridge.showNativeNotification === 'function') {
-                window.AndroidBridge.showNativeNotification(notifTitle, notifMsg);
-              }
-            }
-          } catch(e) {}
-
-          // Add to In-App Notification Center
-          try {
-            notificationService.addNotification({
-              id: notif.id || `notif_${Date.now()}`,
-              title: notifTitle,
-              desc: notifMsg,
-              time: 'Just now',
-              type: 'deal',
-              unread: true,
-              actionUrl: notif.actionUrl || 'flash'
-            });
-            this.triggerViewUpdate('notifications');
-            this.triggerViewUpdate('header');
-          } catch(e) {}
+        if (notif) {
+          this.handleIncomingPushNotification({ ...notif, type: 'flash' });
         }
       });
       if (unsubFlash) this.unsubscribers.push(unsubFlash);
@@ -171,38 +178,11 @@ class RealtimeSyncManager {
         if (items && items.length > 0) {
           items.sort((a, b) => (b.timestamp || b.createdAt || 0) - (a.timestamp || a.createdAt || 0));
           const latest = items[0];
-          const latestTime = latest.timestamp || latest.createdAt || 0;
-          if (latest && (!this.lastPushTime || latestTime > this.lastPushTime)) {
-            this.lastPushTime = latestTime;
-            const notifTitle = latest.title || 'MOBIN X GAMING';
-            const notifMsg = latest.message || latest.desc || '';
-            Toast.show(`📢 ${notifTitle}: ${notifMsg}`, 'info');
-
-            try {
-              if (typeof window !== 'undefined' && window.AndroidBridge) {
-                if (typeof window.AndroidBridge.showNativeNotificationWithAction === 'function') {
-                  window.AndroidBridge.showNativeNotificationWithAction(notifTitle, notifMsg, latest.type || 'general', latest.actionUrl || latest.targetUrl || '');
-                } else if (typeof window.AndroidBridge.showNativeNotification === 'function') {
-                  window.AndroidBridge.showNativeNotification(notifTitle, notifMsg);
-                }
-              }
-            } catch(e) {}
-
-            try {
-              notificationService.addNotification({
-                id: latest.id || `notif_${Date.now()}`,
-                title: notifTitle,
-                desc: notifMsg,
-                time: 'Just now',
-                type: latest.type || 'system',
-                unread: true,
-                actionUrl: latest.actionUrl || latest.targetUrl || ''
-              });
-              this.triggerViewUpdate('notifications');
-              this.triggerViewUpdate('header');
-            } catch(e) {}
+          if (latest) {
+            this.handleIncomingPushNotification(latest);
           }
         }
+        this.isNotificationListenerReady = true;
       });
       if (unsubNotificationsCollection) this.unsubscribers.push(unsubNotificationsCollection);
 

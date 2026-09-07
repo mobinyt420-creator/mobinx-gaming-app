@@ -675,6 +675,12 @@ export function bindOnboardingEvents() {
       return;
     }
 
+    const submitBtn = document.getElementById('btn-gp-submit');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Saving...';
+    }
+
     const authSettings = authService.getAuthSettings();
     const isGooglePhoneVerificationOn = authSettings.googlePhoneVerificationEnabled === true;
 
@@ -683,32 +689,34 @@ export function bindOnboardingEvents() {
       closeModal('modal-google-profile');
       startPhoneOtpFlow(cleanPhone, async () => {
         // Upon OTP success
+        const gUser = pendingGoogleUser;
+        pendingGoogleUser = null;
         const user = await authService.loginWithGoogle(
-          pendingGoogleUser.email,
+          gUser.email,
           fullName,
           cleanPhone,
           '',
-          pendingGoogleUser.avatar,
-          pendingGoogleUser.uid,
+          gUser.avatar,
+          gUser.uid,
           { phoneVerified: true }
         );
-        pendingGoogleUser = null;
         Toast.show(`🎉 Welcome to Mobin X, ${user.username}!`, 'success');
         stateManager.navigate('home');
       });
     } else {
       // Direct completion with phoneVerified: false
+      closeModal('modal-google-profile');
+      const gUser = pendingGoogleUser;
+      pendingGoogleUser = null;
       const user = await authService.loginWithGoogle(
-        pendingGoogleUser.email,
+        gUser.email,
         fullName,
         cleanPhone,
         '',
-        pendingGoogleUser.avatar,
-        pendingGoogleUser.uid,
+        gUser.avatar,
+        gUser.uid,
         { phoneVerified: false }
       );
-      closeModal('modal-google-profile');
-      pendingGoogleUser = null;
       Toast.show(`🎉 Welcome to Mobin X, ${user.username}!`, 'success');
       stateManager.navigate('home');
     }

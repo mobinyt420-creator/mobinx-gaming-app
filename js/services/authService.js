@@ -260,8 +260,8 @@ class AuthService {
       this.setOnboardingCompleted(false);
     }
 
-    // 4. Push to Cloud Firestore (Never storing password!)
-    await this.syncUserToFirestore(this.user);
+    // 4. Push to Cloud Firestore asynchronously (Never storing password!)
+    this.syncUserToFirestore(this.user).catch(e => console.warn('User cloud sync notice:', e));
 
     return this.user;
   }
@@ -329,8 +329,8 @@ class AuthService {
       this.setOnboardingCompleted(false);
     }
 
-    // Sync to Cloud Firestore
-    await this.syncUserToFirestore(this.user);
+    // Sync to Cloud Firestore asynchronously in background
+    this.syncUserToFirestore(this.user).catch(e => console.warn('User cloud sync notice:', e));
 
     return this.user;
   }
@@ -458,8 +458,8 @@ class AuthService {
       });
     } catch(e) {}
 
-    // Immediately push to Cloud Firestore
-    await this.syncUserToFirestore(this.user);
+    // Push to Cloud Firestore asynchronously in background (zero user latency)
+    this.syncUserToFirestore(this.user).catch(e => console.warn('User cloud sync notice:', e));
 
     return this.user;
   }

@@ -511,8 +511,10 @@ export function onBroadcastMessage(callback) {
 
 export async function sendPushBroadcast({ title, message, type = 'general', targetUrl = '', imageUrl = '' }) {
   const notifId = `notif_${Date.now()}`;
+  const broadcastId = `bc_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
   const notifData = {
     id: notifId,
+    broadcastId: broadcastId,
     title,
     message,
     desc: message,
@@ -525,16 +527,17 @@ export async function sendPushBroadcast({ title, message, type = 'general', targ
     active: true
   };
 
-  // 1. Save to notifications collection
-  await saveToFirestore('notifications', notifId, notifData);
+  // Parallel save to both notifications collection and config/notices for <500ms speed
+  await Promise.all([
+    saveToFirestore('notifications', notifId, notifData),
+    saveToFirestore('config', 'notices', {
+      pushNotification: notifData,
+      broadcastId: broadcastId,
+      lastUpdated: Date.now()
+    })
+  ]);
 
-  // 2. Update config/notices for real-time live trigger
-  await saveToFirestore('config', 'notices', {
-    pushNotification: notifData,
-    lastUpdated: Date.now()
-  });
-
-  // 3. Broadcast locally
+  // Broadcast locally
   broadcastChange('PUSH_NOTIFICATION_SENT', notifData);
 
   return notifData;

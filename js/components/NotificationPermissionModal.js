@@ -42,11 +42,30 @@ export class NotificationPermissionModal {
             console.log(`[NotificationPrompt] Denied previously. Session skip count: ${currentSkips}/3`);
             return;
           }
-          // On the 3rd launch, we show the modal again!
+          // On the 3rd launch, we show the prompt again!
           console.log(`[NotificationPrompt] 3rd launch reached after denial. Re-prompting user.`);
         }
 
-        // Show the permission modal
+        // Setup native permission result callback
+        window.onNativeNotificationPermissionResult = (granted) => {
+          if (granted) {
+            localStorage.setItem(STORAGE_KEY_STATUS, 'granted');
+            localStorage.removeItem(STORAGE_KEY_SKIP_COUNT);
+            Toast.show('🔔 নোটিফিকেশন চালু হয়েছে! আপডেট সবার আগে পাবেন।', 'success');
+          } else {
+            localStorage.setItem(STORAGE_KEY_STATUS, 'denied');
+            localStorage.setItem(STORAGE_KEY_SKIP_COUNT, '0');
+          }
+        };
+
+        // 1. Android Environment: Directly request Android system permission dialog
+        // This eliminates the duplicate double pop-up (custom card + OS dialog)
+        if (typeof window !== 'undefined' && window.AndroidBridge && typeof window.AndroidBridge.requestNotificationPermission === 'function') {
+          window.AndroidBridge.requestNotificationPermission();
+          return;
+        }
+
+        // 2. Web/Desktop browser fallback only: show custom modal
         NotificationPermissionModal.show();
       } catch (e) {
         console.warn('[NotificationPrompt] Check error:', e);
