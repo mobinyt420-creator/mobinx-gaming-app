@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 /// Mobin X Central Firebase Service Manager
 class FirebaseService {
   static bool _initialized = false;
+  static bool get isInitialized => _initialized;
 
   static FirebaseFirestore get firestore => FirebaseFirestore.instance;
   static FirebaseAuth get auth => FirebaseAuth.instance;

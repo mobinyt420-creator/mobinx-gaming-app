@@ -54,4 +54,16 @@ class StorageService {
       return null;
     }
   }
+
+  // --- NOTICE POPUP DISMISSAL ---
+  static bool isNoticeDismissedToday(String noticeId) {
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    final saved = _prefs?.getString('notice_dismissed_$noticeId');
+    return saved == today;
+  }
+
+  static Future<void> dismissNoticeToday(String noticeId) async {
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    await _prefs?.setString('notice_dismissed_$noticeId', today);
+  }
 }

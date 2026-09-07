@@ -13,6 +13,7 @@ class AppColors {
 
   // Borders & Dividers
   static const Color border = Color(0xFF1E293B);
+  static const Color surfaceBorder = Color(0xFF1E293B);
   static const Color borderLight = Color(0xFF334155);
   static const Color borderGlow = Color(0xFF38BDF8);
 
