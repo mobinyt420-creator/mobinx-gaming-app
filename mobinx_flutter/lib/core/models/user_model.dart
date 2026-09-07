@@ -117,6 +117,9 @@ class UserModel {
     String? ffUid,
     String? avatar,
     int? walletBalance,
+    int? tournamentsJoined,
+    int? totalDownloads,
+    int? savedSensitivities,
   }) {
     return UserModel(
       id: id,
@@ -137,9 +140,9 @@ class UserModel {
       isAdmin: isAdmin,
       status: status,
       walletBalance: walletBalance ?? this.walletBalance,
-      tournamentsJoined: tournamentsJoined,
-      totalDownloads: totalDownloads,
-      savedSensitivities: savedSensitivities,
+      tournamentsJoined: tournamentsJoined ?? this.tournamentsJoined,
+      totalDownloads: totalDownloads ?? this.totalDownloads,
+      savedSensitivities: savedSensitivities ?? this.savedSensitivities,
       registeredDate: registeredDate,
       lastLoginAt: lastLoginAt,
     );

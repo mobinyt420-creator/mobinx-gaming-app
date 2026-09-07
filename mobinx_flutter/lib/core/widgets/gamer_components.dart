@@ -118,6 +118,7 @@ class GamerButton extends StatelessWidget {
   final IconData? icon;
   final bool isLoading;
   final Gradient? gradient;
+  final Color? color;
   final double? width;
   final double height;
 
@@ -128,6 +129,7 @@ class GamerButton extends StatelessWidget {
     this.icon,
     this.isLoading = false,
     this.gradient,
+    this.color,
     this.width,
     this.height = 48,
   });
@@ -138,15 +140,18 @@ class GamerButton extends StatelessWidget {
       width: width,
       height: height,
       decoration: BoxDecoration(
-        gradient: onPressed == null
-            ? const LinearGradient(colors: [Color(0xFF334155), Color(0xFF1E293B)])
-            : (gradient ?? AppColors.primaryGradient),
+        color: color != null && onPressed != null ? color : null,
+        gradient: color != null
+            ? null
+            : (onPressed == null
+                ? const LinearGradient(colors: [Color(0xFF334155), Color(0xFF1E293B)])
+                : (gradient ?? AppColors.primaryGradient)),
         borderRadius: BorderRadius.circular(14),
         boxShadow: onPressed == null
             ? []
             : [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.4),
+                  color: (color ?? AppColors.primary).withValues(alpha: 0.4),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),

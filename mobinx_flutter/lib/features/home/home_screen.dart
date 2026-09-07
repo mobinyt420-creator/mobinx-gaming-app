@@ -9,6 +9,7 @@ import '../../core/services/home_data_service.dart';
 import '../../core/models/banner_model.dart';
 import '../../core/models/tournament_model.dart';
 import '../profile/profile_screen.dart';
+import '../tournaments/tournaments_screen.dart';
 import 'widgets/hero_banner_carousel.dart';
 import 'widgets/quick_services_grid.dart';
 import 'widgets/flash_deals_section.dart';
@@ -253,7 +254,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 0:
         return _buildHomeTab();
       case 1:
-        return _buildPlaceholderTab('🏆 Tournaments & Matches', 'Free Fire Custom Tournaments will launch in Step 4!');
+        return const TournamentsScreen();
       case 2:
         return _buildPlaceholderTab('💎 Diamond Top-Up Shop', 'Instant bKash/Nagad Diamond Top-Up will launch in Step 5!');
       case 3:
