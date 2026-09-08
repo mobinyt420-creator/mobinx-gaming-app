@@ -124,7 +124,7 @@ class _HeroBannerCarouselState extends State<HeroBannerCarousel> {
                           height: 2,
                           child: Container(
                             decoration: const BoxDecoration(
-                              gradient: AppColors.gamerGlowGradient,
+                              gradient: AppColors.brandGradient,
                             ),
                           ),
                         ),
@@ -213,11 +213,11 @@ class _HeroBannerCarouselState extends State<HeroBannerCarousel> {
               height: 5,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(4),
-                color: isCurrent ? AppColors.cyanLight : AppColors.borderLight,
+                color: isCurrent ? AppColors.primary : AppColors.borderLight,
                 boxShadow: isCurrent
                     ? [
                         BoxShadow(
-                          color: AppColors.cyanLight.withValues(alpha: 0.7),
+                          color: AppColors.primary.withValues(alpha: 0.4),
                           blurRadius: 6,
                         ),
                       ]

@@ -19,6 +19,8 @@ class TournamentModel {
   final String rules;
   final bool isRegistered;
 
+  String get roomPassword => roomPass;
+
   TournamentModel({
     required this.id,
     required this.title,

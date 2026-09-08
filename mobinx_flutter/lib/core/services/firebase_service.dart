@@ -26,8 +26,21 @@ class FirebaseService {
           ),
         );
       } else {
-        // Android reads google-services.json automatically
-        await Firebase.initializeApp();
+        // Android reads google-services.json automatically, with graceful fallback
+        try {
+          await Firebase.initializeApp();
+        } catch (androidInitErr) {
+          debugPrint('Default init failed, retrying with explicit options: $androidInitErr');
+          await Firebase.initializeApp(
+            options: const FirebaseOptions(
+              apiKey: 'AIzaSyCOQ1pa1bOSIahvbpkTQFh6z858ESS2vvg',
+              appId: '1:219633934545:android:aa8914cf664d3f47e065f0',
+              messagingSenderId: '219633934545',
+              projectId: 'obin-shop',
+              storageBucket: 'obin-shop.firebasestorage.app',
+            ),
+          );
+        }
       }
       _initialized = true;
       debugPrint('⚡ Mobin X: Firebase Core & Firestore Initialized Successfully');

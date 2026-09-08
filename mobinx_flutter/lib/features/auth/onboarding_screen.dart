@@ -3,11 +3,11 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/services/auth_service.dart';
-import '../../core/widgets/gamer_components.dart';
 import '../home/home_screen.dart';
 import 'login_sheet.dart';
 import 'register_sheet.dart';
 
+/// Modernized Player Authentication & Onboarding Screen
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -43,7 +43,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           SnackBar(
             content: Text('Google Sign-In note: $e'),
             behavior: SnackBarBehavior.floating,
-            backgroundColor: AppColors.surfaceCard,
+            backgroundColor: AppColors.textMain,
           ),
         );
       }
@@ -84,21 +84,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFFF8FAFC),
       body: Stack(
         children: [
-          // Background ambient gamer gradient glow
+          // Background ambient soft blue glow
           Positioned(
-            top: -100,
-            left: MediaQuery.of(context).size.width / 2 - 140,
+            top: -120,
+            left: MediaQuery.of(context).size.width / 2 - 150,
             child: Container(
-              width: 280,
-              height: 280,
+              width: 300,
+              height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppColors.primary.withValues(alpha: 0.35),
+                    const Color(0xFF38BDF8).withValues(alpha: 0.18),
                     Colors.transparent,
                   ],
                 ),
@@ -112,28 +112,32 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
-                  // Brand Shield Logo
+                  // Brand Shield Logo (M in blue gradient)
                   Container(
-                    width: 76,
-                    height: 76,
+                    width: 72,
+                    height: 72,
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: AppColors.gamerGlowGradient,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF0284C7), Color(0xFF2563EB)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.5),
-                          blurRadius: 24,
-                          offset: const Offset(0, 6),
+                          color: const Color(0xFF0284C7).withValues(alpha: 0.35),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
                         ),
                       ],
                     ),
-                    child: Center(
+                    child: const Center(
                       child: Text(
                         'M',
-                        style: GoogleFonts.outfit(
-                          fontSize: 40,
+                        style: TextStyle(
+                          fontSize: 42,
                           fontWeight: FontWeight.w900,
                           color: Colors.white,
                         ),
@@ -143,45 +147,44 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   const SizedBox(height: 14),
 
                   // App Title
-                  ShaderMask(
-                    shaderCallback: (bounds) => AppColors.gamerGlowGradient.createShader(bounds),
-                    child: Text(
-                      AppConstants.appName,
-                      style: GoogleFonts.outfit(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                        letterSpacing: 1.2,
-                      ),
+                  Text(
+                    AppConstants.appName,
+                    style: GoogleFonts.outfit(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.textMain,
+                      letterSpacing: -0.5,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
 
                   Text(
                     'SIGN IN TO CONTINUE',
                     style: GoogleFonts.outfit(
-                      fontSize: 11,
+                      fontSize: 11.5,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.cyanLight,
+                      color: const Color(0xFF0284C7),
                       letterSpacing: 1.4,
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
 
                   // Option 1: Prominent Continue with Google Card
-                  GestureDetector(
+                  InkWell(
                     onTap: _isGoogleLoading ? null : _handleGoogleSignIn,
+                    borderRadius: BorderRadius.circular(20),
                     child: Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 18),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.borderLight),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.cyan.withValues(alpha: 0.35),
-                            blurRadius: 24,
-                            offset: const Offset(0, 8),
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 16,
+                            offset: const Offset(0, 4),
                           ),
                         ],
                       ),
@@ -203,14 +206,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   width: 48,
                                   height: 48,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFF8FAFC),
+                                    color: const Color(0xFFF1F5F9),
                                     borderRadius: BorderRadius.circular(14),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.08),
-                                        blurRadius: 8,
-                                      ),
-                                    ],
+                                    border: Border.all(color: AppColors.borderLight),
                                   ),
                                   child: Center(
                                     child: Text(
@@ -230,7 +228,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                   style: GoogleFonts.outfit(
                                     fontSize: 17,
                                     fontWeight: FontWeight.w900,
-                                    color: const Color(0xFF0F172A),
+                                    color: AppColors.textMain,
                                   ),
                                 ),
                                 const SizedBox(height: 3),
@@ -243,7 +241,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                                     color: const Color(0xFF64748B),
                                   ),
                                 ),
-                                const SizedBox(height: 12),
+                                const SizedBox(height: 14),
 
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -271,74 +269,88 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
 
                   // Option 2: Manual Login Card
-                  GamerCard(
+                  InkWell(
                     onTap: _openLoginSheet,
-                    padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 18),
-                    borderColor: AppColors.cyan.withValues(alpha: 0.35),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: AppColors.cyan.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.cyan.withValues(alpha: 0.3)),
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.borderLight),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.03),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
                           ),
-                          child: const Icon(Icons.lock_open_rounded, color: AppColors.cyanLight, size: 22),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Manual Login',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              Text(
-                                'Sign in with Email & Password',
-                                style: GoogleFonts.inter(
-                                  fontSize: 11.5,
-                                  color: AppColors.textMuted,
-                                ),
-                              ),
-                            ],
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(Icons.lock_outline_rounded, color: Color(0xFF2563EB), size: 20),
                           ),
-                        ),
-                        const Icon(Icons.chevron_right_rounded, color: AppColors.cyanLight),
-                      ],
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Manual Player Login',
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.textMain,
+                                  ),
+                                ),
+                                Text(
+                                  'Sign in with Email & Password',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.5,
+                                    color: const Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8)),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 14),
 
-                  // Option 3: Create New Account Pill
-                  GestureDetector(
+                  // Option 3: Create New Account
+                  InkWell(
                     onTap: _openRegisterSheet,
+                    borderRadius: BorderRadius.circular(14),
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 18),
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceCard,
+                        color: Colors.white,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.border),
+                        border: Border.all(color: AppColors.borderLight),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.person_add_outlined, color: AppColors.cyanLight, size: 18),
+                          const Icon(Icons.person_add_outlined, color: Color(0xFF2563EB), size: 18),
                           const SizedBox(width: 8),
                           Text(
                             'New Player? Register Account',
                             style: GoogleFonts.outfit(
                               fontSize: 13,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w800,
                               color: AppColors.textMain,
                             ),
                           ),
@@ -351,13 +363,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   // Option 4: Guest Mode Access
                   TextButton.icon(
                     onPressed: _handleGuestAccess,
-                    icon: const Icon(Icons.play_circle_outline_rounded, size: 16, color: AppColors.textMuted),
+                    icon: const Icon(Icons.play_circle_outline_rounded, size: 16, color: Color(0xFF64748B)),
                     label: Text(
                       'Explore as Guest Member →',
                       style: GoogleFonts.outfit(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textMuted,
+                        color: const Color(0xFF64748B),
                       ),
                     ),
                   ),
@@ -368,7 +380,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     'By continuing, you agree to our Terms & Privacy Policy',
                     style: GoogleFonts.inter(
                       fontSize: 11,
-                      color: AppColors.textDisabled,
+                      color: const Color(0xFF94A3B8),
                     ),
                     textAlign: TextAlign.center,
                   ),

@@ -99,6 +99,20 @@ class TournamentService {
 
     // 3. Fetch latest from Firestore in background
     await refresh();
+
+    // 4. Real-time sync listener for instant Admin updates
+    if (FirebaseService.isInitialized) {
+      try {
+        FirebaseService.firestore.collection('tournaments').snapshots().listen((snap) {
+          if (snap.docs.isNotEmpty) {
+            final liveList = snap.docs.map((doc) => TournamentModel.fromJson({...doc.data(), 'id': doc.id})).toList();
+            if (liveList.isNotEmpty) {
+              _updateTournamentsList(liveList);
+            }
+          }
+        });
+      } catch (_) {}
+    }
   }
 
   void _updateTournamentsList(List<TournamentModel> rawList) {
@@ -223,7 +237,7 @@ class TournamentService {
             .timeout(const Duration(seconds: 4));
 
         if (snap.docs.isNotEmpty) {
-          final liveList = snap.docs.map((doc) => TournamentModel.fromJson(doc.data())).toList();
+          final liveList = snap.docs.map((doc) => TournamentModel.fromJson({...doc.data(), 'id': doc.id})).toList();
           if (liveList.isNotEmpty) {
             _updateTournamentsList(liveList);
           }

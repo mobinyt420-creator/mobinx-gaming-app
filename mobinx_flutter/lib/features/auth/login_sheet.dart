@@ -36,6 +36,11 @@ class _LoginSheetState extends State<LoginSheet> {
     final email = _emailCtrl.text.trim();
     final pass = _passCtrl.text;
 
+    if (email.isEmpty || pass.isEmpty) {
+      setState(() => _errorMsg = 'Please enter both email and password.');
+      return;
+    }
+
     setState(() {
       _errorMsg = null;
       _isLoading = true;
@@ -63,13 +68,12 @@ class _LoginSheetState extends State<LoginSheet> {
       padding: EdgeInsets.only(
         left: 20,
         right: 20,
-        top: 24,
+        top: 20,
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
       ),
       decoration: const BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-        border: Border(top: BorderSide(color: AppColors.borderLight, width: 1.5)),
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -82,7 +86,7 @@ class _LoginSheetState extends State<LoginSheet> {
                 width: 44,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.borderLight,
+                  color: const Color(0xFFE2E8F0),
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -93,14 +97,13 @@ class _LoginSheetState extends State<LoginSheet> {
             Row(
               children: [
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 42,
+                  height: 42,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.15),
+                    color: const Color(0xFFEFF6FF),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.35)),
                   ),
-                  child: const Icon(Icons.lock_outline_rounded, color: AppColors.cyanLight, size: 20),
+                  child: const Icon(Icons.lock_outline_rounded, color: Color(0xFF2563EB), size: 22),
                 ),
                 const SizedBox(width: 12),
                 Column(
@@ -110,15 +113,15 @@ class _LoginSheetState extends State<LoginSheet> {
                       'Manual Player Login',
                       style: GoogleFonts.outfit(
                         fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.textMain,
                       ),
                     ),
                     Text(
                       'Sign in with your registered email & password',
                       style: GoogleFonts.inter(
                         fontSize: 11.5,
-                        color: AppColors.textMuted,
+                        color: const Color(0xFF64748B),
                       ),
                     ),
                   ],
@@ -132,18 +135,18 @@ class _LoginSheetState extends State<LoginSheet> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: AppColors.danger.withValues(alpha: 0.15),
+                  color: const Color(0xFFFEF2F2),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.danger.withValues(alpha: 0.4)),
+                  border: Border.all(color: const Color(0xFFFECACA)),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 16),
+                    const Icon(Icons.error_outline_rounded, color: Color(0xFFDC2626), size: 16),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         _errorMsg!,
-                        style: GoogleFonts.inter(fontSize: 12, color: AppColors.danger, fontWeight: FontWeight.w600),
+                        style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFFDC2626), fontWeight: FontWeight.w600),
                       ),
                     ),
                   ],
@@ -155,16 +158,32 @@ class _LoginSheetState extends State<LoginSheet> {
             // Email Input
             Text(
               'Email / Gmail',
-              style: GoogleFonts.outfit(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textBody),
+              style: GoogleFonts.outfit(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.textMain),
             ),
             const SizedBox(height: 6),
             TextField(
               controller: _emailCtrl,
               keyboardType: TextInputType.emailAddress,
-              style: const TextStyle(color: Colors.white, fontSize: 13.5),
-              decoration: const InputDecoration(
+              style: const TextStyle(color: AppColors.textMain, fontSize: 14),
+              decoration: InputDecoration(
                 hintText: 'gamer@gmail.com',
-                prefixIcon: Icon(Icons.email_outlined, color: AppColors.textMuted, size: 18),
+                hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
+                filled: true,
+                fillColor: const Color(0xFFF8FAFC),
+                prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF64748B), size: 18),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               ),
             ),
             const SizedBox(height: 14),
@@ -175,7 +194,7 @@ class _LoginSheetState extends State<LoginSheet> {
               children: [
                 Text(
                   'Password',
-                  style: GoogleFonts.outfit(fontSize: 12.5, fontWeight: FontWeight.w700, color: AppColors.textBody),
+                  style: GoogleFonts.outfit(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.textMain),
                 ),
                 GestureDetector(
                   onTap: () {
@@ -188,7 +207,7 @@ class _LoginSheetState extends State<LoginSheet> {
                   },
                   child: Text(
                     'Forgot Password?',
-                    style: GoogleFonts.outfit(fontSize: 11.5, fontWeight: FontWeight.w700, color: AppColors.cyanLight),
+                    style: GoogleFonts.outfit(fontSize: 11.5, fontWeight: FontWeight.w700, color: const Color(0xFF2563EB)),
                   ),
                 ),
               ],
@@ -197,14 +216,30 @@ class _LoginSheetState extends State<LoginSheet> {
             TextField(
               controller: _passCtrl,
               obscureText: _obscurePass,
-              style: const TextStyle(color: Colors.white, fontSize: 13.5),
+              style: const TextStyle(color: AppColors.textMain, fontSize: 14),
               decoration: InputDecoration(
                 hintText: 'Enter password',
-                prefixIcon: const Icon(Icons.key_outlined, color: AppColors.textMuted, size: 18),
+                hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
+                filled: true,
+                fillColor: const Color(0xFFF8FAFC),
+                prefixIcon: const Icon(Icons.key_outlined, color: Color(0xFF64748B), size: 18),
                 suffixIcon: IconButton(
-                  icon: Icon(_obscurePass ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: AppColors.textMuted, size: 18),
+                  icon: Icon(_obscurePass ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: const Color(0xFF64748B), size: 18),
                   onPressed: () => setState(() => _obscurePass = !_obscurePass),
                 ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               ),
             ),
             const SizedBox(height: 22),
@@ -228,14 +263,14 @@ class _LoginSheetState extends State<LoginSheet> {
                 child: RichText(
                   text: TextSpan(
                     text: "Don't have an account? ",
-                    style: GoogleFonts.inter(fontSize: 12.5, color: AppColors.textMuted),
+                    style: GoogleFonts.inter(fontSize: 12.5, color: const Color(0xFF64748B)),
                     children: [
                       TextSpan(
                         text: 'Create Player Account',
                         style: GoogleFonts.inter(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.cyanLight,
+                          color: const Color(0xFF2563EB),
                           decoration: TextDecoration.underline,
                         ),
                       ),

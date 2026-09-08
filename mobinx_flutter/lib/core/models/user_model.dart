@@ -21,6 +21,9 @@ class UserModel {
   final int tournamentsJoined;
   final int totalDownloads;
   final int savedSensitivities;
+  final String referralCode;
+  final double referralEarnings;
+  final int referralCount;
   final String registeredDate;
   final String lastLoginAt;
 
@@ -46,6 +49,9 @@ class UserModel {
     this.tournamentsJoined = 0,
     this.totalDownloads = 0,
     this.savedSensitivities = 0,
+    this.referralCode = 'MOBINXVIP',
+    this.referralEarnings = 0.0,
+    this.referralCount = 0,
     this.registeredDate = 'Just now',
     this.lastLoginAt = '',
   });
@@ -73,6 +79,9 @@ class UserModel {
       tournamentsJoined: json['stats']?['tournamentsJoined'] is int ? json['stats']['tournamentsJoined'] : 0,
       totalDownloads: json['stats']?['totalDownloads'] is int ? json['stats']['totalDownloads'] : 0,
       savedSensitivities: json['stats']?['savedSensitivities'] is int ? json['stats']['savedSensitivities'] : 0,
+      referralCode: json['referralCode']?.toString() ?? 'MOBINXVIP',
+      referralEarnings: (json['referralEarnings'] is num ? json['referralEarnings'].toDouble() : double.tryParse(json['referralEarnings']?.toString() ?? '0.0')) ?? 0.0,
+      referralCount: json['stats']?['referralsCount'] is int ? json['stats']['referralsCount'] : (json['referralCount'] is int ? json['referralCount'] : 0),
       registeredDate: json['registeredDate']?.toString() ?? 'Just now',
       lastLoginAt: json['lastLoginAt']?.toString() ?? '',
     );

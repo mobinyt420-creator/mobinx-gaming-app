@@ -37,14 +37,24 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   }
 
   Future<void> _initializeApp() async {
-    await StorageService.init();
-    await AuthService.instance.init();
+    try {
+      await StorageService.init();
+      await AuthService.instance.init();
+    } catch (e) {
+      debugPrint('⚡ Splash init error handled: $e');
+    }
+
     await Future.delayed(const Duration(milliseconds: 1600));
 
     if (!mounted) return;
-    final bool isOnboardingDone = StorageService.isOnboardingDone();
+    bool isOnboardingDone = false;
+    try {
+      isOnboardingDone = StorageService.isOnboardingDone();
+    } catch (_) {}
+
     final Widget targetScreen = isOnboardingDone ? const HomeScreen() : const OnboardingScreen();
 
+    if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) => targetScreen,
@@ -119,11 +129,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       height: 90,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: AppColors.gamerGlowGradient,
+                        gradient: AppColors.brandGradient,
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.55),
-                            blurRadius: 30,
+                            color: AppColors.primary.withValues(alpha: 0.35),
+                            blurRadius: 24,
                             spreadRadius: 2,
                             offset: const Offset(0, 8),
                           ),
@@ -144,14 +154,14 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
                     // App Title
                     ShaderMask(
-                      shaderCallback: (bounds) => AppColors.gamerGlowGradient.createShader(bounds),
+                      shaderCallback: (bounds) => AppColors.brandGradient.createShader(bounds),
                       child: Text(
                         AppConstants.appName,
                         style: GoogleFonts.outfit(
                           fontSize: 32,
                           fontWeight: FontWeight.w900,
                           color: Colors.white,
-                          letterSpacing: 1.5,
+                          letterSpacing: 1.2,
                         ),
                       ),
                     ),
@@ -163,8 +173,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       style: GoogleFonts.outfit(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textMuted,
-                        letterSpacing: 0.8,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0.5,
                       ),
                     ),
                     const SizedBox(height: 36),
@@ -174,14 +184,14 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       width: 140,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceCard,
+                        color: AppColors.borderLight,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(10),
                         child: const LinearProgressIndicator(
                           backgroundColor: Colors.transparent,
-                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.cyanLight),
+                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
                         ),
                       ),
                     ),
@@ -202,7 +212,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 style: GoogleFonts.outfit(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textDisabled,
+                  color: AppColors.textMuted,
                 ),
               ),
             ),

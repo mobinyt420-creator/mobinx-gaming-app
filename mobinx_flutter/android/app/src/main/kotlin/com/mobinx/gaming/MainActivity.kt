@@ -1,4 +1,4 @@
-package com.mobinx.mobinx_app
+package com.mobinx.gaming
 
 import io.flutter.embedding.android.FlutterActivity
 

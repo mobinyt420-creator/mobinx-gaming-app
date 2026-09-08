@@ -152,6 +152,30 @@ class HomeDataService {
 
     // 2. Fetch live data from Firestore asynchronously
     await refresh();
+
+    // 3. Setup real-time listeners for instant Admin Panel synchronization
+    if (FirebaseService.isInitialized) {
+      try {
+        FirebaseService.firestore.collection('banners').snapshots().listen((snap) {
+          if (snap.docs.isNotEmpty) {
+            final live = snap.docs
+                .map((doc) => BannerModel.fromJson({...doc.data(), 'id': doc.id}))
+                .where((b) => b.isActive)
+                .toList();
+            if (live.isNotEmpty) bannersNotifier.value = live;
+          }
+        });
+        FirebaseService.firestore.collection('flashDeals').snapshots().listen((snap) {
+          if (snap.docs.isNotEmpty) {
+            final live = snap.docs
+                .map((doc) => FlashDealModel.fromJson({...doc.data(), 'id': doc.id}))
+                .where((d) => d.inStock)
+                .toList();
+            if (live.isNotEmpty) flashDealsNotifier.value = live;
+          }
+        });
+      } catch (_) {}
+    }
   }
 
   /// Pull to refresh / background sync
@@ -161,16 +185,16 @@ class HomeDataService {
 
     try {
       if (FirebaseService.isInitialized) {
-        // Fetch Live Banners
+        // Fetch Live Banners (Supporting both active & isActive from Admin Panel)
         final bannerSnap = await FirebaseService.firestore
             .collection('banners')
-            .where('isActive', isEqualTo: true)
             .get()
             .timeout(const Duration(seconds: 4));
 
         if (bannerSnap.docs.isNotEmpty) {
           final liveBanners = bannerSnap.docs
-              .map((doc) => BannerModel.fromJson(doc.data()))
+              .map((doc) => BannerModel.fromJson({...doc.data(), 'id': doc.id}))
+              .where((b) => b.isActive)
               .toList();
           if (liveBanners.isNotEmpty) {
             bannersNotifier.value = liveBanners;
@@ -180,13 +204,13 @@ class HomeDataService {
         // Fetch Live Flash Deals
         final dealsSnap = await FirebaseService.firestore
             .collection('flashDeals')
-            .where('inStock', isEqualTo: true)
             .get()
             .timeout(const Duration(seconds: 4));
 
         if (dealsSnap.docs.isNotEmpty) {
           final liveDeals = dealsSnap.docs
-              .map((doc) => FlashDealModel.fromJson(doc.data()))
+              .map((doc) => FlashDealModel.fromJson({...doc.data(), 'id': doc.id}))
+              .where((d) => d.inStock)
               .toList();
           if (liveDeals.isNotEmpty) {
             flashDealsNotifier.value = liveDeals;

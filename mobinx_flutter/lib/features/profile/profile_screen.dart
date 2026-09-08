@@ -3,9 +3,16 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/store_service.dart';
 import '../../core/models/user_model.dart';
 import '../../core/widgets/gamer_components.dart';
 import '../auth/onboarding_screen.dart';
+import '../tournaments/tournaments_screen.dart';
+import '../sensitivity/sensitivity_screen.dart';
+import '../referral/referral_screen.dart';
+import '../help/help_screen.dart';
+import '../settings/settings_screen.dart';
+import '../about/about_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -23,21 +30,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surfaceCard,
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: AppColors.borderLight, width: 1.2),
+          side: const BorderSide(color: AppColors.borderLight, width: 1.0),
         ),
         title: Row(
           children: [
-            const Icon(Icons.edit_note_rounded, color: AppColors.cyanLight),
+            const Icon(Icons.edit_note_rounded, color: AppColors.primary),
             const SizedBox(width: 8),
             Text(
               'Edit Player Profile',
               style: GoogleFonts.outfit(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
-                color: Colors.white,
+                color: AppColors.textMain,
               ),
             ),
           ],
@@ -47,31 +54,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Player Name / IGN', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
+              Text('Player Name / IGN', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
               const SizedBox(height: 5),
               TextField(
                 controller: nameCtrl,
-                style: const TextStyle(color: Colors.white, fontSize: 13.5),
+                style: const TextStyle(color: AppColors.textMain, fontSize: 13.5),
                 decoration: const InputDecoration(hintText: 'Your In-Game Name'),
               ),
               const SizedBox(height: 12),
 
-              Text('Phone Number', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
+              Text('Phone Number', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
               const SizedBox(height: 5),
               TextField(
                 controller: phoneCtrl,
                 keyboardType: TextInputType.phone,
-                style: const TextStyle(color: Colors.white, fontSize: 13.5),
+                style: const TextStyle(color: AppColors.textMain, fontSize: 13.5),
                 decoration: const InputDecoration(hintText: '01XXXXXXXXX'),
               ),
               const SizedBox(height: 12),
 
-              Text('Free Fire UID', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
+              Text('Free Fire UID', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textSecondary)),
               const SizedBox(height: 5),
               TextField(
                 controller: ffUidCtrl,
                 keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.white, fontSize: 13.5),
+                style: const TextStyle(color: AppColors.textMain, fontSize: 13.5),
                 decoration: const InputDecoration(hintText: 'e.g. 1234567890'),
               ),
             ],
@@ -100,7 +107,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               );
             },
-            child: const Text('Save Profile'),
+            child: const Text('Save Changes'),
           ),
         ],
       ),
@@ -111,13 +118,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surfaceCard,
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: AppColors.borderLight),
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: AppColors.borderLight, width: 1.0),
         ),
-        title: const Text('Logout Confirmation', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        content: const Text('Are you sure you want to sign out of your Mobin X account?', style: TextStyle(color: AppColors.textBody)),
+        title: Text(
+          'Confirm Logout',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: AppColors.textMain),
+        ),
+        content: const Text(
+          'Are you sure you want to sign out of your Mobin X account?',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
           ElevatedButton(
@@ -154,7 +167,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 12),
                 Text(
                   'Not Signed In',
-                  style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                  style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textMain),
                 ),
                 const SizedBox(height: 6),
                 const Text('Sign in to manage your gaming profile and tournaments.', style: TextStyle(color: AppColors.textMuted)),
@@ -178,38 +191,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Player Profile Card
-              GamerCard(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.surfaceCard,
-                    AppColors.primary.withValues(alpha: 0.12),
+              // Player Profile Card (Modern Light Theme Hero Card)
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.borderLight, width: 1.0),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
                   ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
                 ),
                 child: Column(
                   children: [
                     Row(
                       children: [
-                        // Avatar with glow
+                        // Avatar with ring
                         Container(
                           width: 60,
                           height: 60,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            gradient: AppColors.gamerGlowGradient,
-                            border: Border.all(color: AppColors.cyanLight, width: 2),
+                            gradient: AppColors.brandGradient,
+                            border: Border.all(color: AppColors.primaryLight, width: 2),
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.primary.withValues(alpha: 0.4),
-                                blurRadius: 14,
+                                color: AppColors.primary.withValues(alpha: 0.25),
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
                               ),
                             ],
                           ),
                           child: Center(
                             child: Text(
-                              user.name.isNotEmpty ? user.name[0].toUpperCase() : 'P',
+                              user.name.isNotEmpty ? user.name[0].toUpperCase() : 'M',
                               style: GoogleFonts.outfit(
                                 fontSize: 26,
                                 fontWeight: FontWeight.w900,
@@ -230,7 +249,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 style: GoogleFonts.outfit(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w800,
-                                  color: Colors.white,
+                                  color: AppColors.textMain,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -240,7 +259,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 user.email,
                                 style: GoogleFonts.inter(
                                   fontSize: 11.5,
-                                  color: AppColors.textMuted,
+                                  color: AppColors.textSecondary,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -248,10 +267,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               const SizedBox(height: 6),
                               Row(
                                 children: [
-                                  GamerBadge(
-                                    text: user.isAdmin ? '👑 ADMIN' : '⭐ VIP PRO',
-                                    color: user.isAdmin ? AppColors.gold : AppColors.cyanLight,
-                                    icon: user.isAdmin ? Icons.verified_user_rounded : Icons.star_rounded,
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: user.isAdmin ? const Color(0xFFFEF3C7) : const Color(0xFFEFF6FF),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: user.isAdmin ? const Color(0xFFFDE68A) : const Color(0xFFBFDBFE),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          user.isAdmin ? Icons.verified_user_rounded : Icons.star_rounded,
+                                          size: 13,
+                                          color: user.isAdmin ? const Color(0xFFD97706) : AppColors.primary,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          user.isAdmin ? 'ADMIN' : 'VIP PRO',
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 10.5,
+                                            fontWeight: FontWeight.w900,
+                                            color: user.isAdmin ? const Color(0xFFD97706) : AppColors.primary,
+                                            letterSpacing: 0.3,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
@@ -269,15 +314,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
 
                         IconButton(
-                          icon: const Icon(Icons.edit_outlined, color: AppColors.cyanLight),
+                          icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
                           onPressed: () => _openEditProfileDialog(user),
                         ),
                       ],
                     ),
 
-                    const SizedBox(height: 16),
-                    const Divider(color: AppColors.border),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
+                    const Divider(color: AppColors.borderLight),
+                    const SizedBox(height: 10),
 
                     // Free Fire UID Row
                     Row(
@@ -285,11 +330,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.videogame_asset_outlined, color: AppColors.cyanLight, size: 18),
+                            const Icon(Icons.videogame_asset_outlined, color: AppColors.primary, size: 20),
                             const SizedBox(width: 8),
                             Text(
                               'Free Fire UID:',
-                              style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.textMuted),
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                           ],
                         ),
@@ -308,11 +357,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             }
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                             decoration: BoxDecoration(
-                              color: AppColors.background,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: AppColors.borderLight),
+                              color: user.ffUid.isNotEmpty ? AppColors.surfaceCardSubtle : AppColors.primary,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: user.ffUid.isNotEmpty ? AppColors.borderLight : Colors.transparent,
+                              ),
                             ),
                             child: Row(
                               children: [
@@ -321,7 +372,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   style: GoogleFonts.outfit(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w800,
-                                    color: user.ffUid.isNotEmpty ? Colors.white : AppColors.cyanLight,
+                                    color: user.ffUid.isNotEmpty ? AppColors.textMain : Colors.white,
                                   ),
                                 ),
                                 if (user.ffUid.isNotEmpty) ...[
@@ -340,8 +391,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 16),
 
               // Wallet & Balance Card
-              GamerCard(
-                borderColor: AppColors.gold.withValues(alpha: 0.35),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFFDE68A), width: 1.2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -350,7 +413,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         Text(
                           'Wallet Balance',
-                          style: GoogleFonts.inter(fontSize: 12, color: AppColors.textMuted, fontWeight: FontWeight.w600),
+                          style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(height: 4),
                         Row(
@@ -360,71 +423,180 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               style: GoogleFonts.outfit(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w900,
-                                color: AppColors.goldLight,
+                                color: const Color(0xFFD97706),
                               ),
                             ),
                           ],
                         ),
                       ],
                     ),
-                    GamerButton(
-                      label: 'Top-Up +',
-                      width: 100,
-                      height: 38,
-                      gradient: AppColors.goldGradient,
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF59E0B),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('💎 Diamond Top-Up shop opens in Step 5!'),
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
+                        StoreService.instance.openTopUp();
                       },
+                      child: Text(
+                        'Top-Up +',
+                        style: GoogleFonts.outfit(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
 
               // Player Esports Stats Grid
               Text(
                 '📊 Esports Performance & Stats',
-                style: GoogleFonts.outfit(fontSize: 14.5, fontWeight: FontWeight.w800, color: Colors.white),
+                style: GoogleFonts.outfit(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textMain,
+                ),
               ),
               const SizedBox(height: 10),
               Row(
                 children: [
-                  _buildStatBox('Tournaments', '${user.tournamentsJoined}', Icons.emoji_events_outlined, AppColors.gold),
+                  _buildStatBox('Tournaments', '${user.tournamentsJoined}', Icons.emoji_events_outlined, const Color(0xFFF59E0B)),
                   const SizedBox(width: 10),
-                  _buildStatBox('Downloads', '${user.totalDownloads}', Icons.download_outlined, AppColors.emerald),
+                  _buildStatBox('Downloads', '${user.totalDownloads}', Icons.download_outlined, const Color(0xFF10B981)),
                   const SizedBox(width: 10),
-                  _buildStatBox('Sensitivities', '${user.savedSensitivities}', Icons.track_changes_outlined, AppColors.cyanLight),
+                  _buildStatBox('Sensitivities', '${user.savedSensitivities}', Icons.track_changes_outlined, const Color(0xFF0284C7)),
                 ],
               ),
               const SizedBox(height: 24),
 
-              // Settings & Actions List
+              // Profile Quick Actions & Features
               Text(
-                '⚙️ Account Settings',
-                style: GoogleFonts.outfit(fontSize: 14.5, fontWeight: FontWeight.w800, color: Colors.white),
+                '🎯 Quick Actions & Features',
+                style: GoogleFonts.outfit(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textMain,
+                ),
               ),
               const SizedBox(height: 10),
 
               _buildSettingsTile(
-                icon: Icons.support_agent_rounded,
-                title: 'Official Telegram Support',
-                subtitle: 'Join 100K+ community for match passwords',
+                icon: Icons.emoji_events_rounded,
+                title: 'My Tournaments & Matches',
+                subtitle: 'View joined rooms, match schedules & prize claim status',
+                iconColor: const Color(0xFFF59E0B),
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('✈️ Telegram Community: @mobinx_official')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => TournamentsScreen(onBack: () => Navigator.pop(context))),
                   );
                 },
               ),
               _buildSettingsTile(
-                icon: Icons.privacy_tip_outlined,
-                title: 'Privacy Policy & Terms',
-                subtitle: 'Google Play verified data safety policies',
-                onTap: () {},
+                icon: Icons.tune_rounded,
+                title: 'Saved Aim Presets & Sensitivity Maker',
+                subtitle: 'Calibrate your phone for 100% headshot accuracy',
+                iconColor: const Color(0xFF2563EB),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => SensitivityScreen(onBack: () => Navigator.pop(context))),
+                  );
+                },
+              ),
+              _buildSettingsTile(
+                icon: Icons.card_giftcard_rounded,
+                title: 'Referral Program & Rewards',
+                subtitle: 'Invite friends, earn diamonds & instant bKash rewards',
+                iconColor: const Color(0xFF7C3AED),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ReferralScreen()),
+                  );
+                },
+              ),
+
+              if (user.isAdmin) ...[
+                const SizedBox(height: 14),
+                Text(
+                  '👑 Administrator Management',
+                  style: GoogleFonts.outfit(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFFDC2626),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _buildSettingsTile(
+                  icon: Icons.admin_panel_settings_rounded,
+                  title: 'Open Admin Dashboard Console',
+                  subtitle: 'Real-time banners, rooms, users, downloads & finance',
+                  iconColor: const Color(0xFFDC2626),
+                  onTap: () {
+                    StoreService.instance.openUrlInBrowserView(
+                      'https://mobinx-admin-console.vercel.app',
+                      title: 'Mobin X Admin Console',
+                      barColor: const Color(0xFF1E1B4B),
+                    );
+                  },
+                ),
+              ],
+
+              const SizedBox(height: 16),
+
+              // Settings & Actions List
+              Text(
+                '⚙️ Account Settings',
+                style: GoogleFonts.outfit(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textMain,
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              _buildSettingsTile(
+                icon: Icons.settings_rounded,
+                title: 'App Settings & Preferences',
+                subtitle: 'Push notifications, sound alerts & cache manager',
+                iconColor: AppColors.textSecondary,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                  );
+                },
+              ),
+              _buildSettingsTile(
+                icon: Icons.help_outline_rounded,
+                title: 'Help & Support 24/7',
+                subtitle: 'WhatsApp, Telegram, live tickets & FAQs',
+                iconColor: const Color(0xFF10B981),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const HelpScreen()),
+                  );
+                },
+              ),
+              _buildSettingsTile(
+                icon: Icons.info_outline_rounded,
+                title: 'About Mobin X',
+                subtitle: 'Version details, studio credits & security shield',
+                iconColor: AppColors.primary,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const AboutScreen()),
+                  );
+                },
               ),
               _buildSettingsTile(
                 icon: Icons.logout_rounded,
@@ -442,21 +614,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildStatBox(String label, String value, IconData icon, Color color) {
     return Expanded(
-      child: GamerCard(
+      child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-        borderColor: color.withValues(alpha: 0.25),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.borderLight, width: 1.0),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
         child: Column(
           children: [
-            Icon(icon, color: color, size: 20),
+            Icon(icon, color: color, size: 22),
             const SizedBox(height: 6),
             Text(
               value,
-              style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w900, color: Colors.white),
+              style: GoogleFonts.outfit(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: AppColors.textMain,
+              ),
             ),
             const SizedBox(height: 2),
             Text(
               label,
-              style: GoogleFonts.inter(fontSize: 10, color: AppColors.textMuted, fontWeight: FontWeight.w600),
+              style: GoogleFonts.inter(
+                fontSize: 10,
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -474,33 +665,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required VoidCallback onTap,
     Color? iconColor,
   }) {
-    return GamerCard(
+    return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      onTap: onTap,
-      child: Row(
-        children: [
-          Icon(icon, color: iconColor ?? AppColors.cyanLight, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.outfit(fontSize: 13.5, fontWeight: FontWeight.w700, color: Colors.white),
-                ),
-                Text(
-                  subtitle,
-                  style: GoogleFonts.inter(fontSize: 11, color: AppColors.textMuted),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.borderLight, width: 1.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          const Icon(Icons.chevron_right_rounded, color: AppColors.textDisabled, size: 20),
         ],
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Icon(icon, color: iconColor ?? AppColors.primary, size: 22),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.outfit(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textMain,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.inter(fontSize: 11, color: AppColors.textMuted),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right_rounded, color: AppColors.textDisabled, size: 20),
+            ],
+          ),
+        ),
       ),
     );
   }
