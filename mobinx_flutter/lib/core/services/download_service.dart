@@ -60,9 +60,31 @@ class DownloadService {
     ),
   ];
 
+  bool _isInit = false;
+
   Future<void> init() async {
-    itemsNotifier.value = _defaultItems;
+    if (_isInit) return;
+    _isInit = true;
+
+    if (itemsNotifier.value.isEmpty) {
+      itemsNotifier.value = _defaultItems;
+    }
     await refresh();
+
+    if (FirebaseService.isInitialized) {
+      try {
+        FirebaseService.firestore.collection('downloads').snapshots().listen((snap) {
+          if (snap.docs.isNotEmpty) {
+            final liveList = snap.docs
+                .map((d) => DownloadItemModel.fromJson({...d.data(), 'id': d.id}))
+                .toList();
+            if (liveList.isNotEmpty) {
+              itemsNotifier.value = liveList;
+            }
+          }
+        });
+      } catch (_) {}
+    }
   }
 
   Future<void> refresh() async {

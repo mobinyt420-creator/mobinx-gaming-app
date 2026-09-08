@@ -86,16 +86,23 @@ class TournamentService {
     ),
   ];
 
+  bool _isInit = false;
+
   /// Initialize and load cached registered matches
   Future<void> init() async {
+    if (_isInit) return;
+    _isInit = true;
+
     // 1. Load registered matches from cache
     final cachedRegistered = StorageService.getCache('mobinx_registered_matches');
     if (cachedRegistered is List) {
       registeredIdsNotifier.value = cachedRegistered.map((e) => e.toString()).toSet();
     }
 
-    // 2. Populate default tournaments
-    _updateTournamentsList(_defaultTournaments);
+    // 2. Populate default tournaments only if currently empty (prevents 1s flash glitch)
+    if (tournamentsNotifier.value.isEmpty) {
+      _updateTournamentsList(_defaultTournaments);
+    }
 
     // 3. Fetch latest from Firestore in background
     await refresh();

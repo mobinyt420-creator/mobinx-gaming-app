@@ -281,6 +281,29 @@ class AuthService {
     return guestUser;
   }
 
+  // --- UPDATE USER DETAILS (NAME, PHONE, FF UID) ---
+  Future<void> updateUserDetails({
+    String? name,
+    String? phone,
+    String? ffUid,
+  }) async {
+    final current = userNotifier.value;
+    if (current == null) return;
+
+    final updated = current.copyWith(
+      name: name?.trim().isNotEmpty == true ? name!.trim() : current.name,
+      phone: phone?.replaceAll(RegExp(r'[^0-9+]'), '') ?? current.phone,
+      ffUid: ffUid?.trim().isNotEmpty == true ? ffUid!.trim() : current.ffUid,
+    );
+
+    await StorageService.saveUser(updated);
+    userNotifier.value = updated;
+
+    FirebaseService.syncUserToCloud(updated.toJson()).catchError((e) {
+      debugPrint('[AuthService] Profile sync error: $e');
+    });
+  }
+
   // --- LOGOUT ---
   Future<void> logout() async {
     try {

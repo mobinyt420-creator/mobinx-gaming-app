@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../constants/app_constants.dart';
 import 'firebase_service.dart';
@@ -7,6 +8,8 @@ import 'firebase_service.dart';
 class StoreService {
   StoreService._();
   static final StoreService instance = StoreService._();
+
+  static const MethodChannel _customTabsChannel = MethodChannel('com.mobinx.app/custom_tabs');
 
   String _topUpUrl = AppConstants.topUpPartnerUrl;
   String _shopUrl = 'https://www.obinshop.com/';
@@ -38,15 +41,26 @@ class StoreService {
     }
   }
 
-  /// Opens the store inside an Android Chrome Custom Tab / In-App Browser (Image 3)
-  /// Guaranteed compatibility with bKash/Nagad payments and Google Sign-In
+  /// Opens the store inside an Android Chrome Custom Tab with exact brand toolbar color
   Future<bool> openStore({
     required String url,
     String? title,
+    String colorHex = '#0284C7',
   }) async {
+    // 1. First priority: Native Android Custom Tabs with explicit brand toolbar color
+    try {
+      final res = await _customTabsChannel.invokeMethod('openCustomTab', {
+        'url': url,
+        'color': colorHex,
+      });
+      if (res == true) return true;
+    } catch (e) {
+      debugPrint('[StoreService] Native CustomTab fallback: $e');
+    }
+
+    // 2. Fallback to inAppBrowserView
     final uri = Uri.parse(url);
     try {
-      // Launch in in-app browser view (Chrome Custom Tab)
       final launched = await launchUrl(
         uri,
         mode: LaunchMode.inAppBrowserView,
@@ -59,7 +73,7 @@ class StoreService {
       debugPrint('[StoreService] inAppBrowserView failed: $e');
     }
 
-    // Fallback to external browser if needed
+    // 3. Fallback to external browser if needed
     try {
       return await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (_) {
@@ -67,13 +81,32 @@ class StoreService {
     }
   }
 
-  Future<bool> openTopUp() => openStore(url: _topUpUrl, title: 'Noob Top Up');
-  Future<bool> openShop() => openStore(url: _shopUrl, title: 'Mobin X Shop');
+  /// Top Up opens with brand Sky Blue (#0284C7)
+  Future<bool> openTopUp() => openStore(
+        url: _topUpUrl,
+        title: 'Noob Top Up',
+        colorHex: '#0284C7',
+      );
+
+  /// Shop opens with brand Warm Orange (#F97316)
+  Future<bool> openShop() => openStore(
+        url: _shopUrl,
+        title: 'Mobin X Shop',
+        colorHex: '#F97316',
+      );
 
   Future<bool> openUrlInBrowserView(
     String url, {
     String? title,
     Color? barColor,
+    String colorHex = '#0284C7',
   }) =>
-      openStore(url: url, title: title);
+      openStore(
+        url: url,
+        title: title,
+        colorHex: barColor != null
+            ? '#${barColor.toARGB32().toRadixString(16).padLeft(8, '0').substring(2)}'
+            : colorHex,
+      );
 }
+

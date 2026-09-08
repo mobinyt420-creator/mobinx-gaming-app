@@ -94,42 +94,29 @@ class CategorySlider extends StatefulWidget {
 }
 
 class _CategorySliderState extends State<CategorySlider> {
-  final ScrollController _scrollController = ScrollController();
+  static const double _itemWidth = 68.0;
+  static const double _itemGap = 14.0;
+  static const double _step = _itemWidth + _itemGap; // 82.0
+
+  late final ScrollController _scrollController;
   Timer? _scrollTimer;
-  bool _forward = true;
 
   @override
   void initState() {
     super.initState();
+    // Start at a multiple of categories so it can loop seamlessly in one direction
+    const initialIndex = 500 * 7;
+    _scrollController = ScrollController(initialScrollOffset: initialIndex * _step);
     _startAutoScroll();
   }
 
   void _startAutoScroll() {
     _scrollTimer?.cancel();
-    _scrollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+    _scrollTimer = Timer.periodic(const Duration(milliseconds: 2600), (_) {
       if (!mounted || !_scrollController.hasClients) return;
-      final max = _scrollController.position.maxScrollExtent;
-      if (max <= 0) return;
-
-      final current = _scrollController.offset;
-      double target;
-      if (_forward) {
-        target = current + 150;
-        if (target >= max) {
-          target = max;
-          _forward = false;
-        }
-      } else {
-        target = current - 150;
-        if (target <= 0) {
-          target = 0;
-          _forward = true;
-        }
-      }
-
       _scrollController.animateTo(
-        target,
-        duration: const Duration(milliseconds: 1200),
+        _scrollController.offset + _step,
+        duration: const Duration(milliseconds: 1400),
         curve: Curves.easeInOutCubic,
       );
     });
@@ -146,61 +133,66 @@ class _CategorySliderState extends State<CategorySlider> {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 6),
-      height: 90,
-      child: ListView.separated(
+      height: 92,
+      child: ListView.builder(
         controller: _scrollController,
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 14),
-        itemCount: CategorySlider.categories.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 10),
+        itemCount: 100000,
         itemBuilder: (context, index) {
-          final cat = CategorySlider.categories[index];
-          return InkWell(
-            onTap: () => widget.onCategoryTap(cat.route),
-            borderRadius: BorderRadius.circular(16),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Squircle Card
-                  Container(
-                    width: 54,
-                    height: 54,
-                    decoration: BoxDecoration(
-                      color: cat.bgColor,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: cat.iconColor.withValues(alpha: 0.18),
-                        width: 1.2,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: cat.iconColor.withValues(alpha: 0.12),
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
+          final cat = CategorySlider.categories[index % CategorySlider.categories.length];
+          return Padding(
+            padding: const EdgeInsets.only(right: _itemGap),
+            child: SizedBox(
+              width: _itemWidth,
+              child: InkWell(
+                onTap: () => widget.onCategoryTap(cat.route),
+                borderRadius: BorderRadius.circular(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Squircle Card
+                    Container(
+                      width: 54,
+                      height: 54,
+                      decoration: BoxDecoration(
+                        color: cat.bgColor,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: cat.iconColor.withValues(alpha: 0.18),
+                          width: 1.2,
                         ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Icon(
-                        cat.icon,
-                        color: cat.iconColor,
-                        size: 26,
+                        boxShadow: [
+                          BoxShadow(
+                            color: cat.iconColor.withValues(alpha: 0.12),
+                            blurRadius: 8,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Icon(
+                          cat.icon,
+                          color: cat.iconColor,
+                          size: 26,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    cat.title,
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textMain,
+                    const SizedBox(height: 5),
+                    Text(
+                      cat.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.inter(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textMain,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           );

@@ -6,6 +6,7 @@ import '../../core/services/auth_service.dart';
 import '../home/home_screen.dart';
 import 'login_sheet.dart';
 import 'register_sheet.dart';
+import 'complete_profile_sheet.dart';
 
 /// Modernized Player Authentication & Onboarding Screen
 class OnboardingScreen extends StatefulWidget {
@@ -33,9 +34,23 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isGoogleLoading = true);
     try {
-      await AuthService.instance.signInWithGoogle();
+      final user = await AuthService.instance.signInWithGoogle();
       if (mounted) {
-        _navigateToHome();
+        // If phone is missing, prompt to complete profile with phone number and name
+        if (user.phone.isEmpty || user.phone == '01700000000') {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            isDismissible: false,
+            enableDrag: false,
+            backgroundColor: Colors.transparent,
+            builder: (context) => CompleteProfileSheet(
+              onComplete: _navigateToHome,
+            ),
+          );
+        } else {
+          _navigateToHome();
+        }
       }
     } catch (e) {
       if (mounted) {

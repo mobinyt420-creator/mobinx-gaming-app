@@ -22,7 +22,6 @@ import 'widgets/category_slider.dart';
 import 'widgets/popular_services_grid.dart';
 import 'widgets/flash_deals_section.dart';
 import 'widgets/promo_banners_grid.dart';
-import 'widgets/notice_modal.dart';
 import 'widgets/app_drawer.dart';
 
 /// Main Mobin X Navigation & Home Hub (Exact Alignment with Screenshot 1)
@@ -43,24 +42,11 @@ class _HomeScreenState extends State<HomeScreen> {
     HomeDataService.instance.init();
     StoreService.instance.init();
     NotificationService.instance.init();
-    HomeDataService.instance.activeNoticeNotifier.addListener(_onNoticeChanged);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _onNoticeChanged();
-    });
   }
 
   @override
   void dispose() {
-    HomeDataService.instance.activeNoticeNotifier.removeListener(_onNoticeChanged);
     super.dispose();
-  }
-
-  void _onNoticeChanged() {
-    final notice = HomeDataService.instance.activeNoticeNotifier.value;
-    if (notice != null && mounted) {
-      NoticeModal.showIfEligible(context, notice);
-    }
   }
 
   void _handleBannerTap(BannerModel banner) {

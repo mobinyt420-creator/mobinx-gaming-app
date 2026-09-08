@@ -165,7 +165,7 @@ class HomeDataService {
             if (live.isNotEmpty) flashDealsNotifier.value = live;
           }
         });
-        // Real-time listener for Admin Notices & Popup
+        // Real-time listener for Admin Welcome Popup (Only when explicitly enabled by Admin)
         FirebaseService.firestore.collection('config').doc('notices').snapshots().listen((snap) {
           if (snap.exists && snap.data() != null) {
             final data = snap.data()!;
@@ -183,9 +183,6 @@ class HomeDataService {
               } else {
                 activeNoticeNotifier.value = null;
               }
-            } else if (data['pushNotification'] is Map) {
-              final pn = Map<String, dynamic>.from(data['pushNotification'] as Map);
-              activeNoticeNotifier.value = NoticeModel.fromJson(pn);
             }
           }
         });
@@ -257,10 +254,18 @@ class HomeDataService {
 
         if (noticeDoc.exists && noticeDoc.data() != null) {
           final data = noticeDoc.data()!;
-          if (data['pushNotification'] is Map) {
-            activeNoticeNotifier.value = NoticeModel.fromJson(
-              Map<String, dynamic>.from(data['pushNotification'] as Map),
-            );
+          if (data['welcomePopup'] is Map) {
+            final wp = Map<String, dynamic>.from(data['welcomePopup'] as Map);
+            if (wp['enabled'] == true) {
+              activeNoticeNotifier.value = NoticeModel(
+                id: wp['id']?.toString() ?? 'notice_${wp['title']}',
+                title: wp['title']?.toString() ?? 'Notice',
+                message: wp['message']?.toString() ?? '',
+                category: wp['badge']?.toString() ?? 'NOTICE',
+                actionText: wp['btnText']?.toString() ?? 'OK',
+                actionUrl: wp['btnUrl']?.toString() ?? '',
+              );
+            }
           }
         }
       }
