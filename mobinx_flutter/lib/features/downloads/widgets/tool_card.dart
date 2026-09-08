@@ -172,47 +172,57 @@ class ToolCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
 
-                // Action Button 2: Pro APK Download (Blue Fill/Outline)
+                // Action Buttons: 2x2 Grid (Requested by User)
                 if (item.actionButtons.isNotEmpty)
-                  ...item.actionButtons.map((btn) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 42,
-                        child: OutlinedButton(
-                          onPressed: () {
-                            DownloadService.instance.launchUrlString(btn.url);
-                          },
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: const Color(0xFFEFF6FF),
-                            side: const BorderSide(color: Color(0xFFBFDBFE), width: 1.2),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            padding: EdgeInsets.zero,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.download_rounded, color: Color(0xFF2563EB), size: 18),
-                              const SizedBox(width: 6),
-                              Text(
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: item.actionButtons.length,
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                      childAspectRatio: 3.2,
+                    ),
+                    itemBuilder: (context, idx) {
+                      final btn = item.actionButtons[idx];
+                      return OutlinedButton(
+                        onPressed: () {
+                          DownloadService.instance.launchUrlString(btn.url);
+                        },
+                        style: OutlinedButton.styleFrom(
+                          backgroundColor: const Color(0xFFEFF6FF),
+                          side: const BorderSide(color: Color(0xFFBFDBFE), width: 1.2),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.download_rounded, color: Color(0xFF2563EB), size: 16),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
                                 btn.label,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
                                 style: GoogleFonts.inter(
-                                  fontSize: 13,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w800,
                                   color: const Color(0xFF2563EB),
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
-                      ),
-                    );
-                  })
+                      );
+                    },
+                  )
                 else
                   SizedBox(
                     width: double.infinity,
-                    height: 42,
+                    height: 40,
                     child: OutlinedButton(
                       onPressed: () {
                         DownloadService.instance.launchUrlString('https://mrmobin.blogspot.com/');

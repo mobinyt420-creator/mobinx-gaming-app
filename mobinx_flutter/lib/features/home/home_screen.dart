@@ -6,6 +6,7 @@ import '../../core/constants/app_constants.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/home_data_service.dart';
 import '../../core/services/store_service.dart';
+import '../../core/services/notification_service.dart';
 import '../../core/models/banner_model.dart';
 import '../downloads/downloads_screen.dart';
 import '../notifications/notifications_screen.dart';
@@ -41,13 +42,25 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     HomeDataService.instance.init();
     StoreService.instance.init();
+    NotificationService.instance.init();
+    HomeDataService.instance.activeNoticeNotifier.addListener(_onNoticeChanged);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final notice = HomeDataService.instance.activeNoticeNotifier.value;
-      if (notice != null && mounted) {
-        NoticeModal.showIfEligible(context, notice);
-      }
+      _onNoticeChanged();
     });
+  }
+
+  @override
+  void dispose() {
+    HomeDataService.instance.activeNoticeNotifier.removeListener(_onNoticeChanged);
+    super.dispose();
+  }
+
+  void _onNoticeChanged() {
+    final notice = HomeDataService.instance.activeNoticeNotifier.value;
+    if (notice != null && mounted) {
+      NoticeModal.showIfEligible(context, notice);
+    }
   }
 
   void _handleBannerTap(BannerModel banner) {
@@ -188,30 +201,36 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       },
                     ),
-                    Positioned(
-                      top: 7,
-                      right: 7,
-                      child: Container(
-                        padding: const EdgeInsets.all(2),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFEF4444),
-                          shape: BoxShape.circle,
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
-                        ),
-                        child: const Center(
-                          child: Text(
-                            '4',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w900,
+                    ValueListenableBuilder<int>(
+                      valueListenable: NotificationService.instance.unreadCountNotifier,
+                      builder: (context, unreadCount, _) {
+                        if (unreadCount <= 0) return const SizedBox.shrink();
+                        return Positioned(
+                          top: 7,
+                          right: 7,
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFEF4444),
+                              shape: BoxShape.circle,
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 16,
+                              minHeight: 16,
+                            ),
+                            child: Center(
+                              child: Text(
+                                unreadCount > 9 ? '9+' : '$unreadCount',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                   ],
                 ),

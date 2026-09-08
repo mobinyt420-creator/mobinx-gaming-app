@@ -1,12 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/models/banner_model.dart';
-import '../../../core/widgets/gamer_components.dart';
 
-/// Cyberpunk 16:9 Auto-scrolling Hero Banner Carousel
+/// Clean 16:9 Auto-scrolling Hero Banner Carousel (Exact match with user specs: no dark overlay, no text/explore button, no blue borders)
 class HeroBannerCarousel extends StatefulWidget {
   final List<BannerModel> banners;
   final Function(BannerModel banner) onBannerTap;
@@ -60,7 +57,7 @@ class _HeroBannerCarouselState extends State<HeroBannerCarousel> {
     return Column(
       children: [
         SizedBox(
-          height: 180,
+          height: 160,
           child: PageView.builder(
             controller: _pageController,
             onPageChanged: (idx) {
@@ -77,122 +74,17 @@ class _HeroBannerCarouselState extends State<HeroBannerCarousel> {
                   child: Container(
                     margin: const EdgeInsets.symmetric(horizontal: 4),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: _currentPage == index
-                            ? AppColors.cyanLight.withValues(alpha: 0.6)
-                            : AppColors.borderLight,
-                        width: 1.5,
-                      ),
+                      borderRadius: BorderRadius.circular(16),
                       boxShadow: [
-                        if (_currentPage == index)
-                          BoxShadow(
-                            color: AppColors.primary.withValues(alpha: 0.3),
-                            blurRadius: 16,
-                            offset: const Offset(0, 6),
-                          ),
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.08),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
                       ],
                     ),
                     clipBehavior: Clip.antiAlias,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        // 1. Banner Background Image
-                        _buildBannerImage(banner.image),
-
-                        // 2. Dark Gradient Overlay for optimal legibility
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.black.withValues(alpha: 0.1),
-                                Colors.black.withValues(alpha: 0.4),
-                                Colors.black.withValues(alpha: 0.9),
-                              ],
-                              stops: const [0.0, 0.5, 1.0],
-                            ),
-                          ),
-                        ),
-
-                        // 3. Cyber Glow accent on top
-                        Positioned(
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          height: 2,
-                          child: Container(
-                            decoration: const BoxDecoration(
-                              gradient: AppColors.brandGradient,
-                            ),
-                          ),
-                        ),
-
-                        // 4. Banner Content Details
-                        Positioned(
-                          bottom: 14,
-                          left: 14,
-                          right: 14,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Badge
-                              if (banner.badge.isNotEmpty)
-                                GamerBadge(
-                                  text: banner.badge.toUpperCase(),
-                                  color: AppColors.gold,
-                                  icon: Icons.local_fire_department_rounded,
-                                ),
-                              const SizedBox(height: 6),
-
-                              // Title
-                              Text(
-                                banner.title,
-                                style: GoogleFonts.outfit(
-                                  fontSize: 16.5,
-                                  fontWeight: FontWeight.w900,
-                                  color: Colors.white,
-                                  letterSpacing: 0.3,
-                                  shadows: [
-                                    Shadow(
-                                      color: Colors.black.withValues(alpha: 0.8),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 4),
-
-                              // Call-to-Action Mini Pill
-                              Row(
-                                children: [
-                                  Text(
-                                    'EXPLORE NOW',
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.cyanLight,
-                                      letterSpacing: 1.0,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  const Icon(
-                                    Icons.arrow_forward_rounded,
-                                    size: 13,
-                                    color: AppColors.cyanLight,
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                    child: _buildBannerImage(banner.image),
                   ),
                 ),
               );
@@ -201,59 +93,68 @@ class _HeroBannerCarouselState extends State<HeroBannerCarousel> {
         ),
 
         // Indicator Dots
-        const SizedBox(height: 10),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(widget.banners.length, (idx) {
-            final isCurrent = idx == _currentPage;
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              width: isCurrent ? 20 : 6,
-              height: 5,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(4),
-                color: isCurrent ? AppColors.primary : AppColors.borderLight,
-                boxShadow: isCurrent
-                    ? [
-                        BoxShadow(
-                          color: AppColors.primary.withValues(alpha: 0.4),
-                          blurRadius: 6,
-                        ),
-                      ]
-                    : null,
-              ),
-            );
-          }),
-        ),
+        if (widget.banners.length > 1) ...[
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(widget.banners.length, (idx) {
+              final isSel = _currentPage == idx;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: isSel ? 16 : 6,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: isSel ? const Color(0xFF2563EB) : const Color(0xFFCBD5E1),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              );
+            }),
+          ),
+        ],
       ],
     );
   }
 
   Widget _buildBannerImage(String path) {
-    if (path.startsWith('http://') || path.startsWith('https://')) {
+    final cleanPath = path.trim();
+    if (cleanPath.startsWith('http://') || cleanPath.startsWith('https://')) {
       return CachedNetworkImage(
-        imageUrl: path,
+        imageUrl: cleanPath,
         fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
         placeholder: (context, url) => Container(
-          color: AppColors.surfaceCard,
+          color: const Color(0xFF1E293B),
           child: const Center(
-            child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Color(0xFF2563EB),
+              ),
+            ),
           ),
         ),
         errorWidget: (context, url, error) => Image.asset(
-          'assets/images/banner_esports.jpg',
+          'assets/images/banner_booyah.jpg',
           fit: BoxFit.cover,
+          width: double.infinity,
         ),
       );
     }
 
     return Image.asset(
-      path,
+      cleanPath.isNotEmpty ? cleanPath : 'assets/images/banner_booyah.jpg',
       fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
       errorBuilder: (context, error, stackTrace) => Container(
-        color: AppColors.surfaceCard,
-        child: const Icon(Icons.image_not_supported_outlined, color: AppColors.textMuted),
+        color: const Color(0xFF1E293B),
+        child: const Center(
+          child: Icon(Icons.broken_image_rounded, color: Colors.white38, size: 40),
+        ),
       ),
     );
   }

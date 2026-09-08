@@ -133,22 +133,13 @@ class HomeDataService {
     ),
   ];
 
-  /// Default in-app announcement notice
-  static final NoticeModel _defaultNotice = NoticeModel(
-    id: 'mobinx_welcome_v1',
-    title: '🔥 Welcome to Mobin X Esports Super App!',
-    message: 'Free Fire Custom Tournaments, Instant BD Diamond Top-Up, and VIP Sensitivity calibrators are now active.\n\nMake sure to add your Free Fire UID in your Profile tab to automatically receive match room codes!',
-    category: 'ANNOUNCEMENT',
-    actionText: "LET'S PLAY 🎮",
-  );
-
   /// Initialize Home Data with instant defaults, then sync with Firestore in background
   Future<void> init() async {
-    // 1. Populate instant defaults so user experiences 0ms UI render
+    // 1. Populate instant defaults so user experiences 0ms UI render (no unwanted fake popup)
     bannersNotifier.value = _defaultBanners;
     flashDealsNotifier.value = _defaultFlashDeals;
     featuredTournamentsNotifier.value = _defaultTournaments;
-    activeNoticeNotifier.value = _defaultNotice;
+    activeNoticeNotifier.value = null;
 
     // 2. Fetch live data from Firestore asynchronously
     await refresh();
@@ -172,6 +163,30 @@ class HomeDataService {
                 .where((d) => d.inStock)
                 .toList();
             if (live.isNotEmpty) flashDealsNotifier.value = live;
+          }
+        });
+        // Real-time listener for Admin Notices & Popup
+        FirebaseService.firestore.collection('config').doc('notices').snapshots().listen((snap) {
+          if (snap.exists && snap.data() != null) {
+            final data = snap.data()!;
+            if (data['welcomePopup'] is Map) {
+              final wp = Map<String, dynamic>.from(data['welcomePopup'] as Map);
+              if (wp['enabled'] == true) {
+                activeNoticeNotifier.value = NoticeModel(
+                  id: wp['id']?.toString() ?? 'notice_${wp['title']}',
+                  title: wp['title']?.toString() ?? 'Notice',
+                  message: wp['message']?.toString() ?? '',
+                  category: wp['badge']?.toString() ?? 'NOTICE',
+                  actionText: wp['btnText']?.toString() ?? 'OK',
+                  actionUrl: wp['btnUrl']?.toString() ?? '',
+                );
+              } else {
+                activeNoticeNotifier.value = null;
+              }
+            } else if (data['pushNotification'] is Map) {
+              final pn = Map<String, dynamic>.from(data['pushNotification'] as Map);
+              activeNoticeNotifier.value = NoticeModel.fromJson(pn);
+            }
           }
         });
       } catch (_) {}

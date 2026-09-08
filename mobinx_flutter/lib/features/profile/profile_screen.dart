@@ -186,273 +186,293 @@ class _ProfileScreenState extends State<ProfileScreen> {
           );
         }
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Player Profile Card (Modern Light Theme Hero Card)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.borderLight, width: 1.0),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        // Avatar with ring
-                        Container(
-                          width: 60,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: AppColors.brandGradient,
-                            border: Border.all(color: AppColors.primaryLight, width: 2),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.primary.withValues(alpha: 0.25),
-                                blurRadius: 10,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
-                          ),
-                          child: Center(
-                            child: Text(
-                              user.name.isNotEmpty ? user.name[0].toUpperCase() : 'M',
-                              style: GoogleFonts.outfit(
-                                fontSize: 26,
-                                fontWeight: FontWeight.w900,
-                                color: Colors.white,
+        return SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Player Profile Card (Modern Light Theme Hero Card)
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.borderLight, width: 1.0),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          // Avatar with ring
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: AppColors.brandGradient,
+                              border: Border.all(color: AppColors.primaryLight, width: 2),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.primary.withValues(alpha: 0.25),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Text(
+                                user.name.isNotEmpty ? user.name[0].toUpperCase() : 'M',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 14),
+                          const SizedBox(width: 14),
 
-                        // Name, Player Number & Badge
+                          // Name, Player Number & Badge
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  user.name,
+                                  style: GoogleFonts.outfit(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.textMain,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  user.email,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.5,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: user.isAdmin ? const Color(0xFFFEF3C7) : const Color(0xFFEFF6FF),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: user.isAdmin ? const Color(0xFFFDE68A) : const Color(0xFFBFDBFE),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            user.isAdmin ? Icons.verified_user_rounded : Icons.star_rounded,
+                                            size: 13,
+                                            color: user.isAdmin ? const Color(0xFFD97706) : AppColors.primary,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            user.isAdmin ? 'ADMIN' : 'VIP PRO',
+                                            style: GoogleFonts.outfit(
+                                              fontSize: 10.5,
+                                              fontWeight: FontWeight.w900,
+                                              color: user.isAdmin ? const Color(0xFFD97706) : AppColors.primary,
+                                              letterSpacing: 0.3,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '#${user.playerNumber.toString().padLeft(4, '0')}',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.textMuted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          IconButton(
+                            icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
+                            onPressed: () => _openEditProfileDialog(user),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 14),
+                      const Divider(color: AppColors.borderLight),
+                      const SizedBox(height: 10),
+
+                      // Free Fire UID Row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Icons.videogame_asset_outlined, color: AppColors.primary, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Free Fire UID:',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          GestureDetector(
+                            onTap: () {
+                              if (user.ffUid.isNotEmpty) {
+                                Clipboard.setData(ClipboardData(text: user.ffUid));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Copied Free Fire UID to clipboard!'),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              } else {
+                                _openEditProfileDialog(user);
+                              }
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: user.ffUid.isNotEmpty ? AppColors.surfaceCardSubtle : AppColors.primary,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: user.ffUid.isNotEmpty ? AppColors.borderLight : Colors.transparent,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    user.ffUid.isNotEmpty ? user.ffUid : 'Set UID +',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                      color: user.ffUid.isNotEmpty ? AppColors.textMain : Colors.white,
+                                    ),
+                                  ),
+                                  if (user.ffUid.isNotEmpty) ...[
+                                    const SizedBox(width: 4),
+                                    const Icon(Icons.copy_rounded, size: 12, color: AppColors.textMuted),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // Referral Program Banner Card (Replacing Unnecessary Wallet Balance)
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ReferralScreen()),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF31104B), Color(0xFF6B21A8)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF6B21A8).withValues(alpha: 0.25),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Center(
+                            child: Text('🎁', style: TextStyle(fontSize: 22)),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                user.name,
+                                'Referral Program & Rewards',
                                 style: GoogleFonts.outfit(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.textMain,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                user.email,
+                                'Invite code: ${user.referralCode} • Earn diamonds',
                                 style: GoogleFonts.inter(
-                                  fontSize: 11.5,
-                                  color: AppColors.textSecondary,
+                                  fontSize: 11,
+                                  color: Colors.white70,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 6),
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: user.isAdmin ? const Color(0xFFFEF3C7) : const Color(0xFFEFF6FF),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
-                                        color: user.isAdmin ? const Color(0xFFFDE68A) : const Color(0xFFBFDBFE),
-                                        width: 1,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          user.isAdmin ? Icons.verified_user_rounded : Icons.star_rounded,
-                                          size: 13,
-                                          color: user.isAdmin ? const Color(0xFFD97706) : AppColors.primary,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          user.isAdmin ? 'ADMIN' : 'VIP PRO',
-                                          style: GoogleFonts.outfit(
-                                            fontSize: 10.5,
-                                            fontWeight: FontWeight.w900,
-                                            color: user.isAdmin ? const Color(0xFFD97706) : AppColors.primary,
-                                            letterSpacing: 0.3,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    '#${user.playerNumber.toString().padLeft(4, '0')}',
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 11.5,
-                                      fontWeight: FontWeight.w800,
-                                      color: AppColors.textMuted,
-                                    ),
-                                  ),
-                                ],
                               ),
                             ],
                           ),
                         ),
-
-                        IconButton(
-                          icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
-                          onPressed: () => _openEditProfileDialog(user),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 14),
-                    const Divider(color: AppColors.borderLight),
-                    const SizedBox(height: 10),
-
-                    // Free Fire UID Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.videogame_asset_outlined, color: AppColors.primary, size: 20),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Free Fire UID:',
-                              style: GoogleFonts.inter(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            if (user.ffUid.isNotEmpty) {
-                              Clipboard.setData(ClipboardData(text: user.ffUid));
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Copied Free Fire UID to clipboard!'),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-                            } else {
-                              _openEditProfileDialog(user);
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: user.ffUid.isNotEmpty ? AppColors.surfaceCardSubtle : AppColors.primary,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: user.ffUid.isNotEmpty ? AppColors.borderLight : Colors.transparent,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Text(
-                                  user.ffUid.isNotEmpty ? user.ffUid : 'Set UID +',
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w800,
-                                    color: user.ffUid.isNotEmpty ? AppColors.textMain : Colors.white,
-                                  ),
-                                ),
-                                if (user.ffUid.isNotEmpty) ...[
-                                  const SizedBox(width: 4),
-                                  const Icon(Icons.copy_rounded, size: 12, color: AppColors.textMuted),
-                                ],
-                              ],
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            'INVITE ›',
+                            style: GoogleFonts.outfit(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFF6B21A8),
                             ),
                           ),
                         ),
                       ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-
-              // Wallet & Balance Card
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFFDE68A), width: 1.2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Wallet Balance',
-                          style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Text(
-                              '৳ ${user.walletBalance}.00',
-                              style: GoogleFonts.outfit(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w900,
-                                color: const Color(0xFFD97706),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF59E0B),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        elevation: 2,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      onPressed: () {
-                        StoreService.instance.openTopUp();
-                      },
-                      child: Text(
-                        'Top-Up +',
-                        style: GoogleFonts.outfit(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
               // Player Esports Stats Grid
               Text(
@@ -607,10 +627,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
 
   Widget _buildStatBox(String label, String value, IconData icon, Color color) {
     return Expanded(
