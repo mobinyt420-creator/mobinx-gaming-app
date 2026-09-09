@@ -13,82 +13,9 @@ class TournamentService {
   final ValueNotifier<Set<String>> registeredIdsNotifier = ValueNotifier<Set<String>>({});
   final ValueNotifier<bool> isLoadingNotifier = ValueNotifier<bool>(false);
 
-  static final List<TournamentModel> _defaultTournaments = [
-    TournamentModel(
-      id: 'tourn-1',
-      title: 'Mobin X Booyah Cup #44',
-      mode: 'Squad Battle',
-      map: 'Bermuda',
-      entryFee: 'FREE',
-      prizePool: '৳ 50,000',
-      slotsTotal: 48,
-      slotsFilled: 38,
-      matchTime: 'Tonight at 08:30 PM',
-      date: 'TODAY',
-      banner: 'assets/images/banner_esports.jpg',
-      status: 'Ongoing',
-      isLive: true,
-      isRoomReleased: true,
-      roomId: '9842105',
-      roomPass: '7788',
-      rules: 'Classic Bermuda map. Squad vs Squad. Emotes allowed. Team teaming is strictly banned.',
-    ),
-    TournamentModel(
-      id: 'tourn-2',
-      title: 'All-Stars Clash Squad Championship',
-      mode: '4v4 Clash Squad',
-      map: 'Kalahari',
-      entryFee: '50 Diamonds',
-      prizePool: '৳ 50,000',
-      slotsTotal: 32,
-      slotsFilled: 18,
-      matchTime: 'Tomorrow at 06:00 PM',
-      date: 'TOMORROW',
-      banner: 'assets/images/banner_booyah.jpg',
-      status: 'Upcoming',
-      isLive: false,
-      isRoomReleased: false,
-      rules: 'Best of 7 rounds. Unlimited ammo: OFF. Character skills: ON. Gun attributes: OFF.',
-    ),
-    TournamentModel(
-      id: 'tourn-3',
-      title: 'Weekend Solo Headshot Masters',
-      mode: 'Solo Headshot Only',
-      map: 'Purgatory',
-      entryFee: 'FREE',
-      prizePool: '৳ 10,000',
-      slotsTotal: 50,
-      slotsFilled: 22,
-      matchTime: 'Saturday at 04:00 PM',
-      date: 'SATURDAY',
-      banner: 'assets/images/banner_referral.jpg',
-      status: 'Upcoming',
-      isLive: false,
-      isRoomReleased: false,
-      rules: 'Desert Eagle, M1887, Woodpecker only. Top 3 kills win instant bKash prizes.',
-    ),
-    TournamentModel(
-      id: 'tourn-4',
-      title: 'Mobin X Season 16 Grand Final',
-      mode: 'Squad Championship',
-      map: 'Bermuda',
-      entryFee: 'FREE',
-      prizePool: '৳ 100,000',
-      slotsTotal: 48,
-      slotsFilled: 48,
-      matchTime: '09:00 PM',
-      date: 'PAST EVENT',
-      banner: 'assets/images/banner_esports.jpg',
-      status: 'Completed',
-      isLive: false,
-      isRoomReleased: false,
-      rules: 'Official tournament concluded. Prize money credited to champions.',
-    ),
-  ];
-
   bool _isInit = false;
 
-  /// Initialize and load cached registered matches
+  /// Initialize and load cached registered matches and tournaments
   Future<void> init() async {
     if (_isInit) return;
     _isInit = true;
@@ -99,9 +26,15 @@ class TournamentService {
       registeredIdsNotifier.value = cachedRegistered.map((e) => e.toString()).toSet();
     }
 
-    // 2. Populate default tournaments only if currently empty (prevents 1s flash glitch)
-    if (tournamentsNotifier.value.isEmpty) {
-      _updateTournamentsList(_defaultTournaments);
+    // 2. Load cached tournaments from storage if available (no dummy data)
+    final cachedTournaments = StorageService.getCache('mobinx_tournaments_data');
+    if (cachedTournaments is List && cachedTournaments.isNotEmpty) {
+      try {
+        final cachedList = cachedTournaments
+            .map((item) => TournamentModel.fromJson(Map<String, dynamic>.from(item as Map)))
+            .toList();
+        _updateTournamentsList(cachedList);
+      } catch (_) {}
     }
 
     // 3. Fetch latest from Firestore in background
@@ -111,12 +44,12 @@ class TournamentService {
     if (FirebaseService.isInitialized) {
       try {
         FirebaseService.firestore.collection('tournaments').snapshots().listen((snap) {
-          if (snap.docs.isNotEmpty) {
-            final liveList = snap.docs.map((doc) => TournamentModel.fromJson({...doc.data(), 'id': doc.id})).toList();
-            if (liveList.isNotEmpty) {
-              _updateTournamentsList(liveList);
-            }
-          }
+          final liveList = snap.docs
+              .map((doc) => TournamentModel.fromJson({...doc.data(), 'id': doc.id}))
+              .where((t) => t.status.toUpperCase() != 'INACTIVE')
+              .toList();
+          _updateTournamentsList(liveList);
+          StorageService.setCache('mobinx_tournaments_data', liveList.map((e) => e.toJson()).toList());
         });
       } catch (_) {}
     }
@@ -243,12 +176,12 @@ class TournamentService {
             .get()
             .timeout(const Duration(seconds: 4));
 
-        if (snap.docs.isNotEmpty) {
-          final liveList = snap.docs.map((doc) => TournamentModel.fromJson({...doc.data(), 'id': doc.id})).toList();
-          if (liveList.isNotEmpty) {
-            _updateTournamentsList(liveList);
-          }
-        }
+        final liveList = snap.docs
+            .map((doc) => TournamentModel.fromJson({...doc.data(), 'id': doc.id}))
+            .where((t) => t.status.toUpperCase() != 'INACTIVE')
+            .toList();
+        _updateTournamentsList(liveList);
+        StorageService.setCache('mobinx_tournaments_data', liveList.map((e) => e.toJson()).toList());
       }
     } catch (e) {
       debugPrint('[TournamentService] Refresh error: $e');

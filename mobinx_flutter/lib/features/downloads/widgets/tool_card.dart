@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/models/download_item_model.dart';
 import '../../../core/services/download_service.dart';
+import '../../../core/services/store_service.dart';
 
 /// APK & Video Download Card (Exact Alignment with Screenshot 5)
 class ToolCard extends StatelessWidget {
@@ -11,9 +12,18 @@ class ToolCard extends StatelessWidget {
 
   const ToolCard({super.key, required this.item});
 
-  void _watchVideo(BuildContext context) {
+  void _openYouTubeApp(BuildContext context) {
     final yId = item.youtubeId.isNotEmpty ? item.youtubeId : 'dQw4w9WgXcQ';
     DownloadService.instance.launchUrlString('https://www.youtube.com/watch?v=$yId');
+  }
+
+  void _playInAppVideo(BuildContext context) {
+    final yId = item.youtubeId.isNotEmpty ? item.youtubeId : 'dQw4w9WgXcQ';
+    StoreService.instance.openUrlInBrowserView(
+      'https://www.youtube.com/embed/$yId?autoplay=1',
+      title: item.title.isNotEmpty ? item.title : 'Video Tutorial',
+      barColor: const Color(0xFF0F172A),
+    );
   }
 
   @override
@@ -37,7 +47,7 @@ class ToolCard extends StatelessWidget {
         children: [
           // 1. 16:9 Video Thumbnail Preview (Image 5)
           GestureDetector(
-            onTap: () => _watchVideo(context),
+            onTap: () => _playInAppVideo(context),
             child: AspectRatio(
               aspectRatio: 16 / 9,
               child: Stack(
@@ -128,7 +138,7 @@ class ToolCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Title (e.g. "mmmmmmm" or APK title)
+                // Title
                 Text(
                   item.title.isNotEmpty ? item.title : 'Mobin APK',
                   maxLines: 2,
@@ -141,12 +151,12 @@ class ToolCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
 
-                // Action Button 1: Watch Video Tutorial (Red Fill/Outline)
+                // Action Button 1: Watch Video Tutorial (Red Fill/Outline -> Opens YouTube App)
                 SizedBox(
                   width: double.infinity,
                   height: 42,
                   child: OutlinedButton(
-                    onPressed: () => _watchVideo(context),
+                    onPressed: () => _openYouTubeApp(context),
                     style: OutlinedButton.styleFrom(
                       backgroundColor: const Color(0xFFFEF2F2),
                       side: const BorderSide(color: Color(0xFFFEE2E2), width: 1.2),
@@ -172,7 +182,7 @@ class ToolCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
 
-                // Action Buttons: 2x2 Grid (Requested by User)
+                // Action Buttons: Sleek, medium-sized, perfectly balanced
                 if (item.actionButtons.isNotEmpty)
                   GridView.builder(
                     shrinkWrap: true,
@@ -182,39 +192,42 @@ class ToolCard extends StatelessWidget {
                       crossAxisCount: 2,
                       crossAxisSpacing: 8,
                       mainAxisSpacing: 8,
-                      childAspectRatio: 3.2,
+                      childAspectRatio: 3.6,
                     ),
                     itemBuilder: (context, idx) {
                       final btn = item.actionButtons[idx];
-                      return OutlinedButton(
-                        onPressed: () {
-                          DownloadService.instance.launchUrlString(btn.url);
-                        },
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: const Color(0xFFEFF6FF),
-                          side: const BorderSide(color: Color(0xFFBFDBFE), width: 1.2),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          padding: const EdgeInsets.symmetric(horizontal: 6),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(Icons.download_rounded, color: Color(0xFF2563EB), size: 16),
-                            const SizedBox(width: 4),
-                            Expanded(
-                              child: Text(
-                                btn.label,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  color: const Color(0xFF2563EB),
+                      return SizedBox(
+                        height: 38,
+                        child: OutlinedButton(
+                          onPressed: () {
+                            DownloadService.instance.launchUrlString(btn.url);
+                          },
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: const Color(0xFFEFF6FF),
+                            side: const BorderSide(color: Color(0xFFBFDBFE), width: 1.1),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.download_rounded, color: Color(0xFF2563EB), size: 16),
+                              const SizedBox(width: 5),
+                              Flexible(
+                                child: Text(
+                                  btn.label,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF2563EB),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       );
                     },

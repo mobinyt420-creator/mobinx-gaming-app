@@ -127,7 +127,6 @@ class NotificationService {
       try {
         FirebaseService.firestore
             .collection('notifications')
-            .orderBy('timestamp', descending: true)
             .limit(50)
             .snapshots()
             .listen((snap) {
@@ -136,6 +135,7 @@ class NotificationService {
               final isRead = _readIds.contains(doc.id);
               return NotificationItem.fromFirestore(doc.id, doc.data(), isRead);
             }).toList();
+            liveItems.sort((a, b) => b.timestamp.compareTo(a.timestamp));
             _updateList(liveItems);
           }
         }, onError: (e) {

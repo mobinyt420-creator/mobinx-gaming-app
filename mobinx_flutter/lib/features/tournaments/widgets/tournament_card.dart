@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_colors.dart';
@@ -147,7 +148,7 @@ class _TournamentCardState extends State<TournamentCard> {
                       Row(
                         children: [
                           Text(
-                            'TODAY at 08:30 PM',
+                            t.matchTime.contains('at') ? t.matchTime : '${t.date} at ${t.matchTime}',
                             style: GoogleFonts.outfit(
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
@@ -201,10 +202,11 @@ class _TournamentCardState extends State<TournamentCard> {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.diamond, size: 14, color: Color(0xFF0284C7)),
+                          if (t.prizePool.toLowerCase().contains('diamond') || !t.prizePool.contains('৳'))
+                            const Icon(Icons.diamond, size: 14, color: Color(0xFF0284C7)),
                           const SizedBox(width: 3),
                           Text(
-                            '500',
+                            t.prizePool.isNotEmpty ? t.prizePool : '৳ 1,500',
                             style: GoogleFonts.outfit(
                               fontSize: 13.5,
                               fontWeight: FontWeight.w900,
@@ -468,11 +470,98 @@ class _TournamentCardState extends State<TournamentCard> {
                     t.rules.isNotEmpty ? t.rules : 'Mobile only. No hack/script allowed. Room code released 15m before start.',
                     style: GoogleFonts.inter(fontSize: 10.5, color: const Color(0xFF475569)),
                   ),
-                  if (t.isRegistered && t.isRoomReleased) ...[
+                  if (t.isRoomReleased && t.roomId.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF2F2),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFFECDD3)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Text('⚡', style: TextStyle(fontSize: 14)),
+                              const SizedBox(width: 6),
+                              Text(
+                                'CUSTOM ROOM IS LIVE!',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w900,
+                                  color: const Color(0xFFDC2626),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Room ID',
+                                    style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFF64748B), fontWeight: FontWeight.w600),
+                                  ),
+                                  Text(
+                                    t.roomId,
+                                    style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w900, color: AppColors.textMain),
+                                  ),
+                                ],
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Password',
+                                    style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFF64748B), fontWeight: FontWeight.w600),
+                                  ),
+                                  Text(
+                                    t.roomPassword.isNotEmpty ? t.roomPassword : 'No Pass',
+                                    style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.w900, color: const Color(0xFFDC2626)),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 36,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                Clipboard.setData(ClipboardData(text: 'Room ID: ${t.roomId} Password: ${t.roomPassword}'));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Room ID & Password copied to clipboard! Open Free Fire now!'),
+                                    behavior: SnackBarBehavior.floating,
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFDC2626),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                padding: EdgeInsets.zero,
+                              ),
+                              icon: const Icon(Icons.copy_rounded, size: 15),
+                              label: Text('Copy Room Credentials', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w800)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else ...[
                     const SizedBox(height: 6),
                     Text(
-                      '🔑 Room ID: ${t.roomId} | Password: ${t.roomPassword}',
-                      style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w900, color: const Color(0xFF10B981)),
+                      '⏳ Room ID & Password will be released 15 minutes before the match starts.',
+                      style: GoogleFonts.inter(fontSize: 10.5, fontStyle: FontStyle.italic, color: const Color(0xFF94A3B8)),
                     ),
                   ],
                 ],

@@ -271,16 +271,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBody() {
-    switch (_currentNavIndex) {
-      case 0:
-        return _buildHomeTab();
-      case 3:
-        return DownloadsScreen(onBack: () => setState(() => _currentNavIndex = 0));
-      case 4:
-        return const ProfileScreen();
-      default:
-        return _buildHomeTab();
-    }
+    final stackIndex = _currentNavIndex == 3 ? 1 : (_currentNavIndex == 4 ? 2 : 0);
+    return IndexedStack(
+      index: stackIndex,
+      children: [
+        _buildHomeTab(),
+        DownloadsScreen(onBack: () => setState(() => _currentNavIndex = 0)),
+        const ProfileScreen(),
+      ],
+    );
   }
 
   Widget _buildHomeTab() {

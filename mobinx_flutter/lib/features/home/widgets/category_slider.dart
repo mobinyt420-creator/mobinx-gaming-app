@@ -99,7 +99,7 @@ class _CategorySliderState extends State<CategorySlider> {
   static const double _step = _itemWidth + _itemGap; // 82.0
 
   late final ScrollController _scrollController;
-  Timer? _scrollTimer;
+  bool _isUserInteracting = false;
 
   @override
   void initState() {
@@ -107,24 +107,33 @@ class _CategorySliderState extends State<CategorySlider> {
     // Start at a multiple of categories so it can loop seamlessly in one direction
     const initialIndex = 500 * 7;
     _scrollController = ScrollController(initialScrollOffset: initialIndex * _step);
-    _startAutoScroll();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _startContinuousScroll();
+    });
   }
 
-  void _startAutoScroll() {
-    _scrollTimer?.cancel();
-    _scrollTimer = Timer.periodic(const Duration(milliseconds: 2600), (_) {
-      if (!mounted || !_scrollController.hasClients) return;
-      _scrollController.animateTo(
-        _scrollController.offset + _step,
-        duration: const Duration(milliseconds: 1400),
-        curve: Curves.easeInOutCubic,
-      );
+  void _startContinuousScroll() {
+    if (!mounted || !_scrollController.hasClients || _isUserInteracting) return;
+
+    // Continuous smooth linear drift at constant elegant speed (no pauses or jerks)
+    const double distance = 160.0;
+    const int durationMs = 5000;
+    final target = _scrollController.offset + distance;
+
+    _scrollController.animateTo(
+      target,
+      duration: const Duration(milliseconds: durationMs),
+      curve: Curves.linear,
+    ).then((_) {
+      if (mounted && !_isUserInteracting) {
+        _startContinuousScroll();
+      }
     });
   }
 
   @override
   void dispose() {
-    _scrollTimer?.cancel();
+    _isUserInteracting = true;
     _scrollController.dispose();
     super.dispose();
   }
@@ -134,7 +143,25 @@ class _CategorySliderState extends State<CategorySlider> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 6),
       height: 92,
-      child: ListView.builder(
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (notification is ScrollStartNotification) {
+            if (notification.dragDetails != null) {
+              _isUserInteracting = true;
+            }
+          } else if (notification is ScrollEndNotification) {
+            if (_isUserInteracting) {
+              Future.delayed(const Duration(milliseconds: 600), () {
+                if (mounted) {
+                  _isUserInteracting = false;
+                  _startContinuousScroll();
+                }
+              });
+            }
+          }
+          return false;
+        },
+        child: ListView.builder(
         controller: _scrollController,
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -198,6 +225,7 @@ class _CategorySliderState extends State<CategorySlider> {
           );
         },
       ),
-    );
-  }
+    ),
+  );
+}
 }

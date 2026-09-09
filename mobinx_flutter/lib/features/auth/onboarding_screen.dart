@@ -6,7 +6,6 @@ import '../../core/services/auth_service.dart';
 import '../home/home_screen.dart';
 import 'login_sheet.dart';
 import 'register_sheet.dart';
-import 'complete_profile_sheet.dart';
 
 /// Modernized Player Authentication & Onboarding Screen
 class OnboardingScreen extends StatefulWidget {
@@ -34,23 +33,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isGoogleLoading = true);
     try {
-      final user = await AuthService.instance.signInWithGoogle();
+      await AuthService.instance.signInWithGoogle();
       if (mounted) {
-        // If phone is missing, prompt to complete profile with phone number and name
-        if (user.phone.isEmpty || user.phone == '01700000000') {
-          showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            isDismissible: false,
-            enableDrag: false,
-            backgroundColor: Colors.transparent,
-            builder: (context) => CompleteProfileSheet(
-              onComplete: _navigateToHome,
-            ),
-          );
-        } else {
-          _navigateToHome();
-        }
+        _navigateToHome();
       }
     } catch (e) {
       if (mounted) {
@@ -127,19 +112,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
                   // Brand Shield Logo (M in blue gradient)
                   Container(
-                    width: 72,
-                    height: 72,
+                    width: 76,
+                    height: 76,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         colors: [Color(0xFF0284C7), Color(0xFF2563EB)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(22),
                       boxShadow: [
                         BoxShadow(
                           color: const Color(0xFF0284C7).withValues(alpha: 0.35),
@@ -152,14 +137,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       child: Text(
                         'M',
                         style: TextStyle(
-                          fontSize: 42,
+                          fontSize: 44,
                           fontWeight: FontWeight.w900,
                           color: Colors.white,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 16),
 
                   // App Title
                   Text(
@@ -174,7 +159,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   const SizedBox(height: 4),
 
                   Text(
-                    'SIGN IN TO CONTINUE',
+                    'CREATE PLAYER ACCOUNT',
                     style: GoogleFonts.outfit(
                       fontSize: 11.5,
                       fontWeight: FontWeight.w800,
@@ -182,191 +167,156 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       letterSpacing: 1.4,
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 32),
 
-                  // Option 1: Prominent Continue with Google Card
+                  // 1. Premium Official "Continue with Google" Button (Zero clutter, direct entry)
                   InkWell(
                     onTap: _isGoogleLoading ? null : _handleGoogleSignIn,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(16),
                     child: Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 18),
+                      height: 54,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: AppColors.borderLight),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(alpha: 0.04),
-                            blurRadius: 16,
-                            offset: const Offset(0, 4),
+                            blurRadius: 12,
+                            offset: const Offset(0, 3),
                           ),
                         ],
                       ),
                       child: _isGoogleLoading
                           ? const Center(
                               child: SizedBox(
-                                width: 26,
-                                height: 26,
+                                width: 22,
+                                height: 22,
                                 child: CircularProgressIndicator(
-                                  strokeWidth: 2.8,
+                                  strokeWidth: 2.5,
                                   valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2563EB)),
                                 ),
                               ),
                             )
-                          : Column(
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                // Google G Icon Container
                                 Container(
-                                  width: 48,
-                                  height: 48,
+                                  width: 32,
+                                  height: 32,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFF1F5F9),
-                                    borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(color: AppColors.borderLight),
+                                    color: const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(8),
                                   ),
                                   child: Center(
                                     child: Text(
                                       'G',
                                       style: GoogleFonts.roboto(
-                                        fontSize: 26,
+                                        fontSize: 20,
                                         fontWeight: FontWeight.w900,
                                         color: const Color(0xFF4285F4),
                                       ),
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 12),
-
+                                const SizedBox(width: 12),
                                 Text(
                                   'Continue with Google',
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppColors.textMain,
-                                  ),
-                                ),
-                                const SizedBox(height: 3),
-
-                                Text(
-                                  'Fast & Secure One-Tap Login',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF64748B),
-                                  ),
-                                ),
-                                const SizedBox(height: 14),
-
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF2563EB),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        'Sign In with Google',
-                                        style: GoogleFonts.outfit(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w800,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 16),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  // Option 2: Manual Login Card
-                  InkWell(
-                    onTap: _openLoginSheet,
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.borderLight),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.03),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 42,
-                            height: 42,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEFF6FF),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(Icons.lock_outline_rounded, color: Color(0xFF2563EB), size: 20),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Manual Player Login',
                                   style: GoogleFonts.outfit(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.textMain,
-                                  ),
-                                ),
-                                Text(
-                                  'Sign in with Email & Password',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11.5,
-                                    color: const Color(0xFF64748B),
+                                    letterSpacing: -0.2,
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                          const Icon(Icons.chevron_right_rounded, color: Color(0xFF94A3B8)),
-                        ],
-                      ),
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 18),
 
-                  // Option 3: Create New Account
+                  // Divider
+                  Row(
+                    children: [
+                      const Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          'OR',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF94A3B8),
+                          ),
+                        ),
+                      ),
+                      const Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+                    ],
+                  ),
+                  const SizedBox(height: 18),
+
+                  // 2. Primary for new players: "Create New Player Account"
                   InkWell(
                     onTap: _openRegisterSheet,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 18),
+                      width: double.infinity,
+                      height: 52,
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.borderLight),
+                        color: const Color(0xFF2563EB),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF2563EB).withValues(alpha: 0.3),
+                            blurRadius: 14,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.person_add_outlined, color: Color(0xFF2563EB), size: 18),
+                          const Icon(Icons.person_add_rounded, color: Colors.white, size: 20),
                           const SizedBox(width: 8),
                           Text(
-                            'New Player? Register Account',
+                            'Create New Player Account',
                             style: GoogleFonts.outfit(
-                              fontSize: 13,
+                              fontSize: 14.5,
                               fontWeight: FontWeight.w800,
-                              color: AppColors.textMain,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 3. For returning users: Clean "Already have an account? Log In" option below
+                  InkWell(
+                    onTap: _openLoginSheet,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Already have an account? ',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF64748B),
+                            ),
+                          ),
+                          Text(
+                            'Log In',
+                            style: GoogleFonts.outfit(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFF2563EB),
                             ),
                           ),
                         ],
@@ -375,7 +325,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   const SizedBox(height: 14),
 
-                  // Option 4: Guest Mode Access
+                  // 4. Guest Mode Access
                   TextButton.icon(
                     onPressed: _handleGuestAccess,
                     icon: const Icon(Icons.play_circle_outline_rounded, size: 16, color: Color(0xFF64748B)),
@@ -388,7 +338,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 28),
 
                   // Legal Links
                   Text(
@@ -399,6 +349,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                     textAlign: TextAlign.center,
                   ),
+                  const SizedBox(height: 10),
                 ],
               ),
             ),

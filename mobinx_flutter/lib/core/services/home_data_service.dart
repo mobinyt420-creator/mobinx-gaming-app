@@ -87,55 +87,12 @@ class HomeDataService {
     ),
   ];
 
-  /// Default featured tournaments
-  static final List<TournamentModel> _defaultTournaments = [
-    TournamentModel(
-      id: 'tourn-1',
-      title: 'Mobin X Booyah Cup #44',
-      mode: 'Squad Battle',
-      map: 'Bermuda',
-      entryFee: 'FREE',
-      prizePool: '৳ 50,000',
-      slotsTotal: 48,
-      slotsFilled: 38,
-      matchTime: 'Tonight at 08:30 PM',
-      banner: 'assets/images/banner_esports.jpg',
-      status: 'Upcoming',
-      isLive: false,
-    ),
-    TournamentModel(
-      id: 'tourn-2',
-      title: 'All-Stars Clash Squad Championship',
-      mode: '4v4 Clash Squad',
-      map: 'Kalahari',
-      entryFee: '50 Diamonds',
-      prizePool: '৳ 50,000',
-      slotsTotal: 32,
-      slotsFilled: 18,
-      matchTime: 'Tomorrow at 06:00 PM',
-      banner: 'assets/images/banner_booyah.jpg',
-      status: 'Upcoming',
-      isLive: false,
-    ),
-    TournamentModel(
-      id: 'tourn-3',
-      title: 'Weekend Solo Headshot Masters',
-      mode: 'Solo Headshot Only',
-      map: 'Purgatory',
-      entryFee: 'FREE',
-      prizePool: '৳ 10,000',
-      slotsTotal: 50,
-      slotsFilled: 22,
-      matchTime: 'Saturday at 04:00 PM',
-      banner: 'assets/images/banner_referral.jpg',
-      status: 'Upcoming',
-      isLive: false,
-    ),
-  ];
+  /// Default featured tournaments (empty by default, loaded from Firestore)
+  static final List<TournamentModel> _defaultTournaments = [];
 
   /// Initialize Home Data with instant defaults, then sync with Firestore in background
   Future<void> init() async {
-    // 1. Populate instant defaults so user experiences 0ms UI render (no unwanted fake popup)
+    // 1. Populate instant defaults so user experiences 0ms UI render
     bannersNotifier.value = _defaultBanners;
     flashDealsNotifier.value = _defaultFlashDeals;
     featuredTournamentsNotifier.value = _defaultTournaments;

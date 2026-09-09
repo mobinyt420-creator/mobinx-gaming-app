@@ -15,6 +15,7 @@ class EcommerceProductItem {
   final String originalPrice;
   final String imageUrl;
   final String tag;
+  final String url;
 
   const EcommerceProductItem({
     required this.id,
@@ -24,6 +25,7 @@ class EcommerceProductItem {
     required this.originalPrice,
     required this.imageUrl,
     required this.tag,
+    this.url = 'https://www.obinshop.com/',
   });
 
   factory EcommerceProductItem.fromJson(Map<String, dynamic> json) {
@@ -35,6 +37,7 @@ class EcommerceProductItem {
       originalPrice: json['originalPrice']?.toString() ?? '৳ 850',
       imageUrl: json['image']?.toString() ?? json['imageUrl']?.toString() ?? '',
       tag: json['tag']?.toString() ?? json['badge']?.toString() ?? 'HOT',
+      url: json['url']?.toString() ?? 'https://www.obinshop.com/',
     );
   }
 }
@@ -483,7 +486,13 @@ class _FlashDealsSectionState extends State<FlashDealsSection> {
 
   Widget _buildEcommerceProductCard(EcommerceProductItem product) {
     return InkWell(
-      onTap: () => StoreService.instance.openShop(),
+      onTap: () {
+        if (product.url.isNotEmpty) {
+          StoreService.instance.openStore(url: product.url, title: product.title, colorHex: '#F97316');
+        } else {
+          StoreService.instance.openShop();
+        }
+      },
       borderRadius: BorderRadius.circular(16),
       child: Container(
         decoration: BoxDecoration(

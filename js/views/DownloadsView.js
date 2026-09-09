@@ -122,13 +122,24 @@ export function bindDownloadsEvents() {
     });
   });
 
-  // Video play click
-  document.querySelectorAll('.apk-video-preview-wrapper, .apk-watch-video-btn').forEach(el => {
+  // Video thumbnail center play button: plays in-app modal
+  document.querySelectorAll('.apk-video-preview-wrapper').forEach(el => {
     el.addEventListener('click', (e) => {
       e.stopPropagation();
-      const videoId = el.getAttribute('data-video-id') || el.getAttribute('data-watch-id') || 'dQw4w9WgXcQ';
+      const videoId = el.getAttribute('data-video-id') || 'dQw4w9WgXcQ';
       const title = el.getAttribute('data-title') || 'Video Preview';
       stateManager.openModal('videoPlayer', { videoId, title });
+    });
+  });
+
+  // Watch Video Tutorial button: directly opens YouTube
+  document.querySelectorAll('.apk-watch-video-btn').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const videoId = el.getAttribute('data-watch-id');
+      if (videoId) {
+        window.open(`https://www.youtube.com/watch?v=${videoId}`, '_blank');
+      }
     });
   });
 

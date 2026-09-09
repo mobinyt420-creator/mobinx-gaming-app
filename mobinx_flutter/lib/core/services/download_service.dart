@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/download_item_model.dart';
 import 'firebase_service.dart';
+import 'storage_service.dart';
 
 class DownloadService {
   DownloadService._();
@@ -9,79 +10,37 @@ class DownloadService {
 
   final ValueNotifier<List<DownloadItemModel>> itemsNotifier = ValueNotifier([]);
 
-  static final List<DownloadItemModel> _defaultItems = [
-    DownloadItemModel(
-      id: 'apk-1',
-      title: 'Mobin X Proxy Ultra Boost APK (Latest V2.8)',
-      category: 'Mobin APK',
-      youtubeId: 'dQw4w9WgXcQ',
-      videoThumbnail: 'assets/images/banner_booyah.jpg',
-      videoDuration: '05:00',
-      actionButtons: [
-        DownloadActionModel(
-          id: 'act-1',
-          label: 'Pro APK Download',
-          icon: 'download',
-          url: 'https://mrmobin.blogspot.com/',
-        ),
-      ],
-    ),
-    DownloadItemModel(
-      id: 'apk-2',
-      title: 'Free Fire Max VIP Headshot Aim Config V4',
-      category: 'Tools',
-      youtubeId: 'LXb3EKWsInQ',
-      videoThumbnail: 'assets/images/banner_esports.jpg',
-      videoDuration: '12:10',
-      actionButtons: [
-        DownloadActionModel(
-          id: 'act-1',
-          label: 'Config APK Download',
-          icon: 'download',
-          url: 'https://mrmobin.blogspot.com/',
-        ),
-      ],
-    ),
-    DownloadItemModel(
-      id: 'apk-3',
-      title: 'Mobin X Game Booster Pro Max (Universal Optimizer)',
-      category: 'Premium Apps',
-      youtubeId: '5qap5aO4i9A',
-      videoThumbnail: 'assets/images/banner_referral.jpg',
-      videoDuration: '06:30',
-      actionButtons: [
-        DownloadActionModel(
-          id: 'act-1',
-          label: 'Booster APK Download',
-          icon: 'download',
-          url: 'https://mrmobin.blogspot.com/',
-        ),
-      ],
-    ),
-  ];
-
   bool _isInit = false;
 
   Future<void> init() async {
     if (_isInit) return;
     _isInit = true;
 
-    if (itemsNotifier.value.isEmpty) {
-      itemsNotifier.value = _defaultItems;
+    // 1. Load from local cache immediately (0ms flash, real data only)
+    final cached = StorageService.getCache('mobinx_downloads_cache');
+    if (cached is List && cached.isNotEmpty) {
+      try {
+        final list = cached
+            .map((e) => DownloadItemModel.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+        if (list.isNotEmpty) {
+          itemsNotifier.value = list;
+        }
+      } catch (_) {}
     }
+
+    // 2. Fetch latest live items asynchronously
     await refresh();
 
+    // 3. Real-time Firestore stream listener
     if (FirebaseService.isInitialized) {
       try {
         FirebaseService.firestore.collection('downloads').snapshots().listen((snap) {
-          if (snap.docs.isNotEmpty) {
-            final liveList = snap.docs
-                .map((d) => DownloadItemModel.fromJson({...d.data(), 'id': d.id}))
-                .toList();
-            if (liveList.isNotEmpty) {
-              itemsNotifier.value = liveList;
-            }
-          }
+          final liveList = snap.docs
+              .map((d) => DownloadItemModel.fromJson({...d.data(), 'id': d.id}))
+              .toList();
+          itemsNotifier.value = liveList;
+          StorageService.setCache('mobinx_downloads_cache', liveList.map((e) => e.toJson()).toList());
         });
       } catch (_) {}
     }
@@ -95,14 +54,11 @@ class DownloadService {
             .get()
             .timeout(const Duration(seconds: 4));
 
-        if (snap.docs.isNotEmpty) {
-          final liveList = snap.docs
-              .map((d) => DownloadItemModel.fromJson({...d.data(), 'id': d.id}))
-              .toList();
-          if (liveList.isNotEmpty) {
-            itemsNotifier.value = liveList;
-          }
-        }
+        final liveList = snap.docs
+            .map((d) => DownloadItemModel.fromJson({...d.data(), 'id': d.id}))
+            .toList();
+        itemsNotifier.value = liveList;
+        StorageService.setCache('mobinx_downloads_cache', liveList.map((e) => e.toJson()).toList());
       }
     } catch (e) {
       debugPrint('[DownloadService] refresh notice: $e');
@@ -111,7 +67,12 @@ class DownloadService {
 
   Future<bool> launchUrlString(String url) async {
     try {
-      final uri = Uri.parse(url);
+      var target = url.trim();
+      if (target.isEmpty) return false;
+      if (!target.startsWith('http://') && !target.startsWith('https://')) {
+        target = 'https://$target';
+      }
+      final uri = Uri.parse(target);
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
         return true;
