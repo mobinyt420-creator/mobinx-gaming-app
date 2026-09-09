@@ -55,6 +55,14 @@ class StorageService {
     }
   }
 
+  static bool? getBool(String key) {
+    return _prefs?.getBool(key);
+  }
+
+  static Future<void> setBool(String key, bool val) async {
+    await _prefs?.setBool(key, val);
+  }
+
   // --- NOTICE POPUP DISMISSAL ---
   static bool isNoticeDismissedToday(String noticeId) {
     final today = DateTime.now().toIso8601String().substring(0, 10);

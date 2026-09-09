@@ -336,8 +336,19 @@ class _TournamentCardState extends State<TournamentCard> {
                   onPressed: isFull
                       ? null
                       : () {
-                          if (t.isRegistered && t.isRoomReleased) {
-                            RoomCredentialsDialog.show(context, t);
+                          if (t.isRegistered) {
+                            if (t.isRoomReleased && t.roomId.isNotEmpty) {
+                              RoomCredentialsDialog.show(context, t);
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('✅ You are already joined! Room credentials will be shown here when released.'),
+                                  behavior: SnackBarBehavior.floating,
+                                  backgroundColor: Color(0xFF10B981),
+                                  duration: Duration(seconds: 3),
+                                ),
+                              );
+                            }
                           } else {
                             MatchRegistrationSheet.show(
                               context,
@@ -700,11 +711,6 @@ class _TournamentCardState extends State<TournamentCard> {
                         const Text('🏆 Total Prize Pool: ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFD97706))),
                         Text(t.prizePool, style: GoogleFonts.outfit(fontSize: 11.5, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A))),
                       ],
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Prizes sent directly to winner bKash/Nagad after match validation.',
-                      style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFF64748B)),
                     ),
                   ],
                 ],

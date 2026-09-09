@@ -55,6 +55,25 @@ class AuthService {
       final uid = fbUser?.uid ?? 'google_${email.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_')}';
       final isMasterAdmin = email.toLowerCase().trim() == AppConstants.masterAdminEmail;
 
+      // Check if user already exists in Firestore
+      if (FirebaseService.isInitialized) {
+        try {
+          final doc = await FirebaseService.firestore.collection('users').doc(uid).get().timeout(const Duration(seconds: 3));
+          if (doc.exists && doc.data() != null) {
+            final data = doc.data()!;
+            final existingUser = UserModel.fromJson({
+              ...data,
+              'id': doc.id,
+              'avatar': avatar.isNotEmpty ? avatar : (data['avatar'] ?? AppConstants.defaultAvatar),
+            });
+            await StorageService.saveUser(existingUser);
+            await StorageService.setOnboardingDone(true);
+            userNotifier.value = existingUser;
+            return existingUser;
+          }
+        } catch (_) {}
+      }
+
       final user = UserModel(
         id: uid,
         uid: uid,
@@ -299,6 +318,14 @@ class AuthService {
     await StorageService.saveUser(updated);
     userNotifier.value = updated;
 
+    FirebaseService.syncUserToCloud(updated.toJson()).catchError((e) {
+      debugPrint('[AuthService] Profile sync error: $e');
+    });
+  }
+
+  Future<void> updateUser(UserModel updated) async {
+    await StorageService.saveUser(updated);
+    userNotifier.value = updated;
     FirebaseService.syncUserToCloud(updated.toJson()).catchError((e) {
       debugPrint('[AuthService] Profile sync error: $e');
     });

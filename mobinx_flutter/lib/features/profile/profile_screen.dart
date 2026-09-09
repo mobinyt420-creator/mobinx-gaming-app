@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/store_service.dart';
@@ -227,15 +228,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 ),
                               ],
                             ),
-                            child: Center(
-                              child: Text(
-                                user.name.isNotEmpty ? user.name[0].toUpperCase() : 'M',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.w900,
-                                  color: Colors.white,
-                                ),
-                              ),
+                            child: ClipOval(
+                              child: (user.avatar.isNotEmpty && user.avatar.startsWith('http'))
+                                  ? CachedNetworkImage(
+                                      imageUrl: user.avatar,
+                                      fit: BoxFit.cover,
+                                      placeholder: (_, _) => Container(color: AppColors.primaryLight),
+                                      errorWidget: (_, _, _) => Center(
+                                        child: Text(
+                                          user.name.isNotEmpty ? user.name[0].toUpperCase() : 'M',
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 26,
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  : Center(
+                                      child: Text(
+                                        user.name.isNotEmpty ? user.name[0].toUpperCase() : 'M',
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 26,
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
                             ),
                           ),
                           const SizedBox(width: 14),

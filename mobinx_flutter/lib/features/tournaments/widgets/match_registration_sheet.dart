@@ -92,6 +92,24 @@ class _MatchRegistrationSheetState extends State<MatchRegistrationSheet> {
       return;
     }
 
+    final currentUserId = AuthService.instance.currentUser?.id;
+    final enteredUid = _ffUidCtrl.text.trim();
+    final alreadyJoined = widget.tournament.isRegistered ||
+        widget.tournament.participants.any((p) =>
+            (currentUserId != null && p['userId'] == currentUserId) ||
+            (enteredUid.isNotEmpty && p['ffUid'] == enteredUid));
+
+    if (alreadyJoined) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('⚠️ You are already registered for this tournament! One registration allowed per player.'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isSubmitting = true);
 
     final teammates = <Map<String, String>>[];

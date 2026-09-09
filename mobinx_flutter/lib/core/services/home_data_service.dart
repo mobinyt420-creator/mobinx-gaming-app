@@ -98,8 +98,8 @@ class HomeDataService {
     featuredTournamentsNotifier.value = _defaultTournaments;
     activeNoticeNotifier.value = null;
 
-    // 2. Fetch live data from Firestore asynchronously
-    await refresh();
+    // 2. Fetch live data from Firestore asynchronously in background (0ms UI stall)
+    refresh();
 
     // 3. Setup real-time listeners for instant Admin Panel synchronization
     if (FirebaseService.isInitialized) {
@@ -147,84 +147,91 @@ class HomeDataService {
     }
   }
 
-  /// Pull to refresh / background sync
+  /// Pull to refresh / background sync with parallel non-blocking execution
   Future<void> refresh() async {
     if (isLoadingNotifier.value) return;
     isLoadingNotifier.value = true;
 
     try {
       if (FirebaseService.isInitialized) {
-        // Fetch Live Banners (Supporting both active & isActive from Admin Panel)
-        final bannerSnap = await FirebaseService.firestore
-            .collection('banners')
-            .get()
-            .timeout(const Duration(seconds: 4));
-
-        if (bannerSnap.docs.isNotEmpty) {
-          final liveBanners = bannerSnap.docs
-              .map((doc) => BannerModel.fromJson({...doc.data(), 'id': doc.id}))
-              .where((b) => b.isActive)
-              .toList();
-          if (liveBanners.isNotEmpty) {
-            bannersNotifier.value = liveBanners;
-          }
-        }
-
-        // Fetch Live Flash Deals
-        final dealsSnap = await FirebaseService.firestore
-            .collection('flashDeals')
-            .get()
-            .timeout(const Duration(seconds: 4));
-
-        if (dealsSnap.docs.isNotEmpty) {
-          final liveDeals = dealsSnap.docs
-              .map((doc) => FlashDealModel.fromJson({...doc.data(), 'id': doc.id}))
-              .where((d) => d.inStock)
-              .toList();
-          if (liveDeals.isNotEmpty) {
-            flashDealsNotifier.value = liveDeals;
-          }
-        }
-
-        // Fetch Live Tournaments
-        final tournSnap = await FirebaseService.firestore
-            .collection('tournaments')
-            .limit(5)
-            .get()
-            .timeout(const Duration(seconds: 4));
-
-        if (tournSnap.docs.isNotEmpty) {
-          final liveTourns = tournSnap.docs
-              .map((doc) => TournamentModel.fromJson(doc.data()))
-              .toList();
-          if (liveTourns.isNotEmpty) {
-            featuredTournamentsNotifier.value = liveTourns;
-          }
-        }
-
-        // Fetch Live Notice from config/notices
-        final noticeDoc = await FirebaseService.firestore
-            .collection('config')
-            .doc('notices')
-            .get()
-            .timeout(const Duration(seconds: 4));
-
-        if (noticeDoc.exists && noticeDoc.data() != null) {
-          final data = noticeDoc.data()!;
-          if (data['welcomePopup'] is Map) {
-            final wp = Map<String, dynamic>.from(data['welcomePopup'] as Map);
-            if (wp['enabled'] == true) {
-              activeNoticeNotifier.value = NoticeModel(
-                id: wp['id']?.toString() ?? 'notice_${wp['title']}',
-                title: wp['title']?.toString() ?? 'Notice',
-                message: wp['message']?.toString() ?? '',
-                category: wp['badge']?.toString() ?? 'NOTICE',
-                actionText: wp['btnText']?.toString() ?? 'OK',
-                actionUrl: wp['btnUrl']?.toString() ?? '',
-              );
+        // Parallel queries to prevent isolate thread stalling
+        await Future.wait([
+          // Banners
+          FirebaseService.firestore
+              .collection('banners')
+              .get()
+              .timeout(const Duration(seconds: 3))
+              .then((bannerSnap) {
+            if (bannerSnap.docs.isNotEmpty) {
+              final liveBanners = bannerSnap.docs
+                  .map((doc) => BannerModel.fromJson({...doc.data(), 'id': doc.id}))
+                  .where((b) => b.isActive)
+                  .toList();
+              if (liveBanners.isNotEmpty) {
+                bannersNotifier.value = liveBanners;
+              }
             }
-          }
-        }
+          }).catchError((_) => null),
+
+          // Flash Deals
+          FirebaseService.firestore
+              .collection('flashDeals')
+              .get()
+              .timeout(const Duration(seconds: 3))
+              .then((dealsSnap) {
+            if (dealsSnap.docs.isNotEmpty) {
+              final liveDeals = dealsSnap.docs
+                  .map((doc) => FlashDealModel.fromJson({...doc.data(), 'id': doc.id}))
+                  .where((d) => d.inStock)
+                  .toList();
+              if (liveDeals.isNotEmpty) {
+                flashDealsNotifier.value = liveDeals;
+              }
+            }
+          }).catchError((_) => null),
+
+          // Tournaments
+          FirebaseService.firestore
+              .collection('tournaments')
+              .limit(5)
+              .get()
+              .timeout(const Duration(seconds: 3))
+              .then((tournSnap) {
+            if (tournSnap.docs.isNotEmpty) {
+              final liveTourns = tournSnap.docs
+                  .map((doc) => TournamentModel.fromJson(doc.data()))
+                  .toList();
+              if (liveTourns.isNotEmpty) {
+                featuredTournamentsNotifier.value = liveTourns;
+              }
+            }
+          }).catchError((_) => null),
+
+          // Config Notice
+          FirebaseService.firestore
+              .collection('config')
+              .doc('notices')
+              .get()
+              .timeout(const Duration(seconds: 3))
+              .then((noticeDoc) {
+            if (noticeDoc.exists && noticeDoc.data() != null) {
+              final data = noticeDoc.data()!;
+              if (data['welcomePopup'] is Map) {
+                final wp = Map<String, dynamic>.from(data['welcomePopup'] as Map);
+                if (wp['enabled'] == true) {
+                  activeNoticeNotifier.value = NoticeModel(
+                    id: wp['id']?.toString() ?? 'notice_${wp['title']}',
+                    title: wp['title']?.toString() ?? 'Notice',
+                    message: wp['message']?.toString() ?? '',
+                    category: wp['badge']?.toString() ?? 'NOTICE',
+                    actionText: wp['btnText']?.toString() ?? 'OK',
+                    actionUrl: wp['btnUrl']?.toString() ?? '',
+                  );
+                }
+              }
+            }
+          }).catchError((_) => null),
+        ]);
       }
     } catch (e) {
       debugPrint('[HomeDataService] Background sync error (gracefully using cache): $e');

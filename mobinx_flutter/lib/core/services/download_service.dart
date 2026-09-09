@@ -73,14 +73,19 @@ class DownloadService {
         target = 'https://$target';
       }
       final uri = Uri.parse(target);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-        return true;
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched) {
+        return await launchUrl(uri, mode: LaunchMode.platformDefault);
       }
-      return false;
+      return true;
     } catch (e) {
-      debugPrint('[DownloadService] launch error: $e');
-      return false;
+      debugPrint('[DownloadService] launch fallback: $e');
+      try {
+        final uri = Uri.parse(url.trim());
+        return await launchUrl(uri, mode: LaunchMode.platformDefault);
+      } catch (_) {
+        return false;
+      }
     }
   }
 }

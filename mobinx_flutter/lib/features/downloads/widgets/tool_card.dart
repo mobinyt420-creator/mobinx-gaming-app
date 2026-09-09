@@ -12,13 +12,25 @@ class ToolCard extends StatelessWidget {
 
   const ToolCard({super.key, required this.item});
 
+  String _getYoutubeId() {
+    var raw = item.youtubeId.trim();
+    if (raw.contains('watch?v=')) {
+      raw = raw.split('watch?v=')[1].split('&')[0];
+    } else if (raw.contains('youtu.be/')) {
+      raw = raw.split('youtu.be/')[1].split('?')[0];
+    } else if (raw.contains('shorts/')) {
+      raw = raw.split('shorts/')[1].split('?')[0];
+    }
+    return raw.isNotEmpty ? raw : 'dQw4w9WgXcQ';
+  }
+
   void _openYouTubeApp(BuildContext context) {
-    final yId = item.youtubeId.isNotEmpty ? item.youtubeId : 'dQw4w9WgXcQ';
+    final yId = _getYoutubeId();
     DownloadService.instance.launchUrlString('https://www.youtube.com/watch?v=$yId');
   }
 
   void _playInAppVideo(BuildContext context) {
-    final yId = item.youtubeId.isNotEmpty ? item.youtubeId : 'dQw4w9WgXcQ';
+    final yId = _getYoutubeId();
     StoreService.instance.openUrlInBrowserView(
       'https://www.youtube.com/embed/$yId?autoplay=1',
       title: item.title.isNotEmpty ? item.title : 'Video Tutorial',
@@ -272,17 +284,20 @@ class ToolCard extends StatelessWidget {
   }
 
   Widget _buildThumbnail(String path) {
-    if (path.startsWith('http')) {
-      return CachedNetworkImage(
-        imageUrl: path,
+    final yId = _getYoutubeId();
+    final thumbUrl = path.startsWith('http')
+        ? path
+        : 'https://img.youtube.com/vi/$yId/hqdefault.jpg';
+
+    return CachedNetworkImage(
+      imageUrl: thumbUrl,
+      fit: BoxFit.cover,
+      placeholder: (_, _) => Container(color: const Color(0xFF0F172A)),
+      errorWidget: (_, _, _) => CachedNetworkImage(
+        imageUrl: 'https://img.youtube.com/vi/$yId/mqdefault.jpg',
         fit: BoxFit.cover,
         errorWidget: (_, _, _) => Image.asset('assets/images/banner_booyah.jpg', fit: BoxFit.cover),
-      );
-    }
-    return Image.asset(
-      path.isNotEmpty ? path : 'assets/images/banner_booyah.jpg',
-      fit: BoxFit.cover,
-      errorBuilder: (_, _, _) => Image.asset('assets/images/banner_booyah.jpg', fit: BoxFit.cover),
+      ),
     );
   }
 }

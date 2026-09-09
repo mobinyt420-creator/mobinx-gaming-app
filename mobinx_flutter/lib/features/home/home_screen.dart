@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/storage_service.dart';
 import '../../core/services/home_data_service.dart';
 import '../../core/services/store_service.dart';
 import '../../core/services/notification_service.dart';
@@ -45,6 +46,121 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // Listen for incoming live push notifications broadcasted by Admin
     NotificationService.instance.latestIncomingNotification.addListener(_onIncomingPushNotification);
+
+    // Prompt notification permission if not yet allowed
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkNotificationPermissionPrompt();
+    });
+  }
+
+  void _checkNotificationPermissionPrompt() {
+    final allowed = StorageService.getBool('notifications_permission_allowed');
+    if (allowed != true) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: const BorderSide(color: Color(0xFFE2E8F0)),
+          ),
+          contentPadding: const EdgeInsets.all(22),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Color(0xFFEFF6FF),
+                ),
+                child: const Center(
+                  child: Icon(Icons.notifications_active_rounded, color: Color(0xFF2563EB), size: 28),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Allow Notifications?',
+                style: GoogleFonts.outfit(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Receive instant alerts for Custom Room IDs, match passwords, tournament schedules, and diamond flash deals!',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 12.5,
+                  color: const Color(0xFF64748B),
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 22),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () {
+                        // Denied for this session; will prompt again on next app launch
+                        Navigator.pop(ctx);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFFCBD5E1)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text(
+                        'Don\'t Allow',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        await StorageService.setBool('notifications_permission_allowed', true);
+                        if (ctx.mounted) Navigator.pop(ctx);
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('🔔 Notifications enabled! You will get instant alerts.'),
+                              behavior: SnackBarBehavior.floating,
+                              backgroundColor: Color(0xFF10B981),
+                            ),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2563EB),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text(
+                        'Allow',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      );
+    }
   }
 
   @override

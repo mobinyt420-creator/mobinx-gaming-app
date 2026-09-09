@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/services/auth_service.dart';
@@ -26,16 +27,12 @@ class AppDrawer extends StatelessWidget {
 
           return Column(
             children: [
-              // Drawer Header with Royal Gradient
+              // Drawer Header with User Profile
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.only(top: 50, bottom: 20, left: 20, right: 16),
+                padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
                 decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF1E3A8A), Color(0xFF2563EB), Color(0xFF7C3AED)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
+                  gradient: AppColors.brandGradient,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -53,15 +50,25 @@ class AppDrawer extends StatelessWidget {
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(26),
-                            child: Image.asset(
-                              'assets/images/avatar_user.jpg',
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => const Icon(
-                                Icons.person,
-                                color: Colors.white,
-                                size: 30,
-                              ),
-                            ),
+                            child: (user != null && user.avatar.isNotEmpty && user.avatar.startsWith('http'))
+                                ? CachedNetworkImage(
+                                    imageUrl: user.avatar,
+                                    fit: BoxFit.cover,
+                                    placeholder: (_, _) => Container(color: Colors.white24),
+                                    errorWidget: (_, _, _) => Image.asset(
+                                      'assets/images/avatar_user.jpg',
+                                      fit: BoxFit.cover,
+                                    ),
+                                  )
+                                : Image.asset(
+                                    'assets/images/avatar_user.jpg',
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => const Icon(
+                                      Icons.person,
+                                      color: Colors.white,
+                                      size: 30,
+                                    ),
+                                  ),
                           ),
                         ),
 
