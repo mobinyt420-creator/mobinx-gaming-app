@@ -70,44 +70,12 @@ class NotificationService {
 
   final ValueNotifier<List<NotificationItem>> notificationsNotifier = ValueNotifier<List<NotificationItem>>([]);
   final ValueNotifier<int> unreadCountNotifier = ValueNotifier<int>(0);
+  final ValueNotifier<NotificationItem?> latestIncomingNotification = ValueNotifier<NotificationItem?>(null);
 
   final Set<String> _readIds = {};
+  final Set<String> _knownIds = {};
   bool _isInit = false;
-
-  static final List<NotificationItem> _defaultItems = [
-    NotificationItem(
-      id: 'default_notif_1',
-      title: '🔥 Welcome to Mobin X Super App!',
-      message: 'Experience ultra fast speed, instant diamond top-ups, and live tournaments in pure native Flutter.',
-      type: 'general',
-      timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
-      unread: true,
-    ),
-    NotificationItem(
-      id: 'default_notif_2',
-      title: '🏆 Free Fire Tournament Registration Open',
-      message: 'Weekly CS & Battle Royale custom rooms are live with ৳5,000 bKash prize pool.',
-      type: 'tournament',
-      timestamp: DateTime.now().subtract(const Duration(hours: 3)),
-      unread: true,
-    ),
-    NotificationItem(
-      id: 'default_notif_3',
-      title: '💎 Instant BD Top-Up Active',
-      message: 'Direct in-game diamond delivery within 5-15 seconds via official UID gateway.',
-      type: 'topup',
-      timestamp: DateTime.now().subtract(const Duration(hours: 8)),
-      unread: false,
-    ),
-    NotificationItem(
-      id: 'default_notif_4',
-      title: '🎁 Referral Rewards 2.0',
-      message: 'Earn ৳20 per friend + free tournament pass when friends join with your code.',
-      type: 'referral',
-      timestamp: DateTime.now().subtract(const Duration(days: 1)),
-      unread: false,
-    ),
-  ];
+  final DateTime _appInitTime = DateTime.now();
 
   Future<void> init() async {
     if (_isInit) return;
@@ -119,10 +87,7 @@ class NotificationService {
       _readIds.addAll(savedRead);
     } catch (_) {}
 
-    // 1. Instant fallback so screen is never blank
-    _updateList(_defaultItems);
-
-    // 2. Real-time Firestore sync
+    // 1. Real-time Firestore notifications collection sync
     if (FirebaseService.isInitialized) {
       try {
         FirebaseService.firestore
@@ -135,11 +100,51 @@ class NotificationService {
               final isRead = _readIds.contains(doc.id);
               return NotificationItem.fromFirestore(doc.id, doc.data(), isRead);
             }).toList();
+
             liveItems.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+            // Detect freshly broadcasted notification while app is running
+            for (final item in liveItems) {
+              if (!_knownIds.contains(item.id)) {
+                _knownIds.add(item.id);
+                // If notification arrived after app launched, trigger heads-up banner
+                if (item.timestamp.isAfter(_appInitTime.subtract(const Duration(seconds: 10)))) {
+                  latestIncomingNotification.value = item;
+                }
+              }
+            }
+
             _updateList(liveItems);
+          } else {
+            _updateList([]);
           }
         }, onError: (e) {
           debugPrint('[NotificationService] Firestore snapshot error: $e');
+        });
+
+        // 2. Also listen to config/notices broadcast
+        FirebaseService.firestore
+            .collection('config')
+            .doc('notices')
+            .snapshots()
+            .listen((docSnap) {
+          if (docSnap.exists && docSnap.data() != null) {
+            final data = docSnap.data()!;
+            final pushData = data['pushNotification'];
+            if (pushData is Map<String, dynamic>) {
+              final id = pushData['id']?.toString() ?? 'notice_${DateTime.now().millisecondsSinceEpoch}';
+              final isRead = _readIds.contains(id);
+              final notif = NotificationItem.fromFirestore(id, pushData, isRead);
+              if (!_knownIds.contains(id)) {
+                _knownIds.add(id);
+                if (notif.timestamp.isAfter(_appInitTime.subtract(const Duration(seconds: 10)))) {
+                  latestIncomingNotification.value = notif;
+                }
+              }
+            }
+          }
+        }, onError: (e) {
+          debugPrint('[NotificationService] Notices snapshot error: $e');
         });
       } catch (e) {
         debugPrint('[NotificationService] Init error: $e');

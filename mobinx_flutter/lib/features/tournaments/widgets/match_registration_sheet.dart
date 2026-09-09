@@ -54,7 +54,8 @@ class _MatchRegistrationSheetState extends State<MatchRegistrationSheet> {
   void initState() {
     super.initState();
     final user = AuthService.instance.currentUser;
-    _ignCtrl = TextEditingController(text: user?.name.isNotEmpty == true ? user!.name : '');
+    // Do NOT auto-fill IGN so users enter their real Free Fire Game ID Name
+    _ignCtrl = TextEditingController();
     _ffUidCtrl = TextEditingController(text: user?.ffUid.isNotEmpty == true ? user!.ffUid : '');
     _phoneCtrl = TextEditingController(text: user?.phone.isNotEmpty == true ? user!.phone : '');
   }
@@ -212,15 +213,15 @@ class _MatchRegistrationSheetState extends State<MatchRegistrationSheet> {
                       Text(
                         'TOURNAMENT REGISTRATION',
                         style: GoogleFonts.outfit(
-                          fontSize: 15.5,
+                          fontSize: 16,
                           fontWeight: FontWeight.w900,
-                          color: Colors.white,
+                          color: const Color(0xFF0F172A),
                           letterSpacing: 0.5,
                         ),
                       ),
                       Text(
                         widget.tournament.title,
-                        style: GoogleFonts.inter(fontSize: 11.5, color: AppColors.cyanLight),
+                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF2563EB)),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -228,7 +229,7 @@ class _MatchRegistrationSheetState extends State<MatchRegistrationSheet> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close_rounded, color: AppColors.textMuted),
+                  icon: const Icon(Icons.close_rounded, color: Color(0xFF64748B)),
                   onPressed: () => Navigator.pop(context),
                   visualDensity: VisualDensity.compact,
                 ),
@@ -240,16 +241,16 @@ class _MatchRegistrationSheetState extends State<MatchRegistrationSheet> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.surface,
+                color: const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.borderLight, width: 1),
+                border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _buildSummaryItem('MODE', widget.tournament.mode, AppColors.cyanLight),
-                  _buildSummaryItem('ENTRY', widget.tournament.entryFee, AppColors.emerald),
-                  _buildSummaryItem('PRIZE POOL', widget.tournament.prizePool, AppColors.gold),
+                  _buildSummaryItem('MODE', widget.tournament.mode, const Color(0xFF2563EB)),
+                  _buildSummaryItem('ENTRY', widget.tournament.entryFee, const Color(0xFF10B981)),
+                  _buildSummaryItem('PRIZE POOL', widget.tournament.prizePool, const Color(0xFFD97706)),
                 ],
               ),
             ),
@@ -262,15 +263,22 @@ class _MatchRegistrationSheetState extends State<MatchRegistrationSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Captain / Player 1 IGN
-                    _buildFieldLabel('Leader / Player In-Game Name (IGN) *'),
+                    _buildFieldLabel('Game ID Name (In-Game Name) *'),
                     TextFormField(
                       controller: _ignCtrl,
-                      style: const TextStyle(color: Colors.white, fontSize: 13.5),
-                      decoration: const InputDecoration(
-                        hintText: 'e.g. MOBIN_BOSS_99',
-                        prefixIcon: Icon(Icons.badge_rounded, size: 18, color: AppColors.cyanLight),
+                      style: GoogleFonts.inter(color: const Color(0xFF0F172A), fontSize: 14, fontWeight: FontWeight.w700),
+                      decoration: InputDecoration(
+                        hintText: 'Enter your Free Fire In-Game Name',
+                        hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8), fontSize: 13),
+                        prefixIcon: const Icon(Icons.badge_rounded, size: 20, color: Color(0xFF2563EB)),
+                        filled: true,
+                        fillColor: const Color(0xFFF1F5F9),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1), width: 1.2)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2)),
                       ),
-                      validator: (v) => v?.trim().isEmpty == true ? 'IGN is required' : null,
+                      validator: (v) => v?.trim().isEmpty == true ? 'Game ID Name is required' : null,
                     ),
                     const SizedBox(height: 12),
 
@@ -279,10 +287,17 @@ class _MatchRegistrationSheetState extends State<MatchRegistrationSheet> {
                     TextFormField(
                       controller: _ffUidCtrl,
                       keyboardType: TextInputType.number,
-                      style: const TextStyle(color: Colors.white, fontSize: 13.5),
-                      decoration: const InputDecoration(
+                      style: GoogleFonts.inter(color: const Color(0xFF0F172A), fontSize: 14, fontWeight: FontWeight.w700),
+                      decoration: InputDecoration(
                         hintText: 'e.g. 1928374650',
-                        prefixIcon: Icon(Icons.pin_rounded, size: 18, color: AppColors.gold),
+                        hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8), fontSize: 13),
+                        prefixIcon: const Icon(Icons.pin_rounded, size: 20, color: Color(0xFFD97706)),
+                        filled: true,
+                        fillColor: const Color(0xFFF1F5F9),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1), width: 1.2)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2)),
                       ),
                       validator: (v) => v?.trim().isEmpty == true ? 'Free Fire UID is required' : null,
                     ),
@@ -293,10 +308,17 @@ class _MatchRegistrationSheetState extends State<MatchRegistrationSheet> {
                     TextFormField(
                       controller: _phoneCtrl,
                       keyboardType: TextInputType.phone,
-                      style: const TextStyle(color: Colors.white, fontSize: 13.5),
-                      decoration: const InputDecoration(
+                      style: GoogleFonts.inter(color: const Color(0xFF0F172A), fontSize: 14, fontWeight: FontWeight.w700),
+                      decoration: InputDecoration(
                         hintText: '01XXXXXXXXX',
-                        prefixIcon: Icon(Icons.phone_iphone_rounded, size: 18, color: AppColors.emerald),
+                        hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8), fontSize: 13),
+                        prefixIcon: const Icon(Icons.phone_iphone_rounded, size: 20, color: Color(0xFF10B981)),
+                        filled: true,
+                        fillColor: const Color(0xFFF1F5F9),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
+                        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1), width: 1.2)),
+                        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2)),
                       ),
                       validator: (v) => v?.trim().isEmpty == true ? 'Phone number is required' : null,
                     ),
@@ -388,13 +410,13 @@ class _MatchRegistrationSheetState extends State<MatchRegistrationSheet> {
 
   Widget _buildFieldLabel(String label) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 5),
+      padding: const EdgeInsets.only(bottom: 6),
       child: Text(
         label,
         style: GoogleFonts.outfit(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          color: AppColors.textMuted,
+          fontSize: 12.5,
+          fontWeight: FontWeight.w800,
+          color: const Color(0xFF1E293B),
         ),
       ),
     );
@@ -405,12 +427,12 @@ class _MatchRegistrationSheetState extends State<MatchRegistrationSheet> {
       children: [
         Text(
           title,
-          style: GoogleFonts.outfit(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.textMuted),
+          style: GoogleFonts.outfit(fontSize: 10.5, fontWeight: FontWeight.w800, color: const Color(0xFF64748B)),
         ),
         const SizedBox(height: 2),
         Text(
           val,
-          style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w900, color: color),
+          style: GoogleFonts.outfit(fontSize: 13.5, fontWeight: FontWeight.w900, color: color),
         ),
       ],
     );
@@ -420,20 +442,25 @@ class _MatchRegistrationSheetState extends State<MatchRegistrationSheet> {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.borderLight, width: 0.8),
+        border: Border.all(color: const Color(0xFFCBD5E1), width: 1),
       ),
       child: Row(
         children: [
           Expanded(
             child: TextField(
               controller: ignCtrl,
-              style: const TextStyle(color: Colors.white, fontSize: 12),
+              style: GoogleFonts.inter(color: const Color(0xFF0F172A), fontSize: 12.5, fontWeight: FontWeight.w600),
               decoration: InputDecoration(
                 hintText: '$label IGN',
+                hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8), fontSize: 12),
                 isDense: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                filled: true,
+                fillColor: const Color(0xFFF1F5F9),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               ),
             ),
           ),
@@ -442,11 +469,16 @@ class _MatchRegistrationSheetState extends State<MatchRegistrationSheet> {
             child: TextField(
               controller: uidCtrl,
               keyboardType: TextInputType.number,
-              style: const TextStyle(color: Colors.white, fontSize: 12),
+              style: GoogleFonts.inter(color: const Color(0xFF0F172A), fontSize: 12.5, fontWeight: FontWeight.w600),
               decoration: InputDecoration(
                 hintText: '$label UID',
+                hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8), fontSize: 12),
                 isDense: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                filled: true,
+                fillColor: const Color(0xFFF1F5F9),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               ),
             ),
           ),

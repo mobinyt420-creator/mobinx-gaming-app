@@ -42,11 +42,78 @@ class _HomeScreenState extends State<HomeScreen> {
     HomeDataService.instance.init();
     StoreService.instance.init();
     NotificationService.instance.init();
+
+    // Listen for incoming live push notifications broadcasted by Admin
+    NotificationService.instance.latestIncomingNotification.addListener(_onIncomingPushNotification);
   }
 
   @override
   void dispose() {
+    NotificationService.instance.latestIncomingNotification.removeListener(_onIncomingPushNotification);
     super.dispose();
+  }
+
+  void _onIncomingPushNotification() {
+    final notif = NotificationService.instance.latestIncomingNotification.value;
+    if (notif == null || !mounted) return;
+
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: const Color(0xFF0F172A),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: const BorderSide(color: Color(0xFF38BDF8), width: 1.5),
+        ),
+        duration: const Duration(seconds: 6),
+        content: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: const BoxDecoration(
+                color: Color(0xFF2563EB),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.notifications_active_rounded, color: Colors.white, size: 18),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    notif.title,
+                    style: GoogleFonts.outfit(fontSize: 13.5, fontWeight: FontWeight.w800, color: Colors.white),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    notif.message,
+                    style: GoogleFonts.inter(fontSize: 11.5, color: const Color(0xFF94A3B8)),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        action: SnackBarAction(
+          label: 'VIEW',
+          textColor: const Color(0xFF38BDF8),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+            );
+          },
+        ),
+      ),
+    );
   }
 
   void _handleBannerTap(BannerModel banner) {

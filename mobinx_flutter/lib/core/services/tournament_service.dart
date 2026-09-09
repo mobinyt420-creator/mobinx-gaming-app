@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/tournament_model.dart';
 import 'storage_service.dart';
 import 'firebase_service.dart';
@@ -72,24 +73,41 @@ class TournamentService {
     List<Map<String, String>> teammates = const [],
   }) async {
     try {
+      final currentUser = AuthService.instance.currentUser;
+
       // 1. Add to local registered set
       final newRegistered = Set<String>.from(registeredIdsNotifier.value)..add(tournament.id);
       registeredIdsNotifier.value = newRegistered;
       await StorageService.setCache('mobinx_registered_matches', newRegistered.toList());
 
-      // 2. Increment slot count locally
+      final regData = {
+        'tournamentId': tournament.id,
+        'tournamentTitle': tournament.title,
+        'userId': currentUser?.id ?? ffUid,
+        'ign': ign,
+        'ffUid': ffUid,
+        'phone': phone,
+        'teammates': teammates,
+        'registeredAt': DateTime.now().millisecondsSinceEpoch,
+      };
+
+      // 2. Increment slot count locally and add to participants
       final currentList = tournamentsNotifier.value;
       final updatedList = currentList.map((t) {
         if (t.id == tournament.id) {
           final newSlots = (t.slotsFilled + 1).clamp(0, t.slotsTotal);
-          return t.copyWith(slotsFilled: newSlots, isRegistered: true);
+          final updatedParticipants = List<Map<String, dynamic>>.from(t.participants)..add(regData);
+          return t.copyWith(
+            slotsFilled: newSlots, 
+            isRegistered: true,
+            participants: updatedParticipants,
+          );
         }
         return t;
       }).toList();
       tournamentsNotifier.value = updatedList;
 
       // 3. Update player stats locally
-      final currentUser = AuthService.instance.currentUser;
       if (currentUser != null) {
         final updatedUser = currentUser.copyWith(
           tournamentsJoined: currentUser.tournamentsJoined + 1,
@@ -100,17 +118,6 @@ class TournamentService {
 
       // 4. Asynchronous Cloud Firestore sync
       if (FirebaseService.isInitialized) {
-        final regData = {
-          'tournamentId': tournament.id,
-          'tournamentTitle': tournament.title,
-          'userId': currentUser?.id ?? ffUid,
-          'ign': ign,
-          'ffUid': ffUid,
-          'phone': phone,
-          'teammates': teammates,
-          'registeredAt': DateTime.now().millisecondsSinceEpoch,
-        };
-
         await FirebaseService.firestore
             .collection('tournaments')
             .doc(tournament.id)
@@ -118,12 +125,13 @@ class TournamentService {
             .doc(currentUser?.id ?? ffUid)
             .set(regData);
 
-        // Update slots filled in Firestore
+        // Update slots filled and participants list in Firestore
         await FirebaseService.firestore
             .collection('tournaments')
             .doc(tournament.id)
             .update({
           'slotsFilled': tournament.slotsFilled + 1,
+          'participants': FieldValue.arrayUnion([regData]),
         });
       }
 

@@ -18,6 +18,8 @@ class TournamentModel {
   final bool isRoomReleased;
   final String rules;
   final bool isRegistered;
+  final List<Map<String, dynamic>> prizeTiers;
+  final List<Map<String, dynamic>> participants;
 
   String get roomPassword => roomPass;
 
@@ -40,10 +42,27 @@ class TournamentModel {
     this.isRoomReleased = false,
     this.rules = 'Fair play policy. Emotes allowed. No hacks or PC emulators in mobile rooms.',
     this.isRegistered = false,
+    this.prizeTiers = const [],
+    this.participants = const [],
   });
 
   factory TournamentModel.fromJson(Map<String, dynamic> json) {
     final roomCreds = json['roomCredentials'] is Map ? json['roomCredentials'] : null;
+    
+    // Parse prize tiers
+    List<Map<String, dynamic>> parsedTiers = [];
+    final rawTiers = json['prizeTiers'] ?? json['prizeBreakdown'];
+    if (rawTiers is List) {
+      parsedTiers = rawTiers.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    }
+
+    // Parse participants
+    List<Map<String, dynamic>> parsedParticipants = [];
+    final rawParts = json['participants'];
+    if (rawParts is List) {
+      parsedParticipants = rawParts.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    }
+
     return TournamentModel(
       id: json['id']?.toString() ?? '',
       title: json['title']?.toString() ?? 'Free Fire Custom Match',
@@ -63,6 +82,8 @@ class TournamentModel {
       isRoomReleased: roomCreds?['isReleased'] == true || json['isRoomReleased'] == true,
       rules: json['rules']?.toString() ?? 'Fair play policy. Emotes allowed. No hacks or PC emulators in mobile rooms.',
       isRegistered: json['isRegistered'] == true,
+      prizeTiers: parsedTiers,
+      participants: parsedParticipants,
     );
   }
 
@@ -86,6 +107,8 @@ class TournamentModel {
       'isRoomReleased': isRoomReleased,
       'rules': rules,
       'isRegistered': isRegistered,
+      'prizeTiers': prizeTiers,
+      'participants': participants,
     };
   }
 
@@ -108,6 +131,8 @@ class TournamentModel {
     bool? isRoomReleased,
     String? rules,
     bool? isRegistered,
+    List<Map<String, dynamic>>? prizeTiers,
+    List<Map<String, dynamic>>? participants,
   }) {
     return TournamentModel(
       id: id ?? this.id,
@@ -128,6 +153,8 @@ class TournamentModel {
       isRoomReleased: isRoomReleased ?? this.isRoomReleased,
       rules: rules ?? this.rules,
       isRegistered: isRegistered ?? this.isRegistered,
+      prizeTiers: prizeTiers ?? this.prizeTiers,
+      participants: participants ?? this.participants,
     );
   }
 }
