@@ -79,7 +79,10 @@ class TournamentModel {
       isLive: json['isLive'] == true || json['status']?.toString().toUpperCase() == 'ONGOING',
       roomId: roomCreds?['roomId']?.toString() ?? json['roomId']?.toString() ?? '',
       roomPass: roomCreds?['password']?.toString() ?? json['roomPass']?.toString() ?? '',
-      isRoomReleased: roomCreds?['isReleased'] == true || json['isRoomReleased'] == true,
+      isRoomReleased: roomCreds?['isReleased'] == true ||
+          json['isRoomReleased'] == true ||
+          (roomCreds?['roomId'] != null && roomCreds!['roomId'].toString().trim().isNotEmpty) ||
+          (json['roomId'] != null && json['roomId'].toString().trim().isNotEmpty),
       rules: json['rules']?.toString() ?? 'Fair play policy. Emotes allowed. No hacks or PC emulators in mobile rooms.',
       isRegistered: json['isRegistered'] == true,
       prizeTiers: parsedTiers,

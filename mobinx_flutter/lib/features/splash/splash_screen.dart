@@ -18,18 +18,22 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
   late Animation<double> _scaleAnim;
+  late Animation<double> _progressAnim;
 
   @override
   void initState() {
     super.initState();
     _animController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1400),
+      duration: const Duration(milliseconds: 180),
     );
 
     _fadeAnim = CurvedAnimation(parent: _animController, curve: Curves.easeIn);
-    _scaleAnim = Tween<double>(begin: 0.85, end: 1.0).animate(
-      CurvedAnimation(parent: _animController, curve: Curves.easeOutBack),
+    _scaleAnim = Tween<double>(begin: 0.95, end: 1.0).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic),
+    );
+    _progressAnim = Tween<double>(begin: 0.3, end: 1.0).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeInOut),
     );
 
     _animController.forward();
@@ -38,13 +42,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
   Future<void> _initializeApp() async {
     try {
-      await StorageService.init();
       await AuthService.instance.init();
-    } catch (e) {
-      debugPrint('⚡ Splash init error handled: $e');
-    }
+    } catch (_) {}
 
-    await Future.delayed(const Duration(milliseconds: 1600));
+    // Minimal delay for smooth visual frame render
+    await Future.delayed(const Duration(milliseconds: 150));
 
     if (!mounted) return;
     bool isOnboardingDone = false;
@@ -61,7 +63,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },
-        transitionDuration: const Duration(milliseconds: 400),
+        transitionDuration: const Duration(milliseconds: 120),
       ),
     );
   }
@@ -189,9 +191,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(10),
-                        child: const LinearProgressIndicator(
-                          backgroundColor: Colors.transparent,
-                          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                        child: AnimatedBuilder(
+                          animation: _progressAnim,
+                          builder: (context, _) => LinearProgressIndicator(
+                            value: _progressAnim.value,
+                            backgroundColor: Colors.transparent,
+                            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                          ),
                         ),
                       ),
                     ),

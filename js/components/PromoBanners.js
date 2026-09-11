@@ -56,6 +56,6 @@ export function bindPromoBannersEvents() {
 
   document.getElementById('btn-promo-offers')?.addEventListener('click', () => {
     const urls = authService.getUrls();
-    openExternalStore(urls.topup || 'https://noobtopup.com/', '#0284c7');
+    openExternalStore(urls.topup || 'https://noobtopup.com/', '#004b87');
   });
 }

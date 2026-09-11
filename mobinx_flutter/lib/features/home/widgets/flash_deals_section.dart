@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/models/banner_model.dart';
 import '../../../core/services/store_service.dart';
 import '../../../core/services/firebase_service.dart';
+import '../../../core/widgets/faceted_diamond.dart';
 
 class EcommerceProductItem {
   final String id;
@@ -61,6 +62,7 @@ class FlashDealsSection extends StatefulWidget {
 
 class _FlashDealsSectionState extends State<FlashDealsSection> {
   int _remainingSeconds = 2 * 3600 + 35 * 60 + 28; // 02:35:28
+  late final ValueNotifier<int> _timerNotifier;
   Timer? _countdownTimer;
   Timer? _autoScrollTimer;
   late final ScrollController _diamondScrollController;
@@ -93,13 +95,18 @@ class _FlashDealsSectionState extends State<FlashDealsSection> {
   @override
   void initState() {
     super.initState();
-    // Start at a multiple of diamonds so it loops seamlessly in one direction
-    const initialIndex = 500 * 5;
+    // Start at a modest index of 50 items for smooth infinite loop without 335k pixel layout burst
+    const initialIndex = 50 * 5;
     _diamondScrollController = ScrollController(initialScrollOffset: initialIndex * _diamondStep);
+    _timerNotifier = ValueNotifier(_remainingSeconds);
 
     _startCountdown();
-    _startDiamondAutoScroll();
-    _listenToShopProducts();
+    Future.delayed(const Duration(milliseconds: 1800), () {
+      if (mounted) {
+        _startDiamondAutoScroll();
+        _listenToShopProducts();
+      }
+    });
   }
 
   void _listenToShopProducts() {
@@ -125,7 +132,8 @@ class _FlashDealsSectionState extends State<FlashDealsSection> {
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       if (_remainingSeconds > 0) {
-        setState(() => _remainingSeconds--);
+        _remainingSeconds--;
+        _timerNotifier.value = _remainingSeconds;
       }
     });
   }
@@ -147,14 +155,44 @@ class _FlashDealsSectionState extends State<FlashDealsSection> {
     _countdownTimer?.cancel();
     _autoScrollTimer?.cancel();
     _diamondScrollController.dispose();
+    _timerNotifier.dispose();
     super.dispose();
   }
 
-  String _formatTimerSingleLine() {
-    final hrs = (_remainingSeconds ~/ 3600).toString().padLeft(2, '0');
-    final mins = ((_remainingSeconds % 3600) ~/ 60).toString().padLeft(2, '0');
-    final secs = (_remainingSeconds % 60).toString().padLeft(2, '0');
-    return '$hrs : $mins : $secs';
+
+  /// Digital clock style digit box (dark background, white text)
+  Widget _buildTimerDigitBox(String digits) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(5),
+      ),
+      child: Text(
+        digits,
+        style: GoogleFonts.outfit(
+          fontSize: 12,
+          fontWeight: FontWeight.w900,
+          color: Colors.white,
+          letterSpacing: 1.0,
+        ),
+      ),
+    );
+  }
+
+  /// Colon separator between digit boxes
+  Widget _buildTimerSeparator() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Text(
+        ':',
+        style: GoogleFonts.outfit(
+          fontSize: 11,
+          fontWeight: FontWeight.w900,
+          color: Colors.white70,
+        ),
+      ),
+    );
   }
 
   @override
@@ -249,54 +287,49 @@ class _FlashDealsSectionState extends State<FlashDealsSection> {
                     ),
                   ],
                 ),
-                // Vibrant Red Gradient Countdown Timer Badge (User Requested Red)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFDC2626), Color(0xFFB91C1C)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFDC2626).withValues(alpha: 0.35),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.local_fire_department_rounded,
-                        color: Color(0xFFFEF08A),
-                        size: 14,
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        'Ends\nIn',
-                        style: GoogleFonts.inter(
-                          fontSize: 8.5,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white70,
-                          height: 1.0,
+                // Vibrant Red Gradient Countdown Timer Badge with Digital Clock Boxes
+                ValueListenableBuilder<int>(
+                  valueListenable: _timerNotifier,
+                  builder: (context, seconds, _) {
+                    final hrs = (seconds ~/ 3600).toString().padLeft(2, '0');
+                    final mins = ((seconds % 3600) ~/ 60).toString().padLeft(2, '0');
+                    final secs = (seconds % 60).toString().padLeft(2, '0');
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFDC2626), Color(0xFFB91C1C)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFDC2626).withValues(alpha: 0.35),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 6),
-                      Text(
-                        _formatTimerSingleLine(),
-                        style: GoogleFonts.outfit(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: 0.6,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.local_fire_department_rounded,
+                            color: Color(0xFFFEF08A),
+                            size: 14,
+                          ),
+                          const SizedBox(width: 5),
+                          // Digital clock boxes
+                          _buildTimerDigitBox(hrs),
+                          _buildTimerSeparator(),
+                          _buildTimerDigitBox(mins),
+                          _buildTimerSeparator(),
+                          _buildTimerDigitBox(secs),
+                        ],
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
               ],
             ),
@@ -309,7 +342,7 @@ class _FlashDealsSectionState extends State<FlashDealsSection> {
             child: ListView.builder(
               controller: _diamondScrollController,
               scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               itemCount: 100000,
               itemBuilder: (context, index) {
                 final deal = displayDeals[index % displayDeals.length];
@@ -358,12 +391,12 @@ class _FlashDealsSectionState extends State<FlashDealsSection> {
                         else
                           const SizedBox(height: 14),
 
-                        // Diamond Graphic
+                        // 3D Faceted Diamond Graphic with Sparkles & Gem Float
                         const Center(
-                          child: Icon(
-                            Icons.diamond_rounded,
-                            size: 42,
-                            color: Color(0xFF0284C7),
+                          child: FacetedDiamond3D(
+                            size: 44,
+                            enableFloat: true,
+                            enableSparkles: true,
                           ),
                         ),
 

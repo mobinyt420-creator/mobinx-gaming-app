@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/theme/page_transitions.dart';
 import '../about/about_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -246,7 +247,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: Text('About Mobin X (v${AppConstants.appVersion})', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600)),
                     trailing: const Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.textMuted),
                     onTap: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutScreen()));
+                      Navigator.push(context, SharedAxisPageRoute(page: const AboutScreen()));
                     },
                   ),
                 ],

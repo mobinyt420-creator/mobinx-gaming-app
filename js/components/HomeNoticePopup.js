@@ -161,7 +161,7 @@ export function bindHomeNoticePopupEvents() {
     dismissPopup();
     const url = popup.buttonUrl || 'https://t.me/mrmobin1m';
     if (url.startsWith('http://') || url.startsWith('https://')) {
-      openExternalStore(url, '#0284c7');
+      openExternalStore(url, '#004b87');
     } else {
       stateManager.navigate(url);
     }
@@ -170,7 +170,7 @@ export function bindHomeNoticePopupEvents() {
   // App Update Button Click
   document.getElementById('btn-popup-update-now')?.addEventListener('click', () => {
     const playStoreUrl = updateConfig.updateUrl || 'https://play.google.com/store/apps/details?id=com.mobinx.gaming';
-    openExternalStore(playStoreUrl, '#0284c7');
+    openExternalStore(playStoreUrl, '#004b87');
     dismissPopup();
   });
 }

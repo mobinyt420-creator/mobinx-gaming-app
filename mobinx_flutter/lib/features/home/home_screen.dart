@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/page_transitions.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/storage_service.dart';
@@ -47,9 +50,9 @@ class _HomeScreenState extends State<HomeScreen> {
     // Listen for incoming live push notifications broadcasted by Admin
     NotificationService.instance.latestIncomingNotification.addListener(_onIncomingPushNotification);
 
-    // Prompt notification permission if not yet allowed
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkNotificationPermissionPrompt();
+    // Prompt notification permission smoothly after homepage renders
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) _checkNotificationPermissionPrompt();
     });
   }
 
@@ -224,7 +227,7 @@ class _HomeScreenState extends State<HomeScreen> {
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+              SharedAxisPageRoute(page: const NotificationsScreen()),
             );
           },
         ),
@@ -249,37 +252,37 @@ class _HomeScreenState extends State<HomeScreen> {
     } else if (route == 'tournaments') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => TournamentsScreen(onBack: () => Navigator.pop(context))),
+        SharedAxisPageRoute(page: TournamentsScreen(onBack: () => Navigator.pop(context))),
       );
     } else if (route == 'sensitivity') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => SensitivityScreen(onBack: () => Navigator.pop(context))),
+        SharedAxisPageRoute(page: SensitivityScreen(onBack: () => Navigator.pop(context))),
       );
     } else if (route == 'referral') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const ReferralScreen()),
+        SharedAxisPageRoute(page: const ReferralScreen()),
       );
     } else if (route == 'notifications') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+        SharedAxisPageRoute(page: const NotificationsScreen()),
       );
     } else if (route == 'help') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const HelpScreen()),
+        SharedAxisPageRoute(page: const HelpScreen()),
       );
     } else if (route == 'settings') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const SettingsScreen()),
+        SharedAxisPageRoute(page: const SettingsScreen()),
       );
     } else if (route == 'about') {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const AboutScreen()),
+        SharedAxisPageRoute(page: const AboutScreen()),
       );
     } else if (route == 'admin') {
       StoreService.instance.openUrlInBrowserView(
@@ -366,7 +369,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                          SharedAxisPageRoute(page: const NotificationsScreen()),
                         );
                       },
                     ),
@@ -425,21 +428,20 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(17),
-                          child: Image.asset(
-                            'assets/images/avatar_user.jpg',
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => CircleAvatar(
-                              backgroundColor: AppColors.primaryLight,
-                              child: Text(
-                                (user != null && user.name.isNotEmpty ? user.name[0] : 'M').toUpperCase(),
-                                style: GoogleFonts.outfit(
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.primary,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                          ),
+                          child: (user != null && user.avatar.isNotEmpty && user.avatar.startsWith('http'))
+                              ? CachedNetworkImage(
+                                  imageUrl: user.avatar,
+                                  fit: BoxFit.cover,
+                                  placeholder: (_, _) => Container(color: const Color(0xFFEEF2FF)),
+                                  errorWidget: (_, _, _) => _buildHeaderInitialsAvatar(user),
+                                )
+                              : (user != null && user.name.isNotEmpty)
+                                  ? _buildHeaderInitialsAvatar(user)
+                                  : Image.asset(
+                                      'assets/images/avatar_user.jpg',
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) => _buildHeaderInitialsAvatar(user),
+                                    ),
                         ),
                       ),
                     );
@@ -454,15 +456,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildBody() {
-    final stackIndex = _currentNavIndex == 3 ? 1 : (_currentNavIndex == 4 ? 2 : 0);
-    return IndexedStack(
-      index: stackIndex,
-      children: [
-        _buildHomeTab(),
-        DownloadsScreen(onBack: () => setState(() => _currentNavIndex = 0)),
-        const ProfileScreen(),
-      ],
-    );
+    if (_currentNavIndex == 3) {
+      return DownloadsScreen(onBack: () => setState(() => _currentNavIndex = 0));
+    }
+    if (_currentNavIndex == 4) {
+      return const ProfileScreen();
+    }
+    return _buildHomeTab();
   }
 
   Widget _buildHomeTab() {
@@ -471,7 +471,7 @@ class _HomeScreenState extends State<HomeScreen> {
       color: const Color(0xFF2563EB),
       backgroundColor: Colors.white,
       child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        physics: const AlwaysScrollableScrollPhysics(parent: ClampingScrollPhysics()),
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -549,7 +549,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: SafeArea(
         top: false,
         child: Row(
@@ -558,43 +558,93 @@ class _HomeScreenState extends State<HomeScreen> {
             final tab = tabs[idx];
 
             return Expanded(
-              child: InkWell(
+              child: GestureDetector(
                 onTap: () {
+                  HapticFeedback.lightImpact();
                   if (idx == 1) {
-                    // Top Up -> Opens Webview/Chrome Custom Tab (Screenshot 3)
                     StoreService.instance.openTopUp();
                   } else if (idx == 2) {
-                    // Shop -> Opens Webview/Chrome Custom Tab
                     StoreService.instance.openShop();
                   } else {
                     setState(() => _currentNavIndex = idx);
                   }
                 },
+                behavior: HitTestBehavior.opaque,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        isSelected ? (tab['icon'] as IconData) : (tab['outlined'] as IconData),
-                        color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF64748B),
-                        size: 22,
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        tab['label'] as String,
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                          color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+                  child: AnimatedScale(
+                    scale: isSelected ? 1.08 : 1.0,
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOutCubic,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Animated pill indicator above icon
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 280),
+                          curve: Curves.easeInOutCubic,
+                          width: isSelected ? 20 : 0,
+                          height: 3,
+                          margin: const EdgeInsets.only(bottom: 4),
+                          decoration: BoxDecoration(
+                            color: isSelected ? const Color(0xFF2563EB) : Colors.transparent,
+                            borderRadius: BorderRadius.circular(2),
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: const Color(0xFF2563EB).withValues(alpha: 0.4),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 1),
+                                    ),
+                                  ]
+                                : [],
+                          ),
                         ),
-                      ),
-                    ],
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 200),
+                          child: Icon(
+                            isSelected ? (tab['icon'] as IconData) : (tab['outlined'] as IconData),
+                            key: ValueKey<bool>(isSelected),
+                            color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 200),
+                          style: GoogleFonts.inter(
+                            fontSize: isSelected ? 11 : 10.5,
+                            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                            color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+                          ),
+                          child: Text(tab['label'] as String),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             );
           }),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeaderInitialsAvatar(dynamic user) {
+    final String initial = (user != null && user.name != null && user.name.toString().trim().isNotEmpty)
+        ? user.name.toString().trim()[0].toUpperCase()
+        : 'M';
+    return Container(
+      color: const Color(0xFF4F46E5),
+      child: Center(
+        child: Text(
+          initial,
+          style: GoogleFonts.outfit(
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+            fontSize: 13,
+          ),
         ),
       ),
     );

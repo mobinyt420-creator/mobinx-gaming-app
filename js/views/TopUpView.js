@@ -7,7 +7,7 @@ export function renderTopUpView() {
   const urls = authService.getUrls();
   const targetUrl = urls.topup || APP_CONFIG_URLS.TOPUP_URL || 'https://noobtopup.com/';
   // Trigger immediate seamless redirect
-  openExternalStore(targetUrl, '#0284c7');
+  openExternalStore(targetUrl, '#004b87');
   setTimeout(() => {
     stateManager.navigate('home');
   }, 100);
@@ -17,6 +17,6 @@ export function renderTopUpView() {
 export function bindTopUpEvents() {
   const urls = authService.getUrls();
   const targetUrl = urls.topup || APP_CONFIG_URLS.TOPUP_URL || 'https://noobtopup.com/';
-  openExternalStore(targetUrl, '#0284c7');
+  openExternalStore(targetUrl, '#004b87');
   stateManager.navigate('home');
 }

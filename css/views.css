@@ -1357,6 +1357,23 @@
   font-weight: 600;
 }
 
+.profile-feature-row {
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.profile-feature-row:active {
+  background-color: #f8fafc !important;
+  transform: scale(0.99);
+}
+
+.stat-bubble-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.stat-bubble-card:active {
+  transform: scale(0.95);
+}
+
 .profile-menu-section {
   padding: 0 14px 20px 14px;
   display: flex;

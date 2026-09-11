@@ -146,10 +146,24 @@
 
 .category-marquee-container {
   width: 100%;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   position: relative;
-  mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  cursor: grab;
+  user-select: none;
+  mask-image: linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%);
+}
+
+.category-marquee-container::-webkit-scrollbar {
+  display: none;
+}
+
+.category-marquee-container:active {
+  cursor: grabbing;
 }
 
 .category-marquee-track {
@@ -157,23 +171,6 @@
   gap: 12px;
   width: max-content;
   padding: 4px 14px;
-}
-
-.infinite-glide-track {
-  animation: glideCategories 22s linear infinite;
-}
-
-.infinite-glide-track:hover {
-  animation-play-state: paused;
-}
-
-@keyframes glideCategories {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(calc(-100% / 3));
-  }
 }
 
 .category-shortcut-card {
@@ -387,10 +384,24 @@
 
 .flash-products-carousel {
   width: 100%;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   position: relative;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  cursor: grab;
+  user-select: none;
   mask-image: linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%);
   -webkit-mask-image: linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%);
+}
+
+.flash-products-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.flash-products-carousel:active {
+  cursor: grabbing;
 }
 
 .flash-products-track {
@@ -400,40 +411,25 @@
   padding: 4px 6px;
 }
 
-.infinite-flash-track {
-  animation: glideFlashSale 18s linear infinite;
-  display: flex;
-  gap: 12px;
-  width: max-content;
-  will-change: transform;
-}
-
-.infinite-flash-track:hover {
-  animation-play-state: paused;
-}
-
-@keyframes glideFlashSale {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
-
 .flash-diamond-card {
   flex: 0 0 120px;
   background: #ffffff;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-light);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  padding: 10px 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  padding: 12px 8px 10px 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   position: relative;
   gap: 6px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.flash-diamond-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(2, 132, 199, 0.12);
 }
 
 .flash-card-badge {
@@ -443,19 +439,77 @@
   color: #ffffff;
   font-size: 7.5px;
   font-weight: 800;
-  padding: 2px 5px;
+  padding: 2px 6px;
   border-radius: var(--radius-sm);
-  letter-spacing: 0.2px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.18);
+  text-transform: uppercase;
 }
 
 .flash-card-diamond-graphic {
-  margin-top: 6px;
-  width: 44px;
-  height: 44px;
+  margin-top: 4px;
+  width: 48px;
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+}
+
+.diamond-glow-effect {
+  filter: drop-shadow(0 4px 12px rgba(56, 189, 248, 0.5));
+}
+
+.sparkling-diamond-svg {
+  animation: gemFloat 3.2s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.diamond-sparkle-star {
+  position: absolute;
+  pointer-events: none;
+  font-size: 10px;
+  color: #38bdf8;
+  text-shadow: 0 0 6px #7dd3fc, 0 0 10px #38bdf8;
+  z-index: 2;
+}
+
+.diamond-sparkle-star.s1 {
+  top: 0px;
+  left: 2px;
+  animation: diamondSparkle 2.2s infinite ease-in-out;
+}
+
+.diamond-sparkle-star.s2 {
+  bottom: 2px;
+  right: 2px;
+  font-size: 9px;
+  animation: diamondSparkle 2.2s infinite 1.1s ease-in-out;
+}
+
+@keyframes gemFloat {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-3.5px) scale(1.05);
+  }
+}
+
+@keyframes diamondSparkle {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(0.6) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.3) rotate(25deg);
+  }
+}
+
+.animated-gem-icon {
+  animation: gemFloat 3s ease-in-out infinite;
+  filter: drop-shadow(0 2px 8px rgba(56, 189, 248, 0.4));
 }
 
 .flash-card-details {

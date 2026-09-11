@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/page_transitions.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/store_service.dart';
 import '../../core/models/user_model.dart';
@@ -22,7 +23,28 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _glowController;
+  late Animation<double> _glowAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _glowController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat(reverse: true);
+    _glowAnim = Tween<double>(begin: 0.18, end: 0.45).animate(
+      CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _glowController.dispose();
+    super.dispose();
+  }
+
   void _openEditProfileDialog(UserModel user) {
     final nameCtrl = TextEditingController(text: user.name);
     final phoneCtrl = TextEditingController(text: user.phone);
@@ -212,21 +234,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     children: [
                       Row(
                         children: [
-                          // Avatar with ring
-                          Container(
-                            width: 60,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: AppColors.brandGradient,
-                              border: Border.all(color: AppColors.primaryLight, width: 2),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.primary.withValues(alpha: 0.25),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
+                          // Avatar with pulsing glow ring
+                          AnimatedBuilder(
+                            animation: _glowAnim,
+                            builder: (context, child) => Container(
+                              width: 64,
+                              height: 64,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: AppColors.brandGradient,
+                                border: Border.all(color: AppColors.primaryLight, width: 2),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.primary.withValues(alpha: _glowAnim.value),
+                                    blurRadius: 16,
+                                    spreadRadius: 2,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: child,
                             ),
                             child: ClipOval(
                               child: (user.avatar.isNotEmpty && user.avatar.startsWith('http'))
@@ -415,7 +442,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const ReferralScreen()),
+                      SharedAxisPageRoute(page: const ReferralScreen()),
                     );
                   },
                   child: Container(
@@ -533,7 +560,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => TournamentsScreen(onBack: () => Navigator.pop(context))),
+                    SharedAxisPageRoute(page: TournamentsScreen(onBack: () => Navigator.pop(context))),
                   );
                 },
               ),
@@ -545,7 +572,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => SensitivityScreen(onBack: () => Navigator.pop(context))),
+                    SharedAxisPageRoute(page: SensitivityScreen(onBack: () => Navigator.pop(context))),
                   );
                 },
               ),
@@ -557,7 +584,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const ReferralScreen()),
+                    SharedAxisPageRoute(page: const ReferralScreen()),
                   );
                 },
               ),
@@ -609,7 +636,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                    SharedAxisPageRoute(page: const SettingsScreen()),
                   );
                 },
               ),
@@ -621,7 +648,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const HelpScreen()),
+                    SharedAxisPageRoute(page: const HelpScreen()),
                   );
                 },
               ),
@@ -633,7 +660,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const AboutScreen()),
+                    SharedAxisPageRoute(page: const AboutScreen()),
                   );
                 },
               ),

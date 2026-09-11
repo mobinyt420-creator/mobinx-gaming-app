@@ -80,7 +80,7 @@ export function initBannerCarousel() {
         const route = banner.actionRoute.trim();
         if (route === 'topup') {
           const urls = authService.getUrls();
-          openExternalStore(urls.topup || 'https://noobtopup.com/', '#0284c7');
+          openExternalStore(urls.topup || 'https://noobtopup.com/', '#004b87');
           return;
         }
         if (route === 'shop') {
@@ -89,7 +89,7 @@ export function initBannerCarousel() {
           return;
         }
         if (route.startsWith('http://') || route.startsWith('https://')) {
-          openExternalStore(route, '#0284c7');
+          openExternalStore(route, '#004b87');
         } else {
           stateManager.navigate(route, banner.actionPayload);
         }

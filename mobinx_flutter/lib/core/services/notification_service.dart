@@ -1,7 +1,20 @@
-import 'package:flutter/foundation.dart';
+import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'firebase_service.dart';
+
+/// Top-level background message handler for FCM
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  try {
+    debugPrint('[FCM Background] Received message: ${message.messageId}');
+  } catch (e) {
+    debugPrint('[FCM Background Error]: $e');
+  }
+}
 
 class NotificationItem {
   final String id;
@@ -10,6 +23,8 @@ class NotificationItem {
   final String type; // 'tournament', 'topup', 'download', 'referral', 'general'
   final DateTime timestamp;
   final bool unread;
+  final String? targetUrl;
+  final String? imageUrl;
 
   const NotificationItem({
     required this.id,
@@ -18,9 +33,15 @@ class NotificationItem {
     required this.type,
     required this.timestamp,
     this.unread = true,
+    this.targetUrl,
+    this.imageUrl,
   });
 
-  NotificationItem copyWith({bool? unread}) {
+  NotificationItem copyWith({
+    bool? unread,
+    String? targetUrl,
+    String? imageUrl,
+  }) {
     return NotificationItem(
       id: id,
       title: title,
@@ -28,6 +49,8 @@ class NotificationItem {
       type: type,
       timestamp: timestamp,
       unread: unread ?? this.unread,
+      targetUrl: targetUrl ?? this.targetUrl,
+      imageUrl: imageUrl ?? this.imageUrl,
     );
   }
 
@@ -51,6 +74,8 @@ class NotificationItem {
       type: data['type']?.toString().toLowerCase() ?? 'general',
       timestamp: ts,
       unread: !isRead,
+      targetUrl: data['targetUrl']?.toString() ?? data['actionUrl']?.toString(),
+      imageUrl: data['imageUrl']?.toString(),
     );
   }
 
@@ -68,6 +93,12 @@ class NotificationService {
   static final NotificationService instance = NotificationService._();
   NotificationService._();
 
+  static const String channelId = 'mobinx_high_importance_channel';
+  static const String channelName = 'Mobin X Official Alerts';
+  static const String channelDescription = 'Real-time push notifications for tournaments, custom rooms, flash deals and updates';
+
+  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+
   final ValueNotifier<List<NotificationItem>> notificationsNotifier = ValueNotifier<List<NotificationItem>>([]);
   final ValueNotifier<int> unreadCountNotifier = ValueNotifier<int>(0);
   final ValueNotifier<NotificationItem?> latestIncomingNotification = ValueNotifier<NotificationItem?>(null);
@@ -81,15 +112,180 @@ class NotificationService {
     if (_isInit) return;
     _isInit = true;
 
+    // 1. Load locally cached read IDs
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedRead = prefs.getStringList('mobinx_read_notifications') ?? [];
       _readIds.addAll(savedRead);
     } catch (_) {}
 
-    // 1. Real-time Firestore notifications collection sync
-    if (FirebaseService.isInitialized) {
+    // 2. Initialize Local Notifications Plugin & Android Channel
+    await _initLocalNotifications();
+
+    // 3. Initialize Firebase Cloud Messaging (FCM)
+    await _initFCM();
+
+    // 4. Real-time Firestore notifications sync (Listens for admin panel broadcasts)
+    _setupFirestoreListeners();
+  }
+
+  Future<void> _initLocalNotifications() async {
+    try {
+      const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const iosInit = DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      );
+
+      const initSettings = InitializationSettings(
+        android: androidInit,
+        iOS: iosInit,
+      );
+
+      await _localNotifications.initialize(
+        settings: initSettings,
+        onDidReceiveNotificationResponse: (NotificationResponse response) {
+          debugPrint('[Local Notification Tapped]: ${response.payload}');
+        },
+      );
+
+      // Create Android Notification Channel
+      final androidPlugin = _localNotifications
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+
+      if (androidPlugin != null) {
+        const androidChannel = AndroidNotificationChannel(
+          channelId,
+          channelName,
+          description: channelDescription,
+          importance: Importance.max,
+          enableLights: true,
+          enableVibration: true,
+          playSound: true,
+          showBadge: true,
+        );
+        await androidPlugin.createNotificationChannel(androidChannel);
+      }
+    } catch (e) {
+      debugPrint('[NotificationService] Local notification init error: $e');
+    }
+  }
+
+  Future<void> _initFCM() async {
+    try {
+      final messaging = FirebaseMessaging.instance;
+
+      // Set background messaging handler
+      FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+      // Request system permissions
+      await requestPermission();
+
+      // Subscribe to topics
+      await messaging.subscribeToTopic('all');
+      await messaging.subscribeToTopic('all_users');
+      await messaging.subscribeToTopic('mobinx_broadcast');
+
+      // Foreground message listener: Trigger system notification popup
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        final notif = message.notification;
+        if (notif != null) {
+          showSystemNotification(
+            id: message.messageId ?? 'fcm_${DateTime.now().millisecondsSinceEpoch}',
+            title: notif.title ?? 'Mobin X Alert',
+            body: notif.body ?? '',
+            payload: message.data['targetUrl'] ?? message.data['actionUrl'],
+          );
+
+          final item = NotificationItem(
+            id: message.messageId ?? 'fcm_${DateTime.now().millisecondsSinceEpoch}',
+            title: notif.title ?? 'Mobin X Alert',
+            message: notif.body ?? '',
+            type: message.data['type'] ?? 'general',
+            timestamp: DateTime.now(),
+            unread: true,
+          );
+          latestIncomingNotification.value = item;
+        }
+      });
+    } catch (e) {
+      debugPrint('[NotificationService] FCM init notice: $e');
+    }
+  }
+
+  /// Request System Push Notification Permission (Android 13+ and iOS)
+  Future<bool> requestPermission() async {
+    try {
+      // Firebase Messaging permission request
+      final settings = await FirebaseMessaging.instance.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+        provisional: false,
+      );
+
+      // Android 13+ Local Notification Permission
+      final androidPlugin = _localNotifications
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      if (androidPlugin != null) {
+        await androidPlugin.requestNotificationsPermission();
+      }
+
+      return settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional;
+    } catch (e) {
+      debugPrint('[NotificationService] Permission request error: $e');
+      return false;
+    }
+  }
+
+  /// Trigger a Real Android System Heads-Up Status Bar Notification
+  Future<void> showSystemNotification({
+    required String id,
+    required String title,
+    required String body,
+    String? payload,
+    String? type,
+  }) async {
+    try {
+      final androidDetails = AndroidNotificationDetails(
+        channelId,
+        channelName,
+        channelDescription: channelDescription,
+        importance: Importance.max,
+        priority: Priority.high,
+        icon: '@mipmap/ic_launcher',
+        color: const Color(0xFF0284C7),
+        enableLights: true,
+        enableVibration: true,
+        playSound: true,
+        styleInformation: BigTextStyleInformation(
+          body,
+          contentTitle: title,
+          summaryText: type != null ? 'Mobin X • ${type.toUpperCase()}' : 'Mobin X Official',
+        ),
+      );
+
+      final details = NotificationDetails(android: androidDetails);
+      final notifId = id.hashCode.abs() % 100000;
+      await _localNotifications.show(
+        id: notifId,
+        title: title,
+        body: body,
+        notificationDetails: details,
+        payload: payload,
+      );
+    } catch (e) {
+      debugPrint('[NotificationService] Show system notification error: $e');
+    }
+  }
+
+  void _setupFirestoreListeners() {
+    Future.delayed(const Duration(seconds: 1), () {
+      if (!FirebaseService.isInitialized) return;
       try {
+        // 1. Listen to notifications collection
         FirebaseService.firestore
             .collection('notifications')
             .limit(50)
@@ -107,8 +303,15 @@ class NotificationService {
             for (final item in liveItems) {
               if (!_knownIds.contains(item.id)) {
                 _knownIds.add(item.id);
-                // If notification arrived after app launched, trigger heads-up banner
-                if (item.timestamp.isAfter(_appInitTime.subtract(const Duration(seconds: 10)))) {
+                // If notification arrived freshly from Admin panel, trigger System Notification
+                if (item.timestamp.isAfter(_appInitTime.subtract(const Duration(seconds: 20)))) {
+                  showSystemNotification(
+                    id: item.id,
+                    title: item.title,
+                    body: item.message,
+                    payload: item.targetUrl,
+                    type: item.type,
+                  );
                   latestIncomingNotification.value = item;
                 }
               }
@@ -122,7 +325,7 @@ class NotificationService {
           debugPrint('[NotificationService] Firestore snapshot error: $e');
         });
 
-        // 2. Also listen to config/notices broadcast
+        // 2. Also listen to config/notices broadcast (Instantly triggers system notification)
         FirebaseService.firestore
             .collection('config')
             .doc('notices')
@@ -132,12 +335,19 @@ class NotificationService {
             final data = docSnap.data()!;
             final pushData = data['pushNotification'];
             if (pushData is Map<String, dynamic>) {
-              final id = pushData['id']?.toString() ?? 'notice_${DateTime.now().millisecondsSinceEpoch}';
+              final id = pushData['id']?.toString() ?? pushData['broadcastId']?.toString() ?? 'notice_${DateTime.now().millisecondsSinceEpoch}';
               final isRead = _readIds.contains(id);
               final notif = NotificationItem.fromFirestore(id, pushData, isRead);
               if (!_knownIds.contains(id)) {
                 _knownIds.add(id);
-                if (notif.timestamp.isAfter(_appInitTime.subtract(const Duration(seconds: 10)))) {
+                if (notif.timestamp.isAfter(_appInitTime.subtract(const Duration(seconds: 20)))) {
+                  showSystemNotification(
+                    id: notif.id,
+                    title: notif.title,
+                    body: notif.message,
+                    payload: notif.targetUrl,
+                    type: notif.type,
+                  );
                   latestIncomingNotification.value = notif;
                 }
               }
@@ -149,7 +359,7 @@ class NotificationService {
       } catch (e) {
         debugPrint('[NotificationService] Init error: $e');
       }
-    }
+    });
   }
 
   void _updateList(List<NotificationItem> items) {

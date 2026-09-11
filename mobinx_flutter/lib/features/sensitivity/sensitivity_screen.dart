@@ -459,7 +459,7 @@ Preset: ${preset.title}
 
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
+            physics: const ClampingScrollPhysics(),
             child: Row(
               children: SensitivityService.quickFeaturedDevices.map((item) {
                 return Padding(
@@ -731,7 +731,7 @@ Preset: ${preset.title}
           // Presets Selector Tabs (# 1, # 2, VIP 3, VIP 4)
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
+            physics: const ClampingScrollPhysics(),
             child: Row(
               children: List.generate(_currentSensiData!.presets.length, (idx) {
                 final p = _currentSensiData!.presets[idx];

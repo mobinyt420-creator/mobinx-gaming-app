@@ -170,9 +170,6 @@ export function renderTournamentsView() {
                         </button>
                       </div>
 
-                      <div style="font-size: 10px; color: #059669; font-weight: 700; background: #ecfdf5; padding: 6px 8px; border-radius: 6px; text-align: center;">
-                        🚀 Open Free Fire -> Custom -> Search Room ID -> Enter Pass!
-                      </div>
                     </div>
                   ` : `
                     <div class="room-info-row">
@@ -199,15 +196,17 @@ export function renderTournamentsView() {
                 </div>
               </div>
 
-              <!-- Bottom Green Starts In Countdown Bar -->
-              <div class="br-starts-in-bar" style="${isReleased ? 'background: #dc2626;' : 'background: #059669;'}">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-                <span>${isReleased ? 'ROOM IS LIVE NOW - ' : 'STARTS IN - '}</span>
-                <span class="br-timer-clock" data-start-time="${startTimestamp}">${isReleased ? 'JOIN LOBBY' : 'Calculating...'}</span>
-              </div>
+              <!-- Bottom Green Starts In Countdown Bar (Turned off when Room is Released) -->
+              ${!isReleased ? `
+                <div class="br-starts-in-bar" style="background: #059669;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  <span>STARTS IN - </span>
+                  <span class="br-timer-clock" data-start-time="${startTimestamp}">Calculating...</span>
+                </div>
+              ` : ''}
             </div>
           `;
         }).join('')}

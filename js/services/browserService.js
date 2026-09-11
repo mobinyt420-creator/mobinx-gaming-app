@@ -4,11 +4,11 @@ import { APP_CONFIG_URLS } from '../config/urls.js';
  * Open external website (NoobTopUp, ObinShop) in a high-performance Android Chrome Custom Tab
  * Allows full Google Sign-In, 100% automated payments (bKash, Nagad), and native close button.
  */
-export function openExternalStore(url = 'https://noobtopup.com/', toolbarColor = '#0284c7') {
+export function openExternalStore(url = 'https://noobtopup.com/', toolbarColor = '#004b87') {
   // 1. Android Native Chrome Custom Tabs Bridge (matching Android Custom Tab UI)
   if (typeof window !== 'undefined' && window.AndroidBridge && typeof window.AndroidBridge.openCustomTab === 'function') {
     try {
-      window.AndroidBridge.openCustomTab(url);
+      window.AndroidBridge.openCustomTab(url, toolbarColor);
       return;
     } catch (e) {
       console.warn('AndroidBridge.openCustomTab error:', e);
@@ -34,3 +34,4 @@ export function openExternalStore(url = 'https://noobtopup.com/', toolbarColor =
     window.open(url, '_blank', 'noopener,noreferrer');
   }
 }
+

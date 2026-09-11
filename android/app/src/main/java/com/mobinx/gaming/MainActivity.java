@@ -96,13 +96,19 @@ public class MainActivity extends BridgeActivity {
     public class AndroidBridge {
         @JavascriptInterface
         public void openCustomTab(String url) {
+            openCustomTab(url, "#004b87");
+        }
+
+        @JavascriptInterface
+        public void openCustomTab(String url, String toolbarColorHex) {
             runOnUiThread(() -> {
                 try {
+                    String colorHex = (toolbarColorHex != null && toolbarColorHex.startsWith("#")) ? toolbarColorHex : "#004b87";
                     CustomTabsIntent.Builder builder = new CustomTabsIntent.Builder();
                     builder.setShowTitle(true);
                     builder.setShareState(CustomTabsIntent.SHARE_STATE_ON);
                     builder.setDefaultColorSchemeParams(new CustomTabColorSchemeParams.Builder()
-                            .setToolbarColor(Color.parseColor("#0284c7"))
+                            .setToolbarColor(Color.parseColor(colorHex))
                             .build());
                     CustomTabsIntent customTabsIntent = builder.build();
                     customTabsIntent.launchUrl(MainActivity.this, Uri.parse(url));

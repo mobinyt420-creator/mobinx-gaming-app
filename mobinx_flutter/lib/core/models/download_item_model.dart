@@ -40,6 +40,8 @@ class DownloadItemModel {
   final String videoThumbnail;
   final String videoDuration;
   final bool isPinned;
+  final int order;
+  final int createdAt;
   final List<DownloadActionModel> actionButtons;
 
   DownloadItemModel({
@@ -47,11 +49,13 @@ class DownloadItemModel {
     required this.title,
     this.category = 'Mobin APK',
     this.youtubeId = '',
-    this.videoThumbnail = 'assets/images/banner_yt_mock1.jpg',
-    this.videoDuration = '08:45',
+    this.videoThumbnail = '',
+    this.videoDuration = '',
     this.isPinned = false,
+    this.order = 0,
+    int? createdAt,
     required this.actionButtons,
-  });
+  }) : createdAt = createdAt ?? DateTime.now().millisecondsSinceEpoch;
 
   factory DownloadItemModel.fromJson(Map<String, dynamic> json) {
     var rawActions = json['actionButtons'] as List? ?? [];
@@ -59,14 +63,32 @@ class DownloadItemModel {
         .map((a) => DownloadActionModel.fromJson(a as Map<String, dynamic>))
         .toList();
 
+    int parsedCreatedAt = DateTime.now().millisecondsSinceEpoch;
+    if (json['createdAt'] is int) {
+      parsedCreatedAt = json['createdAt'] as int;
+    } else if (json['timestamp'] is int) {
+      parsedCreatedAt = json['timestamp'] as int;
+    } else if (json['createdAt'] is String) {
+      parsedCreatedAt = DateTime.tryParse(json['createdAt'])?.millisecondsSinceEpoch ?? parsedCreatedAt;
+    }
+
+    int parsedOrder = 0;
+    if (json['order'] is int) {
+      parsedOrder = json['order'] as int;
+    } else if (json['order'] != null) {
+      parsedOrder = int.tryParse(json['order'].toString()) ?? 0;
+    }
+
     return DownloadItemModel(
       id: json['id']?.toString() ?? '',
       title: json['title']?.toString() ?? '',
       category: json['category']?.toString() ?? 'Mobin APK',
-      youtubeId: json['youtubeId']?.toString() ?? '',
-      videoThumbnail: json['videoThumbnail']?.toString() ?? 'assets/images/banner_yt_mock1.jpg',
-      videoDuration: json['videoDuration']?.toString() ?? '08:45',
+      youtubeId: json['youtubeId']?.toString() ?? json['videoId']?.toString() ?? '',
+      videoThumbnail: json['videoThumbnail']?.toString() ?? json['thumbnail']?.toString() ?? json['imageUrl']?.toString() ?? '',
+      videoDuration: json['videoDuration']?.toString() ?? '',
       isPinned: json['isPinned'] == true,
+      order: parsedOrder,
+      createdAt: parsedCreatedAt,
       actionButtons: actions,
     );
   }
@@ -80,6 +102,8 @@ class DownloadItemModel {
       'videoThumbnail': videoThumbnail,
       'videoDuration': videoDuration,
       'isPinned': isPinned,
+      'order': order,
+      'createdAt': createdAt,
       'actionButtons': actionButtons.map((a) => a.toJson()).toList(),
     };
   }

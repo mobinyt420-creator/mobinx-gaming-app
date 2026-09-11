@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../models/user_model.dart';
 import '../constants/app_constants.dart';
@@ -28,7 +29,88 @@ class AuthService {
     }
   }
 
-  // --- GOOGLE SIGN IN ---
+  final ValueNotifier<Map<String, dynamic>> authSettingsNotifier = ValueNotifier<Map<String, dynamic>>({
+    'allowGoogleAuth': true,
+    'allowManualLogin': true,
+    'allowManualRegistration': true,
+  });
+
+  /// Pick Google account without immediate auto-login
+  Future<GoogleSignInAccount?> pickGoogleAccount() async {
+    try {
+      return await _googleSignIn.signIn();
+    } catch (e) {
+      debugPrint('Google account pick notice: $e');
+      return null;
+    }
+  }
+
+  /// Complete Google Sign-In with user-provided custom Name & Phone
+  Future<UserModel> completeGoogleSignIn({
+    required GoogleSignInAccount googleUser,
+    required String customName,
+    required String phone,
+    String ffUid = '',
+  }) async {
+    final email = googleUser.email;
+    final finalName = customName.trim().isNotEmpty ? customName.trim() : (googleUser.displayName ?? email.split('@')[0]);
+    final cleanPhone = phone.replaceAll(RegExp(r'[^0-9+]'), '');
+    final avatar = googleUser.photoUrl ?? AppConstants.defaultAvatar;
+    final uid = 'google_${email.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_')}';
+    final isMasterAdmin = email.toLowerCase().trim() == AppConstants.masterAdminEmail;
+
+    final user = UserModel(
+      id: uid,
+      uid: uid,
+      name: finalName,
+      username: finalName,
+      fullName: finalName,
+      email: email,
+      emailVerified: true,
+      phone: cleanPhone,
+      phoneVerified: true,
+      ffUid: ffUid.trim(),
+      avatar: avatar,
+      authProvider: 'google',
+      role: isMasterAdmin ? 'System Administrator (Admin)' : 'VIP Pro Member',
+      isAdmin: isMasterAdmin,
+      registeredDate: 'Today',
+    );
+
+    // 1. Instant local session save (<2ms)
+    await StorageService.saveUser(user);
+    await StorageService.setOnboardingDone(true);
+    userNotifier.value = user;
+
+    // 2. Background non-blocking Firebase credential exchange & Firestore sync
+    Future.microtask(() async {
+      try {
+        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+        final OAuthCredential credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+
+        if (FirebaseService.isInitialized) {
+          final UserCredential userCredential = await FirebaseService.auth.signInWithCredential(credential);
+          final User? fbUser = userCredential.user;
+          final finalUid = fbUser?.uid ?? uid;
+
+          FirebaseService.firestore.collection('users').doc(finalUid).set({
+            ...user.toJson(),
+            'id': finalUid,
+            'uid': finalUid,
+          }, SetOptions(merge: true)).catchError((_) {});
+        }
+      } catch (bgErr) {
+        debugPrint('Background Google Firebase link notice: $bgErr');
+      }
+    });
+
+    return user;
+  }
+
+  // --- GOOGLE SIGN IN DIRECT (Fallback) ---
   Future<UserModel> signInWithGoogle({
     String phone = '',
     String ffUid = '',
@@ -40,69 +122,12 @@ class AuthService {
         throw Exception('Google Sign-In was cancelled.');
       }
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final OAuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      final UserCredential userCredential = await FirebaseService.auth.signInWithCredential(credential);
-      final User? fbUser = userCredential.user;
-
-      final email = fbUser?.email ?? googleUser.email;
-      final name = fbUser?.displayName ?? googleUser.displayName ?? email.split('@')[0];
-      final avatar = fbUser?.photoURL ?? googleUser.photoUrl ?? AppConstants.defaultAvatar;
-      final uid = fbUser?.uid ?? 'google_${email.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_')}';
-      final isMasterAdmin = email.toLowerCase().trim() == AppConstants.masterAdminEmail;
-
-      // Check if user already exists in Firestore
-      if (FirebaseService.isInitialized) {
-        try {
-          final doc = await FirebaseService.firestore.collection('users').doc(uid).get().timeout(const Duration(seconds: 3));
-          if (doc.exists && doc.data() != null) {
-            final data = doc.data()!;
-            final existingUser = UserModel.fromJson({
-              ...data,
-              'id': doc.id,
-              'avatar': avatar.isNotEmpty ? avatar : (data['avatar'] ?? AppConstants.defaultAvatar),
-            });
-            await StorageService.saveUser(existingUser);
-            await StorageService.setOnboardingDone(true);
-            userNotifier.value = existingUser;
-            return existingUser;
-          }
-        } catch (_) {}
-      }
-
-      final user = UserModel(
-        id: uid,
-        uid: uid,
-        name: name,
-        username: name,
-        fullName: name,
-        email: email,
-        emailVerified: true,
+      return await completeGoogleSignIn(
+        googleUser: googleUser,
+        customName: googleUser.displayName ?? '',
         phone: phone,
-        phoneVerified: phoneVerified,
         ffUid: ffUid,
-        avatar: avatar,
-        authProvider: 'google',
-        role: isMasterAdmin ? 'System Administrator (Admin)' : 'VIP Pro Member',
-        isAdmin: isMasterAdmin,
-        registeredDate: 'Today',
       );
-
-      // Save locally in <5ms for instant UI transition
-      await StorageService.saveUser(user);
-      await StorageService.setOnboardingDone(true);
-      userNotifier.value = user;
-
-      // Push to Cloud Firestore asynchronously in background (zero UI lag)
-      FirebaseService.syncUserToCloud(user.toJson()).catchError((e) {
-        debugPrint('Cloud sync note: $e');
-      });
-
-      return user;
     } catch (e) {
       debugPrint('Google Sign-In error: $e');
       // If native Google Sign-In isn't available in test runner, provide a resilient demo player profile

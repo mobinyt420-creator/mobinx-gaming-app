@@ -87,7 +87,7 @@ export function bindDrawerEvents() {
       stateManager.toggleDrawer(false);
       if (route === 'topup') {
         const urls = authService.getUrls();
-        openExternalStore(urls.topup || 'https://noobtopup.com/', '#0284c7');
+        openExternalStore(urls.topup || 'https://noobtopup.com/', '#004b87');
         return;
       }
       if (route === 'shop') {

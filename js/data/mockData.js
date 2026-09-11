@@ -73,15 +73,6 @@ export const heroBanners = [
  */
 export const quickCategories = [
   {
-    id: "topup",
-    title: "Top Up",
-    icon: "diamond",
-    color: "#2563eb",
-    bgGradient: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)",
-    route: "topup",
-    url: appUrls.topup
-  },
-  {
     id: "shop",
     title: "Shop",
     icon: "bag",
@@ -91,10 +82,35 @@ export const quickCategories = [
     url: appUrls.shop
   },
   {
+    id: "sensitivity",
+    title: "Sensitivity",
+    icon: "sliders",
+    color: "#0284c7",
+    bgGradient: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)",
+    route: "sensitivity"
+  },
+  {
+    id: "referral",
+    title: "Refer & Earn",
+    icon: "gift",
+    color: "#db2777",
+    bgGradient: "linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%)",
+    route: "referral"
+  },
+  {
+    id: "community",
+    title: "Community",
+    icon: "telegram",
+    color: "#0284c7",
+    bgGradient: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)",
+    route: "community",
+    url: appUrls.telegram
+  },
+  {
     id: "downloads",
     title: "Downloads",
     icon: "cloud-download",
-    color: "#10b981",
+    color: "#059669",
     bgGradient: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)",
     route: "downloads"
   },
@@ -102,9 +118,18 @@ export const quickCategories = [
     id: "tournaments",
     title: "Tournaments",
     icon: "trophy",
-    color: "#f59e0b",
+    color: "#d97706",
     bgGradient: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
     route: "tournaments"
+  },
+  {
+    id: "topup",
+    title: "Top Up",
+    icon: "diamond",
+    color: "#2563eb",
+    bgGradient: "linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)",
+    route: "topup",
+    url: appUrls.topup
   }
 ];
 

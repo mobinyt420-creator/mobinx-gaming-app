@@ -656,6 +656,12 @@ function renderDownloadsTab(data) {
               <div style="font-size: 10.5px; color: #64748b;">${item.category} • ${item.actionButtons ? item.actionButtons.length : 2} action buttons</div>
             </div>
             <div style="display: flex; gap: 4px;">
+              <button class="btn-move-download-up" data-download-id="${item.id}" title="Move Up" style="padding: 6px 8px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; font-weight: 800; cursor: pointer;">
+                ↑
+              </button>
+              <button class="btn-move-download-down" data-download-id="${item.id}" title="Move Down" style="padding: 6px 8px; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 12px; font-weight: 800; cursor: pointer;">
+                ↓
+              </button>
               <button class="btn-edit-download" data-download-id="${item.id}" style="padding: 6px 10px; background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer;">
                 ✏️ Edit
               </button>
@@ -1713,6 +1719,31 @@ export function bindAdminEvents() {
   document.getElementById('btn-cancel-edit-download')?.addEventListener('click', () => {
     editingDownload = null;
     reRender();
+  });
+
+  // Move download item Up / Down
+  document.querySelectorAll('.btn-move-download-up').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const dId = e.currentTarget.getAttribute('data-download-id');
+      const moved = await downloadService.moveItem(dId, 'up');
+      if (moved) {
+        Toast.show('Item moved up', 'info');
+        reRender();
+      }
+    });
+  });
+
+  document.querySelectorAll('.btn-move-download-down').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const dId = e.currentTarget.getAttribute('data-download-id');
+      const moved = await downloadService.moveItem(dId, 'down');
+      if (moved) {
+        Toast.show('Item moved down', 'info');
+        reRender();
+      }
+    });
   });
 
   // Edit download item

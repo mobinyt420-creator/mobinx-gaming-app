@@ -131,69 +131,102 @@ class PopularServicesGrid extends StatelessWidget {
             ),
             itemBuilder: (context, index) {
               final item = defaultServices[index];
-              return InkWell(
+              return _PressableServiceCard(
+                item: item,
                 onTap: () => onServiceTap(item.route),
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: AppColors.borderLight, width: 1.0),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Column(
-                    children: [
-                      // 1:1 Aspect Ratio Image Box
-                      Expanded(
-                        child: Container(
-                          width: double.infinity,
-                          color: const Color(0xFFF8FAFC),
-                          padding: const EdgeInsets.all(6),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.asset(
-                              item.image,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => const Center(
-                                child: Icon(Icons.videogame_asset, color: Color(0xFF2563EB)),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      // Label Container (Image 1)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
-                        color: Colors.white,
-                        alignment: Alignment.center,
-                        child: Text(
-                          item.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.outfit(
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.textMain,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               );
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Press-to-scale animated service card with premium micro-interaction
+class _PressableServiceCard extends StatefulWidget {
+  final PopularServiceItem item;
+  final VoidCallback onTap;
+
+  const _PressableServiceCard({required this.item, required this.onTap});
+
+  @override
+  State<_PressableServiceCard> createState() => _PressableServiceCardState();
+}
+
+class _PressableServiceCardState extends State<_PressableServiceCard> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) {
+        setState(() => _isPressed = false);
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: AnimatedScale(
+        scale: _isPressed ? 0.95 : 1.0,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOutCubic,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.borderLight, width: 1.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: _isPressed ? 0.08 : 0.04),
+                blurRadius: _isPressed ? 4 : 8,
+                offset: Offset(0, _isPressed ? 1 : 2),
+              ),
+            ],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            children: [
+              // 1:1 Aspect Ratio Image Box
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  color: const Color(0xFFF8FAFC),
+                  padding: const EdgeInsets.all(6),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.asset(
+                      widget.item.image,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => const Center(
+                        child: Icon(Icons.videogame_asset, color: Color(0xFF2563EB)),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Label Container
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+                color: Colors.white,
+                alignment: Alignment.center,
+                child: Text(
+                  widget.item.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.outfit(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.textMain,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -118,11 +118,11 @@ export function bindSettingsEvents() {
   });
 
   document.getElementById('link-privacy-policy')?.addEventListener('click', () => {
-    openExternalStore('https://mobinx-admin-console.vercel.app/privacy-policy.html', '#0284c7');
+    openExternalStore('https://mobinx-admin-console.vercel.app/privacy-policy.html', '#004b87');
   });
 
   document.getElementById('link-terms-service')?.addEventListener('click', () => {
-    openExternalStore('https://mobinx-admin-console.vercel.app/privacy-policy.html', '#0284c7');
+    openExternalStore('https://mobinx-admin-console.vercel.app/privacy-policy.html', '#004b87');
   });
 
   document.getElementById('link-delete-account')?.addEventListener('click', () => {

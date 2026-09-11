@@ -60,6 +60,11 @@ class _TournamentCardState extends State<TournamentCard> {
     return '${hrs}h:${mins}m:${secs}s';
   }
 
+  bool get _isRoomCredentialsLive {
+    final t = widget.tournament;
+    return (t.isRoomReleased || t.isLive) && t.roomId.trim().isNotEmpty;
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = widget.tournament;
@@ -377,9 +382,200 @@ class _TournamentCardState extends State<TournamentCard> {
               ],
             ),
           ),
+          // 4. Prominent Red Custom Room Credentials Box (Directly visible when Room is Live / Released)
+          if (_isRoomCredentialsLive) ...[
+            const SizedBox(height: 10),
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFFECDD3), width: 1.2),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFFDC2626).withValues(alpha: 0.08),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Top Row: Red dot + CUSTOM ROOM LIVE + Copy Both Button
+                  Row(
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFDC2626),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 7),
+                      Text(
+                        'CUSTOM ROOM LIVE',
+                        style: GoogleFonts.outfit(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          color: const Color(0xFFDC2626),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const Spacer(),
+                      InkWell(
+                        onTap: () {
+                          Clipboard.setData(ClipboardData(text: 'Room: ${t.roomId} Pass: ${t.roomPassword}'));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Room ID & Password copied!'),
+                              behavior: SnackBarBehavior.floating,
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(6),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFFFECDD3)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.copy_rounded, size: 11, color: Color(0xFFDC2626)),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Copy Both',
+                                style: GoogleFonts.inter(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFFDC2626),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Room ID & Password Chips Row
+                  Row(
+                    children: [
+                      // Room ID Chip
+                      Expanded(
+                        child: InkWell(
+                          onTap: () {
+                            Clipboard.setData(ClipboardData(text: t.roomId));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Room ID ${t.roomId} copied!'),
+                                behavior: SnackBarBehavior.floating,
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  'ID: ',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    color: const Color(0xFF64748B),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    t.roomId,
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w900,
+                                      color: const Color(0xFF0F172A),
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const Icon(Icons.copy_rounded, size: 13, color: Color(0xFF64748B)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+
+                      // Password Chip
+                      Expanded(
+                        child: InkWell(
+                          onTap: () {
+                            Clipboard.setData(ClipboardData(text: t.roomPassword));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Password ${t.roomPassword} copied!'),
+                                behavior: SnackBarBehavior.floating,
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                            ),
+                            child: Row(
+                              children: [
+                                Text(
+                                  'Pass: ',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    color: const Color(0xFF64748B),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    t.roomPassword.isNotEmpty ? t.roomPassword : 'None',
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w900,
+                                      color: const Color(0xFFDC2626),
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const Icon(Icons.copy_rounded, size: 13, color: Color(0xFFDC2626)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           const SizedBox(height: 8),
 
-          // 4. Dropdown Buttons: Room Details & Prize Pool
+          // 5. Dropdown Buttons: Room Details & Prize Pool
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14),
             child: Row(
@@ -473,193 +669,15 @@ class _TournamentCardState extends State<TournamentCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Room Rules & Instructions:',
+                    'Room Notice:',
                     style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w800, color: AppColors.textMain),
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    t.rules.isNotEmpty ? t.rules : 'Mobile only. No hack/script allowed. Room code released 15m before start.',
+                    _isRoomCredentialsLive
+                        ? 'Custom Room is LIVE. Enter Room ID & Password in Free Fire lobby.'
+                        : '⏳ Room ID & Password will be released here 15 minutes before match start.',
                     style: GoogleFonts.inter(fontSize: 10.5, color: const Color(0xFF475569)),
-                  ),
-                  if (t.isRoomReleased && t.roomId.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFEF2F2),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFFECDD3), width: 1),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 7,
-                                height: 7,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFFDC2626),
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'CUSTOM ROOM LIVE',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w900,
-                                  color: const Color(0xFFDC2626),
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                              const Spacer(),
-                              InkWell(
-                                onTap: () {
-                                  Clipboard.setData(ClipboardData(text: 'Room: ${t.roomId} Pass: ${t.roomPassword}'));
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Room ID & Password copied!'),
-                                      behavior: SnackBarBehavior.floating,
-                                      duration: Duration(seconds: 2),
-                                    ),
-                                  );
-                                },
-                                borderRadius: BorderRadius.circular(6),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.copy_rounded, size: 11, color: Color(0xFFDC2626)),
-                                      const SizedBox(width: 3),
-                                      Text(
-                                        'Copy Both',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 10.5,
-                                          fontWeight: FontWeight.w700,
-                                          color: const Color(0xFFDC2626),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              // Room ID Chip
-                              Expanded(
-                                child: InkWell(
-                                  onTap: () {
-                                    Clipboard.setData(ClipboardData(text: t.roomId));
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('Room ID ${t.roomId} copied!'),
-                                        behavior: SnackBarBehavior.floating,
-                                        duration: const Duration(seconds: 2),
-                                      ),
-                                    );
-                                  },
-                                  borderRadius: BorderRadius.circular(6),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Text('ID: ', style: GoogleFonts.inter(fontSize: 10.5, color: const Color(0xFF64748B), fontWeight: FontWeight.w600)),
-                                        Expanded(
-                                          child: Text(
-                                            t.roomId,
-                                            style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w900, color: const Color(0xFF0F172A)),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        const Icon(Icons.copy_rounded, size: 12, color: Color(0xFF64748B)),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              // Password Chip
-                              Expanded(
-                                child: InkWell(
-                                  onTap: () {
-                                    Clipboard.setData(ClipboardData(text: t.roomPassword));
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('Password ${t.roomPassword} copied!'),
-                                        behavior: SnackBarBehavior.floating,
-                                        duration: const Duration(seconds: 2),
-                                      ),
-                                    );
-                                  },
-                                  borderRadius: BorderRadius.circular(6),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(6),
-                                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Text('Pass: ', style: GoogleFonts.inter(fontSize: 10.5, color: const Color(0xFF64748B), fontWeight: FontWeight.w600)),
-                                        Expanded(
-                                          child: Text(
-                                            t.roomPassword.isNotEmpty ? t.roomPassword : 'None',
-                                            style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w900, color: const Color(0xFFDC2626)),
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        const Icon(Icons.copy_rounded, size: 12, color: Color(0xFFDC2626)),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ] else ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      '⏳ Room ID & Password will be released 15 minutes before match start.',
-                      style: GoogleFonts.inter(fontSize: 10.5, fontStyle: FontStyle.italic, color: const Color(0xFF94A3B8)),
-                    ),
-                  ],
-                  const SizedBox(height: 8),
-                  // Joined Players Roster Button
-                  InkWell(
-                    onTap: () => _showParticipantsDialog(context, t),
-                    borderRadius: BorderRadius.circular(6),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFFCBD5E1), width: 0.8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.people_alt_rounded, size: 13, color: Color(0xFF2563EB)),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Joined Players (${t.slotsFilled}/${t.slotsTotal}) - View Roster',
-                            style: GoogleFonts.inter(fontSize: 10.5, fontWeight: FontWeight.w700, color: const Color(0xFF2563EB)),
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
                 ],
               ),
@@ -718,32 +736,35 @@ class _TournamentCardState extends State<TournamentCard> {
             ),
           ],
 
-          const SizedBox(height: 12),
-
-          // 5. Attached Green Bottom Countdown Bar (Image 2)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: const BoxDecoration(
-              color: Color(0xFF059669),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.access_time_filled, color: Colors.white, size: 16),
-                const SizedBox(width: 6),
-                Text(
-                  'STARTS IN - ${_formatStartsIn()}',
-                  style: GoogleFonts.outfit(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    letterSpacing: 0.5,
+          // 6. Attached Green Bottom Countdown Bar (Hidden when room credentials released)
+          if (!_isRoomCredentialsLive) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: const BoxDecoration(
+                color: Color(0xFF059669),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.access_time_filled, color: Colors.white, size: 16),
+                  const SizedBox(width: 6),
+                  Text(
+                    'STARTS IN - ${_formatStartsIn()}',
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+          ] else ...[
+            const SizedBox(height: 12),
+          ],
         ],
       ),
     );
@@ -780,79 +801,6 @@ class _TournamentCardState extends State<TournamentCard> {
       path.isNotEmpty ? path : 'assets/images/banner_esports.jpg',
       fit: BoxFit.cover,
       errorBuilder: (_, _, _) => Image.asset('assets/images/banner_esports.jpg', fit: BoxFit.cover),
-    );
-  }
-
-  void _showParticipantsDialog(BuildContext context, TournamentModel t) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            const Icon(Icons.groups_rounded, color: Color(0xFF2563EB), size: 24),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                'Joined Players (${t.slotsFilled}/${t.slotsTotal})',
-                style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w900, color: const Color(0xFF0F172A)),
-              ),
-            ),
-          ],
-        ),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: t.participants.isEmpty
-              ? Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.person_search_rounded, size: 36, color: Color(0xFF94A3B8)),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${t.slotsFilled} player(s) registered for this match.\nBe the next to join and claim the prize!',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(fontSize: 12.5, color: const Color(0xFF64748B)),
-                      ),
-                    ],
-                  ),
-                )
-              : ListView.separated(
-                  shrinkWrap: true,
-                  itemCount: t.participants.length,
-                  separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFE2E8F0)),
-                  itemBuilder: (ctx, idx) {
-                    final p = t.participants[idx];
-                    final ign = p['ign']?.toString() ?? 'Player ${idx + 1}';
-                    final uid = p['ffUid']?.toString() ?? '';
-                    return ListTile(
-                      dense: true,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                      leading: CircleAvatar(
-                        radius: 14,
-                        backgroundColor: const Color(0xFFEFF6FF),
-                        child: Text('${idx + 1}', style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.w800, color: const Color(0xFF2563EB))),
-                      ),
-                      title: Text(
-                        ign,
-                        style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A)),
-                      ),
-                      subtitle: uid.isNotEmpty
-                          ? Text('UID: $uid', style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B)))
-                          : null,
-                    );
-                  },
-                ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('Close', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF2563EB))),
-          ),
-        ],
-      ),
     );
   }
 }

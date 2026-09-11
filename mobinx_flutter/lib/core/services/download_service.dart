@@ -12,6 +12,20 @@ class DownloadService {
 
   bool _isInit = false;
 
+  void _setAndSortItems(List<DownloadItemModel> list) {
+    list.sort((a, b) {
+      if (a.isPinned != b.isPinned) {
+        return a.isPinned ? -1 : 1;
+      }
+      if (a.order != 0 && b.order != 0) {
+        return a.order.compareTo(b.order);
+      }
+      return b.createdAt.compareTo(a.createdAt);
+    });
+    itemsNotifier.value = list;
+    StorageService.setCache('mobinx_downloads_cache', list.map((e) => e.toJson()).toList());
+  }
+
   Future<void> init() async {
     if (_isInit) return;
     _isInit = true;
@@ -24,23 +38,26 @@ class DownloadService {
             .map((e) => DownloadItemModel.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList();
         if (list.isNotEmpty) {
-          itemsNotifier.value = list;
+          _setAndSortItems(list);
         }
       } catch (_) {}
     }
 
-    // 2. Fetch latest live items asynchronously
-    await refresh();
+    // 2. Fetch latest live items asynchronously in background after initial render
+    Future.delayed(const Duration(milliseconds: 1600), () {
+      refresh();
+      _setupFirestoreListener();
+    });
+  }
 
-    // 3. Real-time Firestore stream listener
+  void _setupFirestoreListener() {
     if (FirebaseService.isInitialized) {
       try {
         FirebaseService.firestore.collection('downloads').snapshots().listen((snap) {
           final liveList = snap.docs
               .map((d) => DownloadItemModel.fromJson({...d.data(), 'id': d.id}))
               .toList();
-          itemsNotifier.value = liveList;
-          StorageService.setCache('mobinx_downloads_cache', liveList.map((e) => e.toJson()).toList());
+          _setAndSortItems(liveList);
         });
       } catch (_) {}
     }
@@ -57,8 +74,7 @@ class DownloadService {
         final liveList = snap.docs
             .map((d) => DownloadItemModel.fromJson({...d.data(), 'id': d.id}))
             .toList();
-        itemsNotifier.value = liveList;
-        StorageService.setCache('mobinx_downloads_cache', liveList.map((e) => e.toJson()).toList());
+        _setAndSortItems(liveList);
       }
     } catch (e) {
       debugPrint('[DownloadService] refresh notice: $e');

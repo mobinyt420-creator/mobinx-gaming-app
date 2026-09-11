@@ -26,7 +26,7 @@ class _TopupScreenState extends State<TopupScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        physics: const AlwaysScrollableScrollPhysics(parent: ClampingScrollPhysics()),
         slivers: [
           SliverToBoxAdapter(
             child: Padding(

@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/constants/app_constants.dart';
-import '../../core/models/user_model.dart';
 import '../../core/services/auth_service.dart';
 import '../home/home_screen.dart';
 import 'login_sheet.dart';
 import 'register_sheet.dart';
+
+import 'google_profile_sheet.dart';
 
 /// Modernized Player Authentication & Onboarding Screen
 class OnboardingScreen extends StatefulWidget {
@@ -26,7 +27,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(opacity: animation, child: child);
         },
-        transitionDuration: const Duration(milliseconds: 350),
+        transitionDuration: const Duration(milliseconds: 250),
       ),
     );
   }
@@ -34,12 +35,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isGoogleLoading = true);
     try {
-      final user = await AuthService.instance.signInWithGoogle();
+      final googleUser = await AuthService.instance.pickGoogleAccount();
       if (!mounted) return;
-      if (user.phone.isEmpty || user.phone == '01700000000') {
-        _showCompleteProfileSheet(user);
-      } else {
-        _navigateToHome();
+
+      if (googleUser != null) {
+        // Prompt for Name and Phone Number as requested by user
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => GoogleProfileSheet(
+            googleUser: googleUser,
+            onLoginSuccess: _navigateToHome,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -54,145 +63,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     } finally {
       if (mounted) setState(() => _isGoogleLoading = false);
     }
-  }
-
-  void _showCompleteProfileSheet(UserModel user) {
-    final nameCtrl = TextEditingController(text: user.name);
-    final phoneCtrl = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      isDismissible: false,
-      enableDrag: false,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          padding: const EdgeInsets.all(22),
-          child: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Color(0xFFEFF6FF),
-                      ),
-                      child: const Center(
-                        child: Text('🎮', style: TextStyle(fontSize: 22)),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Complete Your Profile',
-                            style: GoogleFonts.outfit(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w900,
-                              color: const Color(0xFF0F172A),
-                            ),
-                          ),
-                          Text(
-                            'Enter your contact number for match alerts & prizes',
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              color: const Color(0xFF64748B),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                Text(
-                  'Full Name *',
-                  style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF1E293B)),
-                ),
-                const SizedBox(height: 6),
-                TextFormField(
-                  controller: nameCtrl,
-                  style: const TextStyle(color: Color(0xFF0F172A), fontSize: 14),
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: const Color(0xFFF1F5F9),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  ),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter your name' : null,
-                ),
-                const SizedBox(height: 14),
-
-                Text(
-                  'bKash / Nagad Mobile Number *',
-                  style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF1E293B)),
-                ),
-                const SizedBox(height: 6),
-                TextFormField(
-                  controller: phoneCtrl,
-                  keyboardType: TextInputType.phone,
-                  style: const TextStyle(color: Color(0xFF0F172A), fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: '01XXXXXXXXX',
-                    hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
-                    filled: true,
-                    fillColor: const Color(0xFFF1F5F9),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  ),
-                  validator: (v) => (v == null || v.trim().length < 11) ? 'Please enter an 11-digit phone number' : null,
-                ),
-                const SizedBox(height: 22),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      if (!formKey.currentState!.validate()) return;
-                      final updated = user.copyWith(
-                        name: nameCtrl.text.trim(),
-                        username: nameCtrl.text.trim(),
-                        phone: phoneCtrl.text.trim(),
-                      );
-                      await AuthService.instance.updateUser(updated);
-                      if (ctx.mounted) Navigator.pop(ctx);
-                      _navigateToHome();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    child: Text(
-                      'Confirm & Continue 🚀',
-                      style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.w800, color: Colors.white),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 
   void _openLoginSheet() {

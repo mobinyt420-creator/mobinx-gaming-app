@@ -98,53 +98,56 @@ class HomeDataService {
     featuredTournamentsNotifier.value = _defaultTournaments;
     activeNoticeNotifier.value = null;
 
-    // 2. Fetch live data from Firestore asynchronously in background (0ms UI stall)
-    refresh();
+    // 2. Fetch live data from Firestore asynchronously after UI paints completely (prevents UI freeze)
+    Future.delayed(const Duration(milliseconds: 1500), () {
+      refresh();
+      _setupRealtimeListeners();
+    });
+  }
 
-    // 3. Setup real-time listeners for instant Admin Panel synchronization
-    if (FirebaseService.isInitialized) {
-      try {
-        FirebaseService.firestore.collection('banners').snapshots().listen((snap) {
-          if (snap.docs.isNotEmpty) {
-            final live = snap.docs
-                .map((doc) => BannerModel.fromJson({...doc.data(), 'id': doc.id}))
-                .where((b) => b.isActive)
-                .toList();
-            if (live.isNotEmpty) bannersNotifier.value = live;
-          }
-        });
-        FirebaseService.firestore.collection('flashDeals').snapshots().listen((snap) {
-          if (snap.docs.isNotEmpty) {
-            final live = snap.docs
-                .map((doc) => FlashDealModel.fromJson({...doc.data(), 'id': doc.id}))
-                .where((d) => d.inStock)
-                .toList();
-            if (live.isNotEmpty) flashDealsNotifier.value = live;
-          }
-        });
-        // Real-time listener for Admin Welcome Popup (Only when explicitly enabled by Admin)
-        FirebaseService.firestore.collection('config').doc('notices').snapshots().listen((snap) {
-          if (snap.exists && snap.data() != null) {
-            final data = snap.data()!;
-            if (data['welcomePopup'] is Map) {
-              final wp = Map<String, dynamic>.from(data['welcomePopup'] as Map);
-              if (wp['enabled'] == true) {
-                activeNoticeNotifier.value = NoticeModel(
-                  id: wp['id']?.toString() ?? 'notice_${wp['title']}',
-                  title: wp['title']?.toString() ?? 'Notice',
-                  message: wp['message']?.toString() ?? '',
-                  category: wp['badge']?.toString() ?? 'NOTICE',
-                  actionText: wp['btnText']?.toString() ?? 'OK',
-                  actionUrl: wp['btnUrl']?.toString() ?? '',
-                );
-              } else {
-                activeNoticeNotifier.value = null;
-              }
+  void _setupRealtimeListeners() {
+    if (!FirebaseService.isInitialized) return;
+    try {
+      FirebaseService.firestore.collection('banners').snapshots().listen((snap) {
+        if (snap.docs.isNotEmpty) {
+          final live = snap.docs
+              .map((doc) => BannerModel.fromJson({...doc.data(), 'id': doc.id}))
+              .where((b) => b.isActive)
+              .toList();
+          if (live.isNotEmpty) bannersNotifier.value = live;
+        }
+      });
+      FirebaseService.firestore.collection('flashDeals').snapshots().listen((snap) {
+        if (snap.docs.isNotEmpty) {
+          final live = snap.docs
+              .map((doc) => FlashDealModel.fromJson({...doc.data(), 'id': doc.id}))
+              .where((d) => d.inStock)
+              .toList();
+          if (live.isNotEmpty) flashDealsNotifier.value = live;
+        }
+      });
+      // Real-time listener for Admin Welcome Popup (Only when explicitly enabled by Admin)
+      FirebaseService.firestore.collection('config').doc('notices').snapshots().listen((snap) {
+        if (snap.exists && snap.data() != null) {
+          final data = snap.data()!;
+          if (data['welcomePopup'] is Map) {
+            final wp = Map<String, dynamic>.from(data['welcomePopup'] as Map);
+            if (wp['enabled'] == true) {
+              activeNoticeNotifier.value = NoticeModel(
+                id: wp['id']?.toString() ?? 'notice_${wp['title']}',
+                title: wp['title']?.toString() ?? 'Notice',
+                message: wp['message']?.toString() ?? '',
+                category: wp['badge']?.toString() ?? 'NOTICE',
+                actionText: wp['btnText']?.toString() ?? 'OK',
+                actionUrl: wp['btnUrl']?.toString() ?? '',
+              );
+            } else {
+              activeNoticeNotifier.value = null;
             }
           }
-        });
-      } catch (_) {}
-    }
+        }
+      });
+    } catch (_) {}
   }
 
   /// Pull to refresh / background sync with parallel non-blocking execution

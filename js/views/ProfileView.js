@@ -12,179 +12,265 @@ export function renderProfileView() {
   const stats = user.stats || {};
   const tournamentsJoined = stats.tournamentsJoined ?? 0;
   const totalDownloads = stats.totalDownloads ?? 0;
-  const referralEarnings = user.referralEarnings ?? 0;
+  const playerNumber = user.playerNumber ? `#${String(user.playerNumber).padStart(4, '0')}` : '#0001';
+  const referralCode = user.referralCode || 'MOBINXVIP';
+  const ffUid = user.ffUid || user.freeFireUid || '';
 
   return `
-    <div class="view-container profile-view">
-      <!-- Profile Hero Card -->
-      <div class="profile-hero" style="${isAdmin ? 'background: linear-gradient(135deg, #1e1b4b 0%, #1e3a8a 50%, #7c3aed 100%);' : ''}">
-        <div class="profile-avatar-large">
-          <img src="${user.avatar && !user.avatar.includes('dicebear') ? user.avatar : 'data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 64 64\'><circle cx=\'32\' cy=\'32\' r=\'32\' fill=\'%231e293b\'/><circle cx=\'32\' cy=\'24\' r=\'12\' fill=\'%233b82f6\'/><path d=\'M14 52c0-10 8-18 18-18s18 8 18 18\' fill=\'%232563eb\'/></svg>'}" alt="${user.username || 'Player'}" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 64 64\'><circle cx=\'32\' cy=\'32\' r=\'32\' fill=\'%231e293b\'/><circle cx=\'32\' cy=\'24\' r=\'12\' fill=\'%233b82f6\'/><path d=\'M14 52c0-10 8-18 18-18s18 8 18 18\' fill=\'%232563eb\'/></svg>';" />
-        </div>
-        <div class="profile-username">
-          <span>${user.username || user.fullName || 'Player'}</span>
-          ${isAdmin ? '<span class="badge badge-danger" style="font-size: 10px; margin-left: 4px;">ADMIN</span>' : '<span style="font-size: 16px; color: #60a5fa;">✓</span>'}
-        </div>
-        <div style="font-size: 11.5px; opacity: 0.9;">${user.email || 'Gamer Account'}</div>
-        <div class="profile-uid-pill">ID: ${user.id || user.userId || 'MX-USER'} • ${user.role || 'Member'}</div>
+    <div class="view-container profile-view" style="background: #f8fafc; min-height: 100%; padding: 14px 14px 30px 14px; display: flex; flex-direction: column; gap: 16px;">
+      
+      <!-- 1. Top User Profile Card -->
+      <div class="profile-card-top" style="background: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; padding: 16px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03); position: relative;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+          
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <!-- Avatar with glow and badge -->
+            <div class="profile-avatar-circle" style="width: 58px; height: 58px; border-radius: 50%; overflow: hidden; border: 2.5px solid #38bdf8; box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25); flex-shrink: 0; background: #0f172a;">
+              <img src="${user.avatar && !user.avatar.includes('dicebear') ? user.avatar : 'data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 64 64\'><circle cx=\'32\' cy=\'32\' r=\'32\' fill=\'%231e293b\'/><circle cx=\'32\' cy=\'24\' r=\'12\' fill=\'%233b82f6\'/><path d=\'M14 52c0-10 8-18 18-18s18 8 18 18\' fill=\'%232563eb\'/></svg>'}" alt="${user.username || 'Player'}" style="width: 100%; height: 100%; object-fit: cover;" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 64 64\'><circle cx=\'32\' cy=\'32\' r=\'32\' fill=\'%231e293b\'/><circle cx=\'32\' cy=\'24\' r=\'12\' fill=\'%233b82f6\'/><path d=\'M14 52c0-10 8-18 18-18s18 8 18 18\' fill=\'%232563eb\'/></svg>';" />
+            </div>
 
-        <!-- Google Login / Switch Account & Edit Name/Phone -->
-        <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 8px;">
-          <button class="btn-secondary" id="btn-profile-google-login" style="padding: 6px 14px; font-size: 11.5px; border-radius: var(--radius-full); background: rgba(255,255,255,0.95); cursor: pointer; display: inline-flex; align-items: center;">
-            <svg width="14" height="14" viewBox="0 0 24 24" style="margin-right: 4px;"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-            <span>Sign In / Switch Gmail</span>
-          </button>
-          <button class="btn-secondary" id="btn-profile-edit-info" style="padding: 6px 14px; font-size: 11.5px; border-radius: var(--radius-full); background: rgba(255,255,255,0.22); color: #ffffff; border: 1px solid rgba(255,255,255,0.4); cursor: pointer; display: inline-flex; align-items: center;">
-            <span>📝 Setup Name & Phone</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- 4 Stats Bar -->
-      <div class="profile-stats-bar">
-        <div class="p-stat-item">
-          <span class="p-stat-value">${tournamentsJoined}</span>
-          <span class="p-stat-label">Tournaments</span>
-        </div>
-        <div class="p-stat-item">
-          <span class="p-stat-value">${totalDownloads}</span>
-          <span class="p-stat-label">Downloads</span>
-        </div>
-        <div class="p-stat-item">
-          <span class="p-stat-value">${savedSens.length}</span>
-          <span class="p-stat-label">Saved Sens</span>
-        </div>
-        <div class="p-stat-item">
-          <span class="p-stat-value" style="color: var(--success);">$${referralEarnings}</span>
-          <span class="p-stat-label">Earnings</span>
-        </div>
-      </div>
-
-      <!-- Profile Menu Section -->
-      <div class="profile-menu-section">
-
-
-
-        <div class="profile-menu-item" id="p-menu-tournaments">
-          <div class="profile-item-left">
-            <div class="profile-item-icon" style="background: #fffbeb; color: #f59e0b;">🏆</div>
-            <span>My Tournaments & Matches</span>
-          </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-        </div>
-
-        <div class="profile-menu-item" id="p-menu-sensitivities">
-          <div class="profile-item-left">
-            <div class="profile-item-icon" style="background: #eff6ff; color: #2563eb;">🎯</div>
-            <span>Saved Aim Presets (${savedSens.length})</span>
-          </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-        </div>
-
-        <div class="profile-menu-item" id="p-menu-downloads">
-          <div class="profile-item-left">
-            <div class="profile-item-icon" style="background: #ecfdf5; color: #10b981;">📥</div>
-            <span>Downloaded Files & Tools</span>
-          </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-        </div>
-
-        <div class="profile-menu-item" id="p-menu-referral">
-          <div class="profile-item-left">
-            <div class="profile-item-icon" style="background: #f5f3ff; color: #7c3aed;">🎁</div>
-            <span>Referral Program & Rewards</span>
-          </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-        </div>
-
-        <div class="profile-menu-item" id="p-menu-settings">
-          <div class="profile-item-left">
-            <div class="profile-item-icon" style="background: #f1f5f9; color: #475569;">⚙️</div>
-            <span>Account Settings</span>
-          </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-        </div>
-
-        <!-- 24/7 Official Live Support (Telegram / WhatsApp) -->
-        <div class="profile-menu-item" id="p-menu-support" style="background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border: 1.5px solid #a7f3d0;">
-          <div class="profile-item-left">
-            <div class="profile-item-icon" style="background: #10b981; color: #ffffff;">🎧</div>
-            <div>
-              <div style="color: #065f46; font-weight: 800;">24/7 Official Support</div>
-              <div style="font-size: 10.5px; color: #047857;">Telegram & WhatsApp Help Desk</div>
+            <!-- User Info -->
+            <div style="display: flex; flex-direction: column; gap: 2px;">
+              <div style="font-size: 16px; font-weight: 900; color: #0f172a; font-family: var(--font-heading); display: flex; align-items: center; gap: 6px;">
+                <span>${user.username || user.fullName || 'MR Mobin'}</span>
+                ${isAdmin ? '<span style="background: #dc2626; color: #ffffff; font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 10px;">ADMIN</span>' : ''}
+              </div>
+              <div style="font-size: 11.5px; color: #64748b; font-weight: 500;">
+                ${user.email || 'mrmobin444@gmail.com'}
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px; margin-top: 3px;">
+                <span style="background: #0284c7; color: #ffffff; font-size: 9.5px; font-weight: 800; padding: 2px 8px; border-radius: 12px; letter-spacing: 0.3px; display: inline-flex; align-items: center; gap: 3px;">
+                  ★ VIP PRO
+                </span>
+                <span style="background: #f1f5f9; color: #64748b; font-size: 9.5px; font-weight: 700; padding: 2px 6px; border-radius: 6px;">
+                  ${playerNumber}
+                </span>
+              </div>
             </div>
           </div>
-          <span style="background: #10b981; color: #ffffff; font-size: 10.5px; font-weight: 800; padding: 4px 10px; border-radius: 20px;">
-            CHAT →
-          </span>
+
+          <!-- Edit Profile Info Icon Button -->
+          <button id="btn-profile-edit-pencil" title="Edit Profile Details" style="background: #f0f9ff; border: 1px solid #bae6fd; width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #0284c7; cursor: pointer; transition: all 0.15s ease;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+          </button>
         </div>
 
-        <div class="profile-menu-item" id="p-menu-help">
-          <div class="profile-item-left">
-            <div class="profile-item-icon" style="background: #f0fdfa; color: #0d9488;">💬</div>
-            <span>Help Center & FAQs</span>
+        <!-- Free Fire UID Banner Row -->
+        <div style="margin-top: 14px; padding-top: 12px; border-top: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0284c7" stroke-width="2">
+              <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+              <circle cx="6" cy="12" r="1.5" fill="#0284c7"></circle>
+              <circle cx="18" cy="12" r="1.5" fill="#0284c7"></circle>
+              <path d="M10 12h4"></path>
+            </svg>
+            <span style="font-size: 12px; font-weight: 700; color: #334155;">Free Fire UID:</span>
+            <span id="label-profile-ffuid" style="font-size: 12px; font-weight: 800; color: #0284c7;">${ffUid ? ffUid : '<span style="color:#94a3b8; font-weight:500;">Not Set</span>'}</span>
           </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-        </div>
 
-        <div class="profile-menu-item" id="p-menu-onboarding-preview">
-          <div class="profile-item-left">
-            <div class="profile-item-icon" style="background: #eff6ff; color: #2563eb;">📱</div>
-            <span>Welcome / Onboarding Screen</span>
-          </div>
-          <span class="badge badge-primary">PREVIEW</span>
-        </div>
-
-        <div class="profile-menu-item" id="p-menu-logout" style="border-color: rgba(239, 68, 68, 0.2);">
-          <div class="profile-item-left">
-            <div class="profile-item-icon" style="background: #fef2f2; color: #ef4444;">🚪</div>
-            <span style="color: var(--danger); font-weight: 700;">Logout</span>
-          </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
-        </div>
-
-        <!-- Destructive Account Deletion (Google Play Compliance) -->
-        <div class="profile-menu-item" id="p-menu-delete-account" style="border-color: rgba(239, 68, 68, 0.35); background: #fff5f5; margin-top: 4px;">
-          <div class="profile-item-left">
-            <div class="profile-item-icon" style="background: #fee2e2; color: #dc2626;">⚠️</div>
-            <div>
-              <span style="color: #dc2626; font-weight: 800;">Delete Account</span>
-              <div style="font-size: 10px; color: #ef4444;">Permanent data wipe</div>
-            </div>
-          </div>
-          <span style="background: #fee2e2; color: #dc2626; font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 8px;">DANGER</span>
+          <button id="btn-set-ffuid" style="background: #0284c7; color: #ffffff; border: none; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3);">
+            <span>${ffUid ? 'Edit UID ✏️' : 'Set UID +'}</span>
+          </button>
         </div>
       </div>
+
+      <!-- 2. Referral Program & Rewards Violet Banner -->
+      <div id="banner-profile-referral" style="background: linear-gradient(135deg, #2e0854 0%, #4c1d95 50%, #6d28d9 100%); border-radius: 18px; padding: 14px 16px; color: #ffffff; display: flex; align-items: center; justify-content: space-between; gap: 12px; box-shadow: 0 6px 18px rgba(109, 40, 217, 0.25); cursor: pointer;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(255, 255, 255, 0.15); display: flex; align-items: center; justify-content: center; font-size: 20px; border: 1px solid rgba(255, 255, 255, 0.25); flex-shrink: 0;">
+            🎁
+          </div>
+          <div>
+            <div style="font-size: 13.5px; font-weight: 800; letter-spacing: 0.2px;">Referral Program & Rewards</div>
+            <div style="font-size: 10.5px; opacity: 0.88; margin-top: 1px;">
+              Invite code: <strong style="color: #facc15;">${referralCode}</strong> • Earn diamonds
+            </div>
+          </div>
+        </div>
+
+        <button style="background: #ffffff; color: #6d28d9; border: none; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 900; letter-spacing: 0.4px; cursor: pointer; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);">
+          INVITE ›
+        </button>
+      </div>
+
+      <!-- 3. 📊 Esports Performance & Stats (3 Cards) -->
+      <div>
+        <div style="font-size: 12.5px; font-weight: 800; color: #0f172a; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+          <span>📊 Esports Performance & Stats</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+          <!-- Tournaments -->
+          <div class="stat-bubble-card" id="p-stat-tournaments" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 14px 8px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); cursor: pointer;">
+            <div style="font-size: 20px;">🏆</div>
+            <div style="font-size: 18px; font-weight: 900; color: #0f172a; font-family: var(--font-heading);">${tournamentsJoined}</div>
+            <div style="font-size: 9.5px; font-weight: 700; color: #64748b;">Tournaments</div>
+          </div>
+
+          <!-- Downloads -->
+          <div class="stat-bubble-card" id="p-stat-downloads" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 14px 8px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); cursor: pointer;">
+            <div style="font-size: 20px;">📥</div>
+            <div style="font-size: 18px; font-weight: 900; color: #0f172a; font-family: var(--font-heading);">${totalDownloads}</div>
+            <div style="font-size: 9.5px; font-weight: 700; color: #64748b;">Downloads</div>
+          </div>
+
+          <!-- Sensitivities -->
+          <div class="stat-bubble-card" id="p-stat-sensitivities" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 14px 8px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); cursor: pointer;">
+            <div style="font-size: 20px;">🎯</div>
+            <div style="font-size: 18px; font-weight: 900; color: #0f172a; font-family: var(--font-heading);">${savedSens.length}</div>
+            <div style="font-size: 9.5px; font-weight: 700; color: #64748b;">Sensitivities</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. 🎯 Quick Actions & Features -->
+      <div>
+        <div style="font-size: 12.5px; font-weight: 800; color: #0f172a; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+          <span>🎯 Quick Actions & Features</span>
+        </div>
+
+        <div style="background: #ffffff; border-radius: 18px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+          
+          <!-- Tournaments -->
+          <div class="profile-feature-row" id="p-menu-tournaments" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 18px;">🏆</div>
+              <div>
+                <div style="font-size: 13px; font-weight: 800; color: #0f172a;">My Tournaments & Matches</div>
+                <div style="font-size: 10.5px; color: #64748b;">View joined rooms, match schedules & prize claim status</div>
+              </div>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
+
+          <!-- Sensitivity Maker -->
+          <div class="profile-feature-row" id="p-menu-sensitivities" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 18px;">🎛️</div>
+              <div>
+                <div style="font-size: 13px; font-weight: 800; color: #0f172a;">Saved Aim Presets & Sensitivity Maker</div>
+                <div style="font-size: 10.5px; color: #64748b;">Calibrate your phone for 100% headshot accuracy</div>
+              </div>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
+
+          <!-- Referral Program -->
+          <div class="profile-feature-row" id="p-menu-referral" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 18px;">🎁</div>
+              <div>
+                <div style="font-size: 13px; font-weight: 800; color: #0f172a;">Referral Program & Rewards</div>
+                <div style="font-size: 10.5px; color: #64748b;">Invite friends, earn diamonds & instant bKash rewards</div>
+              </div>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- 5. ⚙️ Account Settings -->
+      <div>
+        <div style="font-size: 12.5px; font-weight: 800; color: #0f172a; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+          <span>⚙️ Account Settings</span>
+        </div>
+
+        <div style="background: #ffffff; border-radius: 18px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
+          
+          <!-- Master Admin Console (Visible if Admin) -->
+          ${isAdmin ? `
+            <div class="profile-feature-row" id="p-menu-admin-console" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; background: #f0fdf4; cursor: pointer;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="font-size: 18px;">👑</div>
+                <div>
+                  <div style="font-size: 13px; font-weight: 800; color: #15803d;">Master Admin Console</div>
+                  <div style="font-size: 10.5px; color: #166534;">Control tournaments, room IDs, APK catalog & push alerts</div>
+                </div>
+              </div>
+              <span style="background: #16a34a; color: #ffffff; font-size: 9.5px; font-weight: 800; padding: 2px 8px; border-radius: 10px;">OPEN</span>
+            </div>
+          ` : ''}
+
+          <!-- App Settings & Preferences -->
+          <div class="profile-feature-row" id="p-menu-settings" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 18px;">⚙️</div>
+              <div>
+                <div style="font-size: 13px; font-weight: 800; color: #0f172a;">App Settings & Preferences</div>
+                <div style="font-size: 10.5px; color: #64748b;">Push notifications, sound alerts & cache manager</div>
+              </div>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
+
+          <!-- Help & Support 24/7 -->
+          <div class="profile-feature-row" id="p-menu-support" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 18px;">🎧</div>
+              <div>
+                <div style="font-size: 13px; font-weight: 800; color: #0f172a;">Help & Support 24/7</div>
+                <div style="font-size: 10.5px; color: #64748b;">WhatsApp, Telegram, live tickets & FAQs</div>
+              </div>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
+
+          <!-- About Mobin X -->
+          <div class="profile-feature-row" id="p-menu-about" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 18px;">ℹ️</div>
+              <div>
+                <div style="font-size: 13px; font-weight: 800; color: #0f172a;">About Mobin X</div>
+                <div style="font-size: 10.5px; color: #64748b;">Version details, studio credits & security shield</div>
+              </div>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
+
+          <!-- Sign Out -->
+          <div class="profile-feature-row" id="p-menu-logout" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="font-size: 18px;">🚪</div>
+              <div>
+                <div style="font-size: 13px; font-weight: 800; color: #dc2626;">Sign Out</div>
+                <div style="font-size: 10.5px; color: #64748b;">Logout from this Android device</div>
+              </div>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
+
+        </div>
+      </div>
+
     </div>
 
-    <!-- Multi-Step Account Deletion Confirmation Modal -->
-    <div id="modal-delete-account" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(6px); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
+    <!-- Free Fire UID Setup Modal -->
+    <div id="modal-set-ffuid" class="modal-overlay" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(6px); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
       <div style="background: #ffffff; border-radius: 24px; padding: 24px 20px; width: 100%; max-width: 360px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); text-align: center;">
-        <div style="width: 56px; height: 56px; border-radius: 50%; background: #fee2e2; color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 26px; margin: 0 auto 14px auto;">
-          ⚠️
+        <div style="width: 52px; height: 52px; border-radius: 50%; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 12px auto;">
+          🎮
         </div>
-        <h3 style="font-size: 18px; font-weight: 900; color: #0f172a; margin: 0 0 8px 0;">Delete your account?</h3>
-        <p style="font-size: 12.5px; color: #64748b; line-height: 1.5; margin: 0 0 18px 0;">
-          Your account and associated data will be permanently deleted. This action cannot be undone.
+        <h3 style="font-size: 17px; font-weight: 900; color: #0f172a; margin: 0 0 6px 0;">Set Free Fire Player UID</h3>
+        <p style="font-size: 12px; color: #64748b; line-height: 1.4; margin: 0 0 16px 0;">
+          Your UID is used to automatically verify tournament registrations and deliver rewards.
         </p>
 
-        <!-- Optional password field for password accounts -->
-        <div id="wrap-reauth-pass" style="display: none; margin-bottom: 14px; text-align: left;">
-          <label style="font-size: 11.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 4px;">Confirm Password</label>
-          <input type="password" id="input-delete-reauth-pass" placeholder="Enter your current password" style="width: 100%; height: 42px; border: 1.5px solid #cbd5e1; border-radius: 12px; padding: 0 12px; font-size: 13px; outline: none; box-sizing: border-box;" />
+        <div style="margin-bottom: 16px; text-align: left;">
+          <label style="font-size: 11.5px; font-weight: 700; color: #475569; display: block; margin-bottom: 4px;">Free Fire UID Number</label>
+          <input type="text" id="input-modal-ffuid" placeholder="e.g. 1928374650" value="${ffUid || ''}" style="width: 100%; height: 44px; border: 1.5px solid #cbd5e1; border-radius: 12px; padding: 0 12px; font-size: 14px; font-weight: 700; outline: none; box-sizing: border-box;" />
         </div>
 
         <div style="display: flex; gap: 10px;">
-          <button id="btn-cancel-delete" style="flex: 1; height: 46px; background: #f1f5f9; border: none; border-radius: 12px; font-size: 14px; font-weight: 700; color: #475569; cursor: pointer;">
+          <button id="btn-cancel-ffuid" style="flex: 1; height: 44px; background: #f1f5f9; border: none; border-radius: 12px; font-size: 13px; font-weight: 700; color: #475569; cursor: pointer;">
             Cancel
           </button>
-          <button id="btn-confirm-delete" style="flex: 1.2; height: 46px; background: #dc2626; border: none; border-radius: 12px; font-size: 14px; font-weight: 800; color: #ffffff; cursor: pointer; box-shadow: 0 6px 16px rgba(220, 38, 38, 0.35);">
-            Delete Account
+          <button id="btn-save-ffuid" style="flex: 1.2; height: 44px; background: #0284c7; border: none; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #ffffff; cursor: pointer; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);">
+            Save UID
           </button>
-        </div>
-
-        <div style="margin-top: 14px;">
-          <a href="javascript:void(0)" id="link-external-delete-info" style="font-size: 11px; color: #0284c7; text-decoration: underline;">Learn more on our Deletion Request page</a>
         </div>
       </div>
     </div>
@@ -192,127 +278,98 @@ export function renderProfileView() {
 }
 
 export function bindProfileEvents() {
-  document.getElementById('btn-profile-edit-info')?.addEventListener('click', () => {
+  // Free Fire UID Modal Handlers
+  const modalUid = document.getElementById('modal-set-ffuid');
+  document.getElementById('btn-set-ffuid')?.addEventListener('click', () => {
+    if (modalUid) modalUid.style.display = 'flex';
+  });
+
+  document.getElementById('btn-cancel-ffuid')?.addEventListener('click', () => {
+    if (modalUid) modalUid.style.display = 'none';
+  });
+
+  document.getElementById('btn-save-ffuid')?.addEventListener('click', async () => {
+    const val = document.getElementById('input-modal-ffuid')?.value.trim();
+    if (!val) {
+      Toast.show('Please enter your Free Fire UID', 'warning');
+      return;
+    }
+
+    const updatedUser = authService.updateUserProfile({ ffUid: val, freeFireUid: val });
+    try {
+      if (firebaseService && typeof firebaseService.saveToFirestore === 'function' && updatedUser.id) {
+        await firebaseService.saveToFirestore('users', updatedUser.id, updatedUser);
+      }
+    } catch (e) {}
+
+    Toast.show(`Free Fire UID saved: ${val}`, 'success');
+    if (modalUid) modalUid.style.display = 'none';
+    stateManager.navigate('profile');
+  });
+
+  // Edit profile pencil icon
+  document.getElementById('btn-profile-edit-pencil')?.addEventListener('click', () => {
     resetOnboardingStep('auth-hub');
     stateManager.navigate('onboarding');
   });
 
-  document.getElementById('btn-profile-google-login')?.addEventListener('click', async () => {
-    try {
-      Toast.show('Opening Google Account Picker...', 'info');
-      const googleUser = await firebaseService.signInWithGoogle();
-      if (googleUser && googleUser.email) {
-        const user = await authService.loginWithGoogle(
-          googleUser.email, 
-          googleUser.displayName, 
-          '', 
-          '', 
-          googleUser.photoURL || '',
-          googleUser.uid
-        );
-        Toast.show(`Welcome back, ${user.username}!`, 'success');
-        stateManager.navigate('profile');
-      }
-    } catch (err) {
-      console.warn('Profile Google Login error:', err);
-      Toast.show(err.message || 'Google Sign-In was cancelled', 'warning');
-    }
+  // Referral banner & menu click
+  document.getElementById('banner-profile-referral')?.addEventListener('click', () => {
+    stateManager.navigate('referral');
   });
-
-  document.getElementById('p-menu-support')?.addEventListener('click', () => {
-    const urls = authService.getUrls();
-    const telegramUrl = urls.telegram || 'https://t.me/mrmobin1m';
-    Toast.show('Connecting to Official 24/7 Support Desk...', 'info');
-    window.open(telegramUrl, '_blank');
-  });
-
-  document.getElementById('p-menu-onboarding-preview')?.addEventListener('click', () => {
-    resetOnboardingStep('welcome');
-    stateManager.navigate('onboarding');
-  });
-
-  document.getElementById('p-menu-tournaments')?.addEventListener('click', () => {
-    stateManager.navigate('tournaments');
-  });
-
-  document.getElementById('p-menu-sensitivities')?.addEventListener('click', () => {
-    const saved = authService.getSavedSensitivities();
-    if (saved.length === 0) {
-      Toast.show('No saved sensitivity presets yet. Generate one in Sensitivity Maker!', 'info');
-      stateManager.navigate('sensitivity');
-    } else {
-      Toast.show(`You have ${saved.length} saved presets in vault.`, 'success');
-      stateManager.navigate('sensitivity');
-    }
-  });
-
-  document.getElementById('p-menu-downloads')?.addEventListener('click', () => {
-    stateManager.navigate('downloads');
-  });
-
   document.getElementById('p-menu-referral')?.addEventListener('click', () => {
     stateManager.navigate('referral');
   });
 
+  // Stat cards navigation
+  document.getElementById('p-stat-tournaments')?.addEventListener('click', () => {
+    stateManager.navigate('tournaments');
+  });
+  document.getElementById('p-stat-downloads')?.addEventListener('click', () => {
+    stateManager.navigate('downloads');
+  });
+  document.getElementById('p-stat-sensitivities')?.addEventListener('click', () => {
+    stateManager.navigate('sensitivity');
+  });
+
+  // Feature menu rows
+  document.getElementById('p-menu-tournaments')?.addEventListener('click', () => {
+    stateManager.navigate('tournaments');
+  });
+  document.getElementById('p-menu-sensitivities')?.addEventListener('click', () => {
+    stateManager.navigate('sensitivity');
+  });
+
+  // Admin console
+  document.getElementById('p-menu-admin-console')?.addEventListener('click', () => {
+    stateManager.navigate('admin');
+  });
+
+  // Settings & Preferences
   document.getElementById('p-menu-settings')?.addEventListener('click', () => {
     stateManager.navigate('settings');
   });
 
-  document.getElementById('p-menu-help')?.addEventListener('click', () => {
-    stateManager.navigate('help');
+  // 24/7 Support
+  document.getElementById('p-menu-support')?.addEventListener('click', () => {
+    const urls = authService.getUrls();
+    const telegramUrl = urls.telegram || 'https://t.me/mrmobin1m';
+    Toast.show('Connecting to Official 24/7 Support...', 'info');
+    window.open(telegramUrl, '_blank');
   });
 
+  // About Mobin X
+  document.getElementById('p-menu-about')?.addEventListener('click', () => {
+    stateManager.navigate('about');
+  });
+
+  // Logout / Sign Out
   document.getElementById('p-menu-logout')?.addEventListener('click', () => {
-    authService.logout();
-    resetOnboardingStep('welcome');
-    Toast.show('Logged out successfully. See you soon!', 'info');
-    stateManager.navigate('onboarding');
-  });
-
-  // --- DELETE ACCOUNT EVENT HANDLERS ---
-  const modalDelete = document.getElementById('modal-delete-account');
-  const wrapReauth = document.getElementById('wrap-reauth-pass');
-  const user = authService.getCurrentUser() || {};
-
-  document.getElementById('p-menu-delete-account')?.addEventListener('click', () => {
-    if (modalDelete) {
-      modalDelete.style.display = 'flex';
-      if (user.authProvider === 'password' && wrapReauth) {
-        wrapReauth.style.display = 'block';
-      }
-    }
-  });
-
-  document.getElementById('btn-cancel-delete')?.addEventListener('click', () => {
-    if (modalDelete) modalDelete.style.display = 'none';
-  });
-
-  document.getElementById('link-external-delete-info')?.addEventListener('click', () => {
-    openExternalStore('https://mobinx-admin-console.vercel.app/delete-account.html', '#ef4444');
-  });
-
-  document.getElementById('btn-confirm-delete')?.addEventListener('click', async () => {
-    const confirmBtn = document.getElementById('btn-confirm-delete');
-    const passInput = document.getElementById('input-delete-reauth-pass');
-    const password = passInput ? passInput.value : null;
-
-    if (confirmBtn) {
-      confirmBtn.disabled = true;
-      confirmBtn.textContent = 'Deleting...';
-    }
-
-    try {
-      await authService.deleteAccount(password);
-      if (modalDelete) modalDelete.style.display = 'none';
-      Toast.show('Your account and data have been permanently deleted.', 'info');
+    if (confirm('Are you sure you want to sign out from this device?')) {
+      authService.logout();
       resetOnboardingStep('welcome');
+      Toast.show('Signed out successfully.', 'info');
       stateManager.navigate('onboarding');
-    } catch (err) {
-      Toast.show(err.message || 'Unable to delete account right now. Please try again.', 'danger');
-      if (confirmBtn) {
-        confirmBtn.disabled = false;
-        confirmBtn.textContent = 'Delete Account';
-      }
     }
   });
 }

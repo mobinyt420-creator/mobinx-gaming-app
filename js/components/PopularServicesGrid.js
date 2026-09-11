@@ -51,14 +51,14 @@ export function bindPopularServicesEvents() {
     card.addEventListener('click', () => {
       const extUrl = card.getAttribute('data-external-url');
       if (extUrl) {
-        openExternalStore(extUrl, '#0284c7');
+        openExternalStore(extUrl, '#004b87');
         return;
       }
 
       const route = card.getAttribute('data-service');
       if (route === 'topup') {
         const urls = authService.getUrls();
-        openExternalStore(urls.topup || 'https://noobtopup.com/', '#0284c7');
+        openExternalStore(urls.topup || 'https://noobtopup.com/', '#004b87');
         return;
       }
       if (route === 'shop') {

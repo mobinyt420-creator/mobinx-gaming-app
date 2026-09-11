@@ -18,27 +18,29 @@ class StoreService {
   String get shopUrl => _shopUrl;
 
   Future<void> init() async {
-    try {
-      if (FirebaseService.isInitialized) {
-        final doc = await FirebaseService.firestore
-            .collection('config')
-            .doc('urls')
-            .get()
-            .timeout(const Duration(seconds: 4));
+    Future.delayed(const Duration(seconds: 2), () async {
+      try {
+        if (FirebaseService.isInitialized) {
+          final doc = await FirebaseService.firestore
+              .collection('config')
+              .doc('urls')
+              .get()
+              .timeout(const Duration(seconds: 4));
 
-        if (doc.exists && doc.data() != null) {
-          final data = doc.data()!;
-          if (data['topup'] != null && data['topup'].toString().isNotEmpty) {
-            _topUpUrl = data['topup'].toString();
-          }
-          if (data['shop'] != null && data['shop'].toString().isNotEmpty) {
-            _shopUrl = data['shop'].toString();
+          if (doc.exists && doc.data() != null) {
+            final data = doc.data()!;
+            if (data['topup'] != null && data['topup'].toString().isNotEmpty) {
+              _topUpUrl = data['topup'].toString();
+            }
+            if (data['shop'] != null && data['shop'].toString().isNotEmpty) {
+              _shopUrl = data['shop'].toString();
+            }
           }
         }
+      } catch (e) {
+        debugPrint('[StoreService] URL sync notice: $e');
       }
-    } catch (e) {
-      debugPrint('[StoreService] URL sync notice: $e');
-    }
+    });
   }
 
   /// Opens the store inside an Android Chrome Custom Tab with exact brand toolbar color
@@ -81,11 +83,11 @@ class StoreService {
     }
   }
 
-  /// Top Up opens with brand Sky Blue (#0284C7)
+  /// Top Up opens with brand Deep Navy Blue (#004B87)
   Future<bool> openTopUp() => openStore(
         url: _topUpUrl,
         title: 'Noob Top Up',
-        colorHex: '#0284C7',
+        colorHex: '#004B87',
       );
 
   /// Shop opens with brand Warm Orange (#F97316)

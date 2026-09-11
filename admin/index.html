@@ -2747,7 +2747,9 @@ function renderDownloads() {
                   </div>
                 </div>
 
-                <div style="display: flex; gap: 6px;">
+                <div style="display: flex; gap: 6px; align-items: center;">
+                  <button class="btn btn-secondary btn-move-dl-up" data-id="${dl.id}" title="Move Up" style="padding: 6px 10px; font-size: 12px; font-weight: 800;">↑</button>
+                  <button class="btn btn-secondary btn-move-dl-down" data-id="${dl.id}" title="Move Down" style="padding: 6px 10px; font-size: 12px; font-weight: 800;">↓</button>
                   <button class="btn btn-secondary btn-toggle-dl-status" data-id="${dl.id}" style="padding: 6px 12px; font-size: 12px;">
                     ${dl.isActive === false || dl.status === 'inactive' ? '🔴 Inactive' : '🟢 Active'}
                   </button>
@@ -4508,6 +4510,43 @@ function bindCurrentTabEvents() {
 
       await deleteFromFirestore('downloads', id);
       broadcastSync('DOWNLOADS_UPDATED', { deletedId: id });
+    });
+  });
+
+  // Downloads: Move Up / Down
+  document.querySelectorAll('.btn-move-dl-up').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const idx = state.downloads.findIndex(d => d.id === id);
+      if (idx > 0) {
+        const temp = state.downloads[idx];
+        state.downloads[idx] = state.downloads[idx - 1];
+        state.downloads[idx - 1] = temp;
+        state.downloads.forEach((d, i) => { d.order = i; });
+        setStorage('mobinx_downloads_catalog', state.downloads);
+        showToast('Download item moved up', 'info');
+        renderCurrentTab();
+        state.downloads.forEach(d => syncToFirestore('downloads', d.id, d));
+        broadcastSync('DOWNLOADS_UPDATED', { reordered: true });
+      }
+    });
+  });
+
+  document.querySelectorAll('.btn-move-dl-down').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.id;
+      const idx = state.downloads.findIndex(d => d.id === id);
+      if (idx !== -1 && idx < state.downloads.length - 1) {
+        const temp = state.downloads[idx];
+        state.downloads[idx] = state.downloads[idx + 1];
+        state.downloads[idx + 1] = temp;
+        state.downloads.forEach((d, i) => { d.order = i; });
+        setStorage('mobinx_downloads_catalog', state.downloads);
+        showToast('Download item moved down', 'info');
+        renderCurrentTab();
+        state.downloads.forEach(d => syncToFirestore('downloads', d.id, d));
+        broadcastSync('DOWNLOADS_UPDATED', { reordered: true });
+      }
     });
   });
 

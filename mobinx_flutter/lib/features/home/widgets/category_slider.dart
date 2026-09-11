@@ -99,41 +99,63 @@ class _CategorySliderState extends State<CategorySlider> {
   static const double _step = _itemWidth + _itemGap; // 82.0
 
   late final ScrollController _scrollController;
-  bool _isUserInteracting = false;
+  Timer? _idleResumeTimer;
+  Timer? _driftTimer;
+  bool _isInteracting = false;
 
   @override
   void initState() {
     super.initState();
-    // Start at a multiple of categories so it can loop seamlessly in one direction
-    const initialIndex = 500 * 7;
+    // Start at mid-range for infinite bidirectional scrolling
+    const initialIndex = 50 * 7;
     _scrollController = ScrollController(initialScrollOffset: initialIndex * _step);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _startContinuousScroll();
-    });
+    _scheduleAutoDrift(const Duration(milliseconds: 1500));
   }
 
-  void _startContinuousScroll() {
-    if (!mounted || !_scrollController.hasClients || _isUserInteracting) return;
-
-    // Continuous smooth linear drift at constant elegant speed (no pauses or jerks)
-    const double distance = 160.0;
-    const int durationMs = 5000;
-    final target = _scrollController.offset + distance;
-
-    _scrollController.animateTo(
-      target,
-      duration: const Duration(milliseconds: durationMs),
-      curve: Curves.linear,
-    ).then((_) {
-      if (mounted && !_isUserInteracting) {
-        _startContinuousScroll();
+  void _scheduleAutoDrift(Duration delay) {
+    _idleResumeTimer?.cancel();
+    _idleResumeTimer = Timer(delay, () {
+      if (mounted && !_isInteracting) {
+        _startSmoothDrift();
       }
     });
   }
 
+  void _startSmoothDrift() {
+    _driftTimer?.cancel();
+    if (!mounted || !_scrollController.hasClients || _isInteracting) return;
+
+    // Gentle continuous drift: 1.0 px every 35ms (~28px/sec)
+    _driftTimer = Timer.periodic(const Duration(milliseconds: 35), (timer) {
+      if (!mounted || !_scrollController.hasClients || _isInteracting) {
+        timer.cancel();
+        return;
+      }
+      try {
+        final currentOffset = _scrollController.offset;
+        _scrollController.jumpTo(currentOffset + 0.9);
+      } catch (_) {
+        timer.cancel();
+      }
+    });
+  }
+
+  void _pauseDrift() {
+    _isInteracting = true;
+    _idleResumeTimer?.cancel();
+    _driftTimer?.cancel();
+  }
+
+  void _resumeDriftAfterDelay() {
+    _isInteracting = false;
+    _scheduleAutoDrift(const Duration(milliseconds: 2500));
+  }
+
   @override
   void dispose() {
-    _isUserInteracting = true;
+    _isInteracting = true;
+    _idleResumeTimer?.cancel();
+    _driftTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
   }
@@ -143,89 +165,120 @@ class _CategorySliderState extends State<CategorySlider> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 6),
       height: 92,
-      child: NotificationListener<ScrollNotification>(
-        onNotification: (notification) {
-          if (notification is ScrollStartNotification) {
-            if (notification.dragDetails != null) {
-              _isUserInteracting = true;
+      child: Listener(
+        onPointerDown: (_) => _pauseDrift(),
+        onPointerUp: (_) => _resumeDriftAfterDelay(),
+        onPointerCancel: (_) => _resumeDriftAfterDelay(),
+        child: NotificationListener<ScrollNotification>(
+          onNotification: (notification) {
+            if (notification is ScrollStartNotification) {
+              _pauseDrift();
+            } else if (notification is ScrollEndNotification) {
+              _resumeDriftAfterDelay();
             }
-          } else if (notification is ScrollEndNotification) {
-            if (_isUserInteracting) {
-              Future.delayed(const Duration(milliseconds: 600), () {
-                if (mounted) {
-                  _isUserInteracting = false;
-                  _startContinuousScroll();
-                }
-              });
-            }
-          }
-          return false;
-        },
-        child: ListView.builder(
-        controller: _scrollController,
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        itemCount: 100000,
-        itemBuilder: (context, index) {
-          final cat = CategorySlider.categories[index % CategorySlider.categories.length];
-          return Padding(
-            padding: const EdgeInsets.only(right: _itemGap),
-            child: SizedBox(
-              width: _itemWidth,
-              child: InkWell(
-                onTap: () => widget.onCategoryTap(cat.route),
-                borderRadius: BorderRadius.circular(16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Squircle Card
-                    Container(
-                      width: 54,
-                      height: 54,
-                      decoration: BoxDecoration(
-                        color: cat.bgColor,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: cat.iconColor.withValues(alpha: 0.18),
-                          width: 1.2,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: cat.iconColor.withValues(alpha: 0.12),
-                            blurRadius: 8,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Icon(
-                          cat.icon,
-                          color: cat.iconColor,
-                          size: 26,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      cat.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textMain,
-                      ),
+            return false;
+          },
+          child: ListView.builder(
+            controller: _scrollController,
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            itemCount: 10000,
+            itemBuilder: (context, index) {
+              final cat = CategorySlider.categories[index % CategorySlider.categories.length];
+              return Padding(
+                padding: const EdgeInsets.only(right: _itemGap),
+                child: _PressableCategoryItem(
+                  cat: cat,
+                  onTap: () => widget.onCategoryTap(cat.route),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Press-to-scale category item with micro-interaction
+class _PressableCategoryItem extends StatefulWidget {
+  final QuickCategoryItem cat;
+  final VoidCallback onTap;
+
+  const _PressableCategoryItem({required this.cat, required this.onTap});
+
+  @override
+  State<_PressableCategoryItem> createState() => _PressableCategoryItemState();
+}
+
+class _PressableCategoryItemState extends State<_PressableCategoryItem> {
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _isPressed = true),
+      onTapUp: (_) {
+        setState(() => _isPressed = false);
+        widget.onTap();
+      },
+      onTapCancel: () => setState(() => _isPressed = false),
+      child: AnimatedScale(
+        scale: _isPressed ? 0.92 : 1.0,
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOutCubic,
+        child: SizedBox(
+          width: _CategorySliderState._itemWidth,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Squircle Card with press feedback
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 120),
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: _isPressed
+                      ? Color.lerp(widget.cat.bgColor, widget.cat.iconColor, 0.08)!
+                      : widget.cat.bgColor,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: widget.cat.iconColor.withValues(alpha: _isPressed ? 0.3 : 0.18),
+                    width: 1.2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: widget.cat.iconColor.withValues(alpha: _isPressed ? 0.2 : 0.12),
+                      blurRadius: _isPressed ? 4 : 8,
+                      offset: Offset(0, _isPressed ? 1 : 3),
                     ),
                   ],
                 ),
+                child: Center(
+                  child: Icon(
+                    widget.cat.icon,
+                    color: widget.cat.iconColor,
+                    size: 26,
+                  ),
+                ),
               ),
-            ),
-          );
-        },
+              const SizedBox(height: 5),
+              Text(
+                widget.cat.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textMain,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 }

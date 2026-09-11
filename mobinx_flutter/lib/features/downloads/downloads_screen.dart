@@ -104,7 +104,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               child: Row(
                 children: _categories.map((cat) {
                   final isSelected = _selectedCategory == cat;
@@ -176,7 +176,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
                   }
 
                   return ListView.separated(
-                    physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                    physics: const AlwaysScrollableScrollPhysics(parent: ClampingScrollPhysics()),
                     padding: const EdgeInsets.all(14),
                     itemCount: filtered.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 14),

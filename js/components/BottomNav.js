@@ -76,7 +76,7 @@ export function bindBottomNavEvents() {
       const target = e.currentTarget.getAttribute('data-nav');
       if (target === 'topup') {
         const urls = authService.getUrls();
-        openExternalStore(urls.topup || 'https://noobtopup.com/', '#0284c7');
+        openExternalStore(urls.topup || 'https://noobtopup.com/', '#004b87');
         return;
       }
       if (target === 'shop') {

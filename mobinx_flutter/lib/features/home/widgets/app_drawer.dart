@@ -5,14 +5,38 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/services/auth_service.dart';
 
-/// Slide-Out Navigation Drawer (Matching DrawerMenu.js from website)
-class AppDrawer extends StatelessWidget {
+/// Slide-Out Navigation Drawer with Staggered Entrance Animations
+class AppDrawer extends StatefulWidget {
   final Function(String route) onNavigate;
 
   const AppDrawer({
     super.key,
     required this.onNavigate,
   });
+
+  @override
+  State<AppDrawer> createState() => _AppDrawerState();
+}
+
+class _AppDrawerState extends State<AppDrawer> with SingleTickerProviderStateMixin {
+  late AnimationController _staggerController;
+
+  @override
+  void initState() {
+    super.initState();
+    _staggerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    )..forward();
+  }
+
+  @override
+  void dispose() {
+    _staggerController.dispose();
+    super.dispose();
+  }
+
+  Function(String route) get onNavigate => widget.onNavigate;
 
   @override
   Widget build(BuildContext context) {
@@ -123,6 +147,7 @@ class AppDrawer extends StatelessWidget {
                     _buildDrawerItem(
                       icon: Icons.home_rounded,
                       title: 'Home',
+                      index: 0,
                       onTap: () {
                         Navigator.of(context).pop();
                         onNavigate('home');
@@ -131,6 +156,7 @@ class AppDrawer extends StatelessWidget {
                     _buildDrawerItem(
                       icon: Icons.emoji_events_rounded,
                       title: 'BR Matches & Tournaments',
+                      index: 1,
                       onTap: () {
                         Navigator.of(context).pop();
                         onNavigate('tournaments');
@@ -139,6 +165,7 @@ class AppDrawer extends StatelessWidget {
                     _buildDrawerItem(
                       icon: Icons.diamond_rounded,
                       title: 'Diamond Top-Up (noobtopup.com)',
+                      index: 2,
                       onTap: () {
                         Navigator.of(context).pop();
                         onNavigate('topup');
@@ -147,6 +174,7 @@ class AppDrawer extends StatelessWidget {
                     _buildDrawerItem(
                       icon: Icons.shopping_cart_rounded,
                       title: 'VIP Shop (obinshop.com)',
+                      index: 3,
                       onTap: () {
                         Navigator.of(context).pop();
                         onNavigate('shop');
@@ -155,6 +183,7 @@ class AppDrawer extends StatelessWidget {
                     _buildDrawerItem(
                       icon: Icons.download_rounded,
                       title: 'APK & Tools Download',
+                      index: 4,
                       onTap: () {
                         Navigator.of(context).pop();
                         onNavigate('downloads');
@@ -163,6 +192,7 @@ class AppDrawer extends StatelessWidget {
                     _buildDrawerItem(
                       icon: Icons.tune_rounded,
                       title: 'VIP Sensitivity Maker',
+                      index: 5,
                       onTap: () {
                         Navigator.of(context).pop();
                         onNavigate('sensitivity');
@@ -172,6 +202,7 @@ class AppDrawer extends StatelessWidget {
                       icon: Icons.card_giftcard_rounded,
                       title: 'Refer & Earn Program',
                       iconColor: const Color(0xFF7C3AED),
+                      index: 6,
                       onTap: () {
                         Navigator.of(context).pop();
                         onNavigate('referral');
@@ -181,6 +212,7 @@ class AppDrawer extends StatelessWidget {
                       icon: Icons.notifications_active_rounded,
                       title: 'Notification Center',
                       iconColor: const Color(0xFFF59E0B),
+                      index: 7,
                       onTap: () {
                         Navigator.of(context).pop();
                         onNavigate('notifications');
@@ -189,6 +221,7 @@ class AppDrawer extends StatelessWidget {
                     _buildDrawerItem(
                       icon: Icons.person_rounded,
                       title: 'My Profile & UID',
+                      index: 8,
                       onTap: () {
                         Navigator.of(context).pop();
                         onNavigate('profile');
@@ -201,6 +234,7 @@ class AppDrawer extends StatelessWidget {
                         icon: Icons.admin_panel_settings_rounded,
                         title: '👑 Admin Dashboard Console',
                         iconColor: const Color(0xFFDC2626),
+                        index: 9,
                         onTap: () {
                           Navigator.of(context).pop();
                           onNavigate('admin');
@@ -214,6 +248,7 @@ class AppDrawer extends StatelessWidget {
                       icon: Icons.settings_rounded,
                       title: 'Settings',
                       iconColor: AppColors.textSecondary,
+                      index: 10,
                       onTap: () {
                         Navigator.of(context).pop();
                         onNavigate('settings');
@@ -223,6 +258,7 @@ class AppDrawer extends StatelessWidget {
                       icon: Icons.help_outline_rounded,
                       title: 'Help & Support 24/7',
                       iconColor: const Color(0xFF10B981),
+                      index: 11,
                       onTap: () {
                         Navigator.of(context).pop();
                         onNavigate('help');
@@ -289,20 +325,41 @@ class AppDrawer extends StatelessWidget {
     required String title,
     required VoidCallback onTap,
     Color? iconColor,
+    int index = 0,
   }) {
-    return ListTile(
-      leading: Icon(icon, color: iconColor ?? AppColors.primary, size: 22),
-      title: Text(
-        title,
-        style: GoogleFonts.inter(
-          fontSize: 13.5,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textMain,
+    final delay = (index * 0.06).clamp(0.0, 0.7);
+    final end = (delay + 0.3).clamp(0.0, 1.0);
+    final slideAnim = Tween<Offset>(
+      begin: const Offset(-0.3, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _staggerController,
+      curve: Interval(delay, end, curve: Curves.easeOutCubic),
+    ));
+    final fadeAnim = CurvedAnimation(
+      parent: _staggerController,
+      curve: Interval(delay, end, curve: Curves.easeOut),
+    );
+
+    return SlideTransition(
+      position: slideAnim,
+      child: FadeTransition(
+        opacity: fadeAnim,
+        child: ListTile(
+          leading: Icon(icon, color: iconColor ?? AppColors.primary, size: 22),
+          title: Text(
+            title,
+            style: GoogleFonts.inter(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textMain,
+            ),
+          ),
+          dense: true,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          onTap: onTap,
         ),
       ),
-      dense: true,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      onTap: onTap,
     );
   }
 }

@@ -112,7 +112,7 @@ class _TournamentsScreenState extends State<TournamentsScreen> {
             }
 
             return ListView.separated(
-              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+              physics: const AlwaysScrollableScrollPhysics(parent: ClampingScrollPhysics()),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
               itemCount: tournaments.length,
               separatorBuilder: (context, index) => const SizedBox(height: 16),

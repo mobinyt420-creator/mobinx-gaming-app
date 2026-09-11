@@ -4,6 +4,10 @@ import 'core/theme/app_theme.dart';
 import 'core/constants/app_constants.dart';
 import 'features/splash/splash_screen.dart';
 import 'core/services/firebase_service.dart';
+import 'core/services/storage_service.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import 'core/services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,12 +18,22 @@ void main() async {
     debugPrint('⚡ Mobin X Caught Error: ${details.exception}');
   };
 
-  // Safe Firebase init
+  // 1. Completely disable HTTP runtime font downloads (forces instant 0ms offline bundled fonts)
+  GoogleFonts.config.allowRuntimeFetching = false;
+
+  // 2. Fast local disk session init (<5ms)
   try {
-    await FirebaseService.init();
+    await StorageService.init();
   } catch (e) {
-    debugPrint('Firebase init notice: $e');
+    debugPrint('Storage init notice: $e');
   }
+
+  // 3. Initialize Firebase & Notification system asynchronously in background
+  FirebaseService.init().then((_) {
+    NotificationService.instance.init();
+  }).catchError((e) {
+    debugPrint('Background Firebase init: $e');
+  });
 
   // Lock to portrait orientation for esports gaming UX
   try {

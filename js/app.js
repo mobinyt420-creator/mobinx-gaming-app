@@ -179,7 +179,7 @@ class App {
           break;
         case 'topup': {
           const urls = authService.getUrls();
-          openExternalStore(urls.topup || 'https://noobtopup.com/', '#0284c7');
+          openExternalStore(urls.topup || 'https://noobtopup.com/', '#004b87');
           stateManager.setState({ currentView: 'home' });
           break;
         }
