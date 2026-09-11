@@ -709,4 +709,100 @@
   transform: translateX(22px);
 }
 
+/* ==========================================================================
+   Category Slider Marquee Ticker & Interactive Touch Carousel
+   ========================================================================== */
+.category-section {
+  width: 100%;
+  padding: 10px 0 6px 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.category-marquee-container {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  cursor: grab;
+  user-select: none;
+  padding-bottom: 2px;
+}
+
+.category-marquee-container::-webkit-scrollbar {
+  display: none;
+}
+
+.category-marquee-container:active {
+  cursor: grabbing;
+}
+
+.category-marquee-track {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: max-content;
+  padding: 4px 14px;
+}
+
+.category-shortcut-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  width: 68px;
+  cursor: pointer;
+  touch-action: pan-y;
+  transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.category-shortcut-card:active {
+  transform: scale(0.92);
+}
+
+.category-icon-box {
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.category-shortcut-card:hover .category-icon-box {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+}
+
+.category-icon-svg {
+  display: block;
+  transition: transform 0.2s ease;
+}
+
+.category-shortcut-card:hover .category-icon-svg {
+  transform: scale(1.08);
+}
+
+.category-shortcut-label {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #0f172a;
+  text-align: center;
+  white-space: nowrap;
+  max-width: 68px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.1px;
+}
+
 

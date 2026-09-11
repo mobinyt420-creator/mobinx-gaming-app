@@ -71,13 +71,44 @@ public class MainActivity extends BridgeActivity {
                 settings.setJavaScriptCanOpenWindowsAutomatically(true);
                 settings.setSupportMultipleWindows(true);
 
-                // Add Native Android Bridge for Chrome Custom Tabs and Google Auth
+            // Add Native Android Bridge for Chrome Custom Tabs and Google Auth
                 webView.addJavascriptInterface(new AndroidBridge(), "AndroidBridge");
+            }
+
+            // Create Android High Importance Notification Channel immediately on launch
+            createNotificationChannel();
+
+            // Request Notification Permission on Android 13+ (API 33+)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, RC_NOTIFICATION_PERMISSION);
+                }
             }
 
             handleNotificationIntent(getIntent());
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            String channelId = "mobinx_push_channel";
+            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            NotificationChannel channel = new NotificationChannel(
+                    channelId,
+                    "Mobin X Announcements",
+                    NotificationManager.IMPORTANCE_HIGH
+            );
+            channel.setDescription("Official match announcements, top-ups and tournament updates");
+            channel.enableLights(true);
+            channel.setLightColor(Color.parseColor("#3b82f6"));
+            channel.enableVibration(true);
+            channel.setShowBadge(true);
+            channel.setLockscreenVisibility(android.app.Notification.VISIBILITY_PUBLIC);
+            if (notificationManager != null) {
+                notificationManager.createNotificationChannel(channel);
+            }
         }
     }
 
@@ -230,7 +261,10 @@ public class MainActivity extends BridgeActivity {
                             .setContentTitle(title != null && !title.isEmpty() ? title : "MOBIN X GAMING")
                             .setContentText(message != null ? message : "New notification received!")
                             .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
-                            .setPriority(NotificationCompat.PRIORITY_HIGH)
+                            .setPriority(NotificationCompat.PRIORITY_MAX)
+                            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                            .setVibrate(new long[]{0, 250, 100, 250})
+                            .setLights(Color.parseColor("#3b82f6"), 1000, 500)
                             .setDefaults(NotificationCompat.DEFAULT_ALL)
                             .setAutoCancel(true)
                             .setContentIntent(pendingIntent);

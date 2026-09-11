@@ -260,6 +260,9 @@ class NotificationService {
         enableLights: true,
         enableVibration: true,
         playSound: true,
+        fullScreenIntent: true,
+        ticker: title,
+        visibility: NotificationVisibility.public,
         styleInformation: BigTextStyleInformation(
           body,
           contentTitle: title,
@@ -326,6 +329,7 @@ class NotificationService {
         });
 
         // 2. Also listen to config/notices broadcast (Instantly triggers system notification)
+        String? lastBroadcastId;
         FirebaseService.firestore
             .collection('config')
             .doc('notices')
@@ -335,12 +339,15 @@ class NotificationService {
             final data = docSnap.data()!;
             final pushData = data['pushNotification'];
             if (pushData is Map<String, dynamic>) {
-              final id = pushData['id']?.toString() ?? pushData['broadcastId']?.toString() ?? 'notice_${DateTime.now().millisecondsSinceEpoch}';
-              final isRead = _readIds.contains(id);
+              final id = pushData['id']?.toString() ?? 'notice_${DateTime.now().millisecondsSinceEpoch}';
+              final broadcastId = pushData['broadcastId']?.toString() ?? data['broadcastId']?.toString() ?? id;
+              final isRead = _readIds.contains(broadcastId) || _readIds.contains(id);
               final notif = NotificationItem.fromFirestore(id, pushData, isRead);
-              if (!_knownIds.contains(id)) {
-                _knownIds.add(id);
-                if (notif.timestamp.isAfter(_appInitTime.subtract(const Duration(seconds: 20)))) {
+
+              // Trigger if broadcastId changed (new send or resend from admin)
+              if (broadcastId != lastBroadcastId) {
+                lastBroadcastId = broadcastId;
+                if (!_readIds.contains(broadcastId)) {
                   showSystemNotification(
                     id: notif.id,
                     title: notif.title,

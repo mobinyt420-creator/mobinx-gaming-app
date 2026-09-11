@@ -106,10 +106,12 @@ class _CategorySliderState extends State<CategorySlider> {
   @override
   void initState() {
     super.initState();
-    // Start at mid-range for infinite bidirectional scrolling
-    const initialIndex = 50 * 7;
-    _scrollController = ScrollController(initialScrollOffset: initialIndex * _step);
-    _scheduleAutoDrift(const Duration(milliseconds: 1500));
+    _scrollController = ScrollController();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _scheduleAutoDrift(const Duration(milliseconds: 800));
+      }
+    });
   }
 
   void _scheduleAutoDrift(Duration delay) {
@@ -125,15 +127,23 @@ class _CategorySliderState extends State<CategorySlider> {
     _driftTimer?.cancel();
     if (!mounted || !_scrollController.hasClients || _isInteracting) return;
 
-    // Gentle continuous drift: 1.0 px every 35ms (~28px/sec)
-    _driftTimer = Timer.periodic(const Duration(milliseconds: 35), (timer) {
+    // Continuous linear glide: animates 60px every 1500ms (~40px/sec)
+    _driftTimer = Timer.periodic(const Duration(milliseconds: 1500), (timer) {
       if (!mounted || !_scrollController.hasClients || _isInteracting) {
         timer.cancel();
         return;
       }
       try {
         final currentOffset = _scrollController.offset;
-        _scrollController.jumpTo(currentOffset + 0.9);
+        final cycleWidth = CategorySlider.categories.length * _step;
+        if (currentOffset > cycleWidth * 100) {
+          _scrollController.jumpTo(currentOffset % cycleWidth);
+        }
+        _scrollController.animateTo(
+          _scrollController.offset + 60,
+          duration: const Duration(milliseconds: 1500),
+          curve: Curves.linear,
+        );
       } catch (_) {
         timer.cancel();
       }
@@ -148,7 +158,7 @@ class _CategorySliderState extends State<CategorySlider> {
 
   void _resumeDriftAfterDelay() {
     _isInteracting = false;
-    _scheduleAutoDrift(const Duration(milliseconds: 2500));
+    _scheduleAutoDrift(const Duration(milliseconds: 1500));
   }
 
   @override

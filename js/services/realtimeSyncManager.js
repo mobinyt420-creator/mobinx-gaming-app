@@ -24,21 +24,31 @@ class RealtimeSyncManager {
     const notifId = notif.id || `notif_${notif.timestamp || Date.now()}`;
     const broadcastId = notif.broadcastId || `${notifId}_${notif.timestamp || Date.now()}`;
 
-    // Deduplicate: Don't show the exact same broadcast multiple times
+    // Deduplicate: Don't show the exact same broadcast twice in this session
     if (this.processedBroadcastIds.has(broadcastId)) {
       return;
     }
     this.processedBroadcastIds.add(broadcastId);
 
-    // If it's the initial snapshot on app boot and not a force alert, just register the ID without alert
-    if (!this.isNotificationListenerReady && !forceAlert) {
+    const lastShown = localStorage.getItem('mobinx_last_shown_broadcast');
+    const isNewBroadcast = lastShown !== broadcastId;
+    const isRecent = notif.timestamp ? (Date.now() - notif.timestamp < 1000 * 60 * 60 * 6) : true;
+
+    // Show if it's a fresh broadcast or listener is ready
+    if (!this.isNotificationListenerReady && !isNewBroadcast && !forceAlert) {
       return;
     }
 
-    // Trigger In-App Toast
+    if (isNewBroadcast) {
+      try {
+        localStorage.setItem('mobinx_last_shown_broadcast', broadcastId);
+      } catch(e) {}
+    }
+
+    // 1. Trigger In-App Toast
     Toast.show(`📢 ${notifTitle}: ${notifMsg}`, 'info');
 
-    // Trigger Native Android Status Bar Notification
+    // 2. Trigger Native Android Status Bar Notification (Heads-Up Banner)
     try {
       if (typeof window !== 'undefined' && window.AndroidBridge) {
         if (typeof window.AndroidBridge.showNativeNotificationWithAction === 'function') {
@@ -55,6 +65,19 @@ class RealtimeSyncManager {
     } catch(e) {
       console.warn('Native notification bridge notice:', e);
     }
+
+    // 3. Web Notification API Fallback (for mobile Chrome / PWA)
+    try {
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        new Notification(notifTitle, {
+          body: notifMsg,
+          icon: '/assets/icons/icon-192.png',
+          badge: '/assets/icons/icon-192.png',
+          vibrate: [200, 100, 200],
+          tag: broadcastId
+        });
+      }
+    } catch(e) {}
 
     // Add to In-App Notification Center
     try {

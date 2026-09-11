@@ -131,14 +131,14 @@ export function bindCategoryEvents() {
     if (glideRaf) cancelAnimationFrame(glideRaf);
     if (resumeTimeout) clearTimeout(resumeTimeout);
 
-    const speed = 0.55; // Silky smooth speed
+    const speed = 0.6; // Silky smooth 60fps glide speed
 
     function tick() {
       if (!isInteracting && container) {
         container.scrollLeft += speed;
-        const halfWidth = (container.scrollWidth - container.clientWidth) / 2;
-        if (halfWidth > 0 && container.scrollLeft >= halfWidth) {
-          container.scrollLeft -= halfWidth;
+        const oneThird = container.scrollWidth / 3;
+        if (oneThird > 0 && container.scrollLeft >= oneThird * 2) {
+          container.scrollLeft -= oneThird;
         }
       }
       glideRaf = requestAnimationFrame(tick);
