@@ -266,7 +266,7 @@ class _AppDrawerState extends State<AppDrawer> with SingleTickerProviderStateMix
                     ),
                     _buildDrawerItem(
                       icon: Icons.info_outline_rounded,
-                      title: 'About Mobin X',
+                      title: 'About OBIN',
                       iconColor: AppColors.primary,
                       onTap: () {
                         Navigator.of(context).pop();

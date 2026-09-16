@@ -17,20 +17,12 @@ export function renderHeader() {
           </svg>
         </button>
         
-        <div class="app-brand" id="brand-home-trigger" title="Mobin X Home">
-          <div class="brand-logo-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M4 5L12 13L20 5V19H16V10L12 14L8 10V19H4V5Z" fill="url(#headerLogoGrad)"/>
-              <defs>
-                <linearGradient id="headerLogoGrad" x1="4" y1="5" x2="20" y2="19" gradientUnits="userSpaceOnUse">
-                  <stop stop-color="#2563eb"/>
-                  <stop offset="1" stop-color="#00d2ff"/>
-                </linearGradient>
-              </defs>
-            </svg>
+        <div class="app-brand" id="brand-home-trigger" title="OBIN Home">
+          <div class="brand-logo-icon" style="width: 28px; height: 28px; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(56, 189, 248, 0.4); box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);">
+            <img src="assets/images/obin_icon_512.png" alt="OBIN" style="width: 100%; height: 100%; object-fit: cover;" />
           </div>
           <div class="brand-text">
-            <span class="brand-title">Mobin X</span>
+            <span class="brand-title" style="font-weight: 900; letter-spacing: 0.5px;">OBIN</span>
           </div>
         </div>
       </div>

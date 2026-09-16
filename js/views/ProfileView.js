@@ -219,13 +219,13 @@ export function renderProfileView() {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </div>
 
-          <!-- About Mobin X -->
+          <!-- About OBIN -->
           <div class="profile-feature-row" id="p-menu-about" style="padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; cursor: pointer;">
             <div style="display: flex; align-items: center; gap: 12px;">
               <div style="font-size: 18px;">ℹ️</div>
               <div>
-                <div style="font-size: 13px; font-weight: 800; color: #0f172a;">About Mobin X</div>
-                <div style="font-size: 10.5px; color: #64748b;">Version details, studio credits & security shield</div>
+                <div style="font-size: 13px; font-weight: 800; color: #0f172a;">About OBIN</div>
+                <div style="font-size: 10.5px; color: #64748b;">Version details, ecosystem & security shield</div>
               </div>
             </div>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>

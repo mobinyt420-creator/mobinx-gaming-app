@@ -18,7 +18,6 @@ class CompleteProfileSheet extends StatefulWidget {
 class _CompleteProfileSheetState extends State<CompleteProfileSheet> {
   final _nameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
-  final _ffUidCtrl = TextEditingController();
   bool _isLoading = false;
   String? _errorMsg;
 
@@ -29,7 +28,6 @@ class _CompleteProfileSheetState extends State<CompleteProfileSheet> {
     if (user != null) {
       _nameCtrl.text = user.name;
       _phoneCtrl.text = user.phone;
-      _ffUidCtrl.text = user.ffUid;
     }
   }
 
@@ -37,14 +35,12 @@ class _CompleteProfileSheetState extends State<CompleteProfileSheet> {
   void dispose() {
     _nameCtrl.dispose();
     _phoneCtrl.dispose();
-    _ffUidCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _handleSave() async {
     final name = _nameCtrl.text.trim();
     final phone = _phoneCtrl.text.trim();
-    final ffUid = _ffUidCtrl.text.trim();
 
     if (name.isEmpty) {
       setState(() => _errorMsg = 'Please enter your name.');
@@ -64,7 +60,7 @@ class _CompleteProfileSheetState extends State<CompleteProfileSheet> {
       await AuthService.instance.updateUserDetails(
         name: name,
         phone: phone,
-        ffUid: ffUid,
+        ffUid: AuthService.instance.currentUser?.ffUid ?? '',
       );
       if (mounted) {
         Navigator.pop(context);
@@ -240,43 +236,7 @@ class _CompleteProfileSheetState extends State<CompleteProfileSheet> {
               ),
             ),
           ),
-          const SizedBox(height: 14),
-
-          // Free Fire UID Input (Optional)
-          Text(
-            'Free Fire UID (Optional)',
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textMain,
-            ),
-          ),
-          const SizedBox(height: 6),
-          TextField(
-            controller: _ffUidCtrl,
-            keyboardType: TextInputType.number,
-            style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600),
-            decoration: InputDecoration(
-              hintText: 'e.g. 123456789',
-              prefixIcon: const Icon(Icons.sports_esports_outlined, size: 20, color: AppColors.textMuted),
-              filled: true,
-              fillColor: const Color(0xFFF8FAFC),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.borderLight),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.borderLight),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
 
           // Confirm Button
           SizedBox(

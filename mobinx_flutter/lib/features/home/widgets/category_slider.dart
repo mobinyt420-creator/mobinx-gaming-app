@@ -93,79 +93,75 @@ class CategorySlider extends StatefulWidget {
   State<CategorySlider> createState() => _CategorySliderState();
 }
 
-class _CategorySliderState extends State<CategorySlider> {
-  static const double _itemWidth = 68.0;
-  static const double _itemGap = 14.0;
-  static const double _step = _itemWidth + _itemGap; // 82.0
+class _CategorySliderState extends State<CategorySlider> with SingleTickerProviderStateMixin {
+  static const double _itemWidth = 70.0;
+  static const double _itemGap = 12.0;
+  static const double _step = _itemWidth + _itemGap;
 
   late final ScrollController _scrollController;
-  Timer? _idleResumeTimer;
-  Timer? _driftTimer;
-  bool _isInteracting = false;
+  Timer? _autoScrollTimer;
+  Timer? _resumeTimer;
+  bool _isUserTouching = false;
+  late final AnimationController _pulseController;
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
+
+    // Subtle breathing micro-animation controller for icons
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    )..repeat(reverse: true);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        _scheduleAutoDrift(const Duration(milliseconds: 800));
-      }
+      _startSmoothAutoScroll();
     });
   }
 
-  void _scheduleAutoDrift(Duration delay) {
-    _idleResumeTimer?.cancel();
-    _idleResumeTimer = Timer(delay, () {
-      if (mounted && !_isInteracting) {
-        _startSmoothDrift();
-      }
-    });
-  }
+  void _startSmoothAutoScroll() {
+    _autoScrollTimer?.cancel();
+    // Silky smooth 50fps step micro-gliding (~32 pixels/sec)
+    _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 32), (_) {
+      if (!mounted || !_scrollController.hasClients || _isUserTouching) return;
 
-  void _startSmoothDrift() {
-    _driftTimer?.cancel();
-    if (!mounted || !_scrollController.hasClients || _isInteracting) return;
-
-    // Continuous linear glide: animates 60px every 1500ms (~40px/sec)
-    _driftTimer = Timer.periodic(const Duration(milliseconds: 1500), (timer) {
-      if (!mounted || !_scrollController.hasClients || _isInteracting) {
-        timer.cancel();
-        return;
-      }
       try {
         final currentOffset = _scrollController.offset;
-        final cycleWidth = CategorySlider.categories.length * _step;
-        if (currentOffset > cycleWidth * 100) {
-          _scrollController.jumpTo(currentOffset % cycleWidth);
+        final maxOffset = CategorySlider.categories.length * _step * 50;
+
+        double nextOffset = currentOffset + 1.0;
+        if (nextOffset >= maxOffset) {
+          nextOffset = nextOffset % (CategorySlider.categories.length * _step);
+          _scrollController.jumpTo(nextOffset);
+        } else {
+          _scrollController.jumpTo(nextOffset);
         }
-        _scrollController.animateTo(
-          _scrollController.offset + 60,
-          duration: const Duration(milliseconds: 1500),
-          curve: Curves.linear,
-        );
-      } catch (_) {
-        timer.cancel();
-      }
+      } catch (_) {}
     });
   }
 
-  void _pauseDrift() {
-    _isInteracting = true;
-    _idleResumeTimer?.cancel();
-    _driftTimer?.cancel();
+  void _onUserInteractionStart() {
+    _isUserTouching = true;
+    _resumeTimer?.cancel();
   }
 
-  void _resumeDriftAfterDelay() {
-    _isInteracting = false;
-    _scheduleAutoDrift(const Duration(milliseconds: 1500));
+  void _onUserInteractionEnd() {
+    _resumeTimer?.cancel();
+    _resumeTimer = Timer(const Duration(milliseconds: 1800), () {
+      if (mounted) {
+        setState(() {
+          _isUserTouching = false;
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
-    _isInteracting = true;
-    _idleResumeTimer?.cancel();
-    _driftTimer?.cancel();
+    _autoScrollTimer?.cancel();
+    _resumeTimer?.cancel();
+    _pulseController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -173,21 +169,21 @@ class _CategorySliderState extends State<CategorySlider> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      height: 92,
-      child: Listener(
-        onPointerDown: (_) => _pauseDrift(),
-        onPointerUp: (_) => _resumeDriftAfterDelay(),
-        onPointerCancel: (_) => _resumeDriftAfterDelay(),
-        child: NotificationListener<ScrollNotification>(
-          onNotification: (notification) {
-            if (notification is ScrollStartNotification) {
-              _pauseDrift();
-            } else if (notification is ScrollEndNotification) {
-              _resumeDriftAfterDelay();
-            }
-            return false;
-          },
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      height: 98,
+      child: NotificationListener<ScrollNotification>(
+        onNotification: (notification) {
+          if (notification is ScrollStartNotification) {
+            _onUserInteractionStart();
+          } else if (notification is ScrollEndNotification) {
+            _onUserInteractionEnd();
+          }
+          return false;
+        },
+        child: Listener(
+          onPointerDown: (_) => _onUserInteractionStart(),
+          onPointerUp: (_) => _onUserInteractionEnd(),
+          onPointerCancel: (_) => _onUserInteractionEnd(),
           child: ListView.builder(
             controller: _scrollController,
             scrollDirection: Axis.horizontal,
@@ -200,6 +196,8 @@ class _CategorySliderState extends State<CategorySlider> {
                 padding: const EdgeInsets.only(right: _itemGap),
                 child: _PressableCategoryItem(
                   cat: cat,
+                  pulseAnimation: _pulseController,
+                  itemIndex: index % CategorySlider.categories.length,
                   onTap: () => widget.onCategoryTap(cat.route),
                 ),
               );
@@ -211,12 +209,19 @@ class _CategorySliderState extends State<CategorySlider> {
   }
 }
 
-/// Press-to-scale category item with micro-interaction
+/// Press-to-scale category item with glossy squircle feedback & subtle breathing micro-animation
 class _PressableCategoryItem extends StatefulWidget {
   final QuickCategoryItem cat;
+  final Animation<double> pulseAnimation;
+  final int itemIndex;
   final VoidCallback onTap;
 
-  const _PressableCategoryItem({required this.cat, required this.onTap});
+  const _PressableCategoryItem({
+    required this.cat,
+    required this.pulseAnimation,
+    required this.itemIndex,
+    required this.onTap,
+  });
 
   @override
   State<_PressableCategoryItem> createState() => _PressableCategoryItemState();
@@ -227,6 +232,9 @@ class _PressableCategoryItemState extends State<_PressableCategoryItem> {
 
   @override
   Widget build(BuildContext context) {
+    // Staggered micro-pulsing for organic, professional visual flow
+    final isStaggered = widget.itemIndex % 2 == 0;
+
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) {
@@ -236,53 +244,74 @@ class _PressableCategoryItemState extends State<_PressableCategoryItem> {
       onTapCancel: () => setState(() => _isPressed = false),
       child: AnimatedScale(
         scale: _isPressed ? 0.92 : 1.0,
-        duration: const Duration(milliseconds: 120),
+        duration: const Duration(milliseconds: 140),
         curve: Curves.easeOutCubic,
         child: SizedBox(
           width: _CategorySliderState._itemWidth,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Squircle Card with press feedback
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 120),
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: _isPressed
-                      ? Color.lerp(widget.cat.bgColor, widget.cat.iconColor, 0.08)!
-                      : widget.cat.bgColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: widget.cat.iconColor.withValues(alpha: _isPressed ? 0.3 : 0.18),
-                    width: 1.2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: widget.cat.iconColor.withValues(alpha: _isPressed ? 0.2 : 0.12),
-                      blurRadius: _isPressed ? 4 : 8,
-                      offset: Offset(0, _isPressed ? 1 : 3),
+              // Premium Squircle Card with subtle live micro-animation
+              AnimatedBuilder(
+                animation: widget.pulseAnimation,
+                builder: (context, child) {
+                  final pulseVal = widget.pulseAnimation.value;
+                  final subtleGlow = isStaggered ? pulseVal * 0.12 : (1.0 - pulseVal) * 0.12;
+
+                  return Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          widget.cat.bgColor,
+                          Color.lerp(widget.cat.bgColor, Colors.white, 0.45)!,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color: widget.cat.iconColor.withValues(alpha: 0.25 + subtleGlow),
+                        width: 1.4,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: widget.cat.iconColor.withValues(alpha: 0.15 + subtleGlow),
+                          blurRadius: 10 + (subtleGlow * 20),
+                          offset: const Offset(0, 4),
+                        ),
+                        const BoxShadow(
+                          color: Colors.white,
+                          blurRadius: 4,
+                          offset: Offset(-1, -1),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: Center(
-                  child: Icon(
-                    widget.cat.icon,
-                    color: widget.cat.iconColor,
-                    size: 26,
-                  ),
-                ),
+                    child: Center(
+                      child: Transform.scale(
+                        scale: 1.0 + (subtleGlow * 0.25),
+                        child: Icon(
+                          widget.cat.icon,
+                          color: widget.cat.iconColor,
+                          size: 28,
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
-              const SizedBox(height: 5),
+              const SizedBox(height: 6),
               Text(
                 widget.cat.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.inter(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
                   color: AppColors.textMain,
+                  letterSpacing: -0.15,
                 ),
               ),
             ],

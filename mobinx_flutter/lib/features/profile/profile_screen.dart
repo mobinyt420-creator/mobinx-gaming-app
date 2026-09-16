@@ -654,8 +654,8 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               ),
               _buildSettingsTile(
                 icon: Icons.info_outline_rounded,
-                title: 'About Mobin X',
-                subtitle: 'Version details, studio credits & security shield',
+                title: 'About OBIN',
+                subtitle: 'Version details, ecosystem & security shield',
                 iconColor: AppColors.primary,
                 onTap: () {
                   Navigator.push(

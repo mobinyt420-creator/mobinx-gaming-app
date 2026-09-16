@@ -90,7 +90,7 @@ export function renderSettingsView() {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </div>
           <div class="settings-link-row" id="link-about-app" style="padding: 12px 0; display: flex; justify-content: space-between; cursor: pointer;">
-            <span style="font-size: 13px; font-weight: 600;">About Mobin X (V1.0.0)</span>
+            <span style="font-size: 13px; font-weight: 600;">About OBIN (V1.0.0)</span>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </div>
         </div>

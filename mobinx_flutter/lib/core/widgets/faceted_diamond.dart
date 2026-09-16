@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 /// 3D Faceted Sparkling Diamond Widget with floating pulse animation (gemFloat) and star sparkles (✦, ✨)

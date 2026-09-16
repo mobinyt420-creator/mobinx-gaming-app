@@ -19,7 +19,7 @@ class AboutScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'About Mobin X',
+          'About OBIN',
           style: GoogleFonts.outfit(
             fontSize: 17,
             fontWeight: FontWeight.w800,
@@ -36,29 +36,32 @@ class AboutScreen extends StatelessWidget {
         child: Column(
           children: [
             Container(
-              width: 72,
-              height: 72,
+              width: 76,
+              height: 76,
               decoration: BoxDecoration(
-                color: const Color(0xFFE0F2FE),
                 borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: const Color(0xFFBAE6FD), width: 2),
-              ),
-              child: const Center(
-                child: Text(
-                  'M',
-                  style: TextStyle(
-                    color: Color(0xFF0284C7),
-                    fontSize: 38,
-                    fontWeight: FontWeight.w900,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF0284C7).withValues(alpha: 0.25),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
                   ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(22),
+                child: Image.asset(
+                  'assets/images/obin_icon_512.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Image.asset('assets/images/mobinx_icon_512.png', fit: BoxFit.cover),
                 ),
               ),
             ),
             const SizedBox(height: 16),
             Text(
-              'MOBIN X',
+              'OBIN',
               style: GoogleFonts.outfit(
-                fontSize: 22,
+                fontSize: 24,
                 fontWeight: FontWeight.w900,
                 color: AppColors.textMain,
                 letterSpacing: 1.0,
@@ -66,7 +69,7 @@ class AboutScreen extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Your Ultimate Gaming Super Hub • v${AppConstants.appVersion}',
+              'The Ultimate Super App Ecosystem • v${AppConstants.appVersion}',
               style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
@@ -75,7 +78,7 @@ class AboutScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Mobin X is a next-generation esports super hub and digital marketplace designed for gamers. Get instant diamond top-ups, custom sensitivity calibrations, safe resource downloads, and competitive tournaments.',
+              'OBIN is a next-generation super app combining shop & e-commerce, instant diamond top-ups, custom sensitivity calibrations, safe resource downloads, and esports tournaments.',
               textAlign: TextAlign.center,
               style: GoogleFonts.inter(
                 fontSize: 13,
@@ -93,13 +96,13 @@ class AboutScreen extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  _buildMetaRow('App Version', 'v${AppConstants.appVersion} Stable (OB45 Meta)'),
+                  _buildMetaRow('App Version', 'v${AppConstants.appVersion} Stable (OBIN 2026.09)'),
                   const Divider(color: AppColors.borderLight),
-                  _buildMetaRow('Developer', 'Mobin X Studio'),
+                  _buildMetaRow('Platform', 'OBIN Super App Ecosystem'),
                   const Divider(color: AppColors.borderLight),
                   _buildMetaRow('Framework', 'Pure Flutter Native Engine'),
                   const Divider(color: AppColors.borderLight),
-                  _buildMetaRow('Security Shield', 'Mobin Shield 2.0 (Active)', isGreen: true),
+                  _buildMetaRow('Security Shield', 'OBIN Shield 2.0 (Active)', isGreen: true),
                 ],
               ),
             ),

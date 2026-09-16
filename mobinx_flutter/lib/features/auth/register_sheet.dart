@@ -145,7 +145,7 @@ class _RegisterSheetState extends State<RegisterSheet> {
                       ),
                     ),
                     Text(
-                      'Join Mobin X official esports ecosystem',
+                      'Join OBIN official super app ecosystem',
                       style: GoogleFonts.inter(
                         fontSize: 11.5,
                         color: const Color(0xFF64748B),

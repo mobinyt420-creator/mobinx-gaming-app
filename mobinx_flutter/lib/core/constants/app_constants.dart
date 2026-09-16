@@ -3,8 +3,8 @@ class AppConstants {
   AppConstants._();
 
   // App Identity
-  static const String appName = 'Mobin X';
-  static const String appTagline = 'Gaming Super-App Ecosystem';
+  static const String appName = 'OBIN';
+  static const String appTagline = 'The Ultimate Super App Ecosystem';
   static const String appVersion = '3.0.0';
   static const int appVersionCode = 3;
   static const String packageName = 'com.mobinx.gaming';

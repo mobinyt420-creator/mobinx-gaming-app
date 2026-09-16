@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/models/download_item_model.dart';
 import '../../../core/services/download_service.dart';
@@ -17,9 +16,6 @@ class ToolCard extends StatefulWidget {
 }
 
 class _ToolCardState extends State<ToolCard> {
-  bool _isPlaying = false;
-  YoutubePlayerController? _ytController;
-
   String _getYoutubeId() {
     var raw = widget.item.youtubeId.trim();
     if (raw.contains('watch?v=')) {
@@ -37,36 +33,10 @@ class _ToolCardState extends State<ToolCard> {
     DownloadService.instance.launchUrlString('https://www.youtube.com/watch?v=$yId');
   }
 
-  void _startInAppVideo() {
+  void _handleVideoTap() {
     final yId = _getYoutubeId();
-    _ytController?.close();
-    _ytController = YoutubePlayerController.fromVideoId(
-      videoId: yId,
-      autoPlay: true,
-      params: const YoutubePlayerParams(
-        showControls: true,
-        showFullscreenButton: true,
-        mute: false,
-        showVideoAnnotations: false,
-      ),
-    );
-    setState(() {
-      _isPlaying = true;
-    });
-  }
-
-  void _stopInAppVideo() {
-    _ytController?.close();
-    _ytController = null;
-    setState(() {
-      _isPlaying = false;
-    });
-  }
-
-  @override
-  void dispose() {
-    _ytController?.close();
-    super.dispose();
+    // Safely open video directly in YouTube app or external player to avoid WebView OOM crash
+    DownloadService.instance.launchUrlString('https://www.youtube.com/watch?v=$yId');
   }
 
   @override
@@ -90,105 +60,76 @@ class _ToolCardState extends State<ToolCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. 16:9 Video Player / Thumbnail Preview
+          // 1. 16:9 Video Player / Instant High-Res Thumbnail Preview
           AspectRatio(
             aspectRatio: 16 / 9,
-            child: _isPlaying && _ytController != null
-                ? Stack(
-                    children: [
-                      Positioned.fill(
-                        child: YoutubePlayer(
-                          controller: _ytController!,
-                          aspectRatio: 16 / 9,
+            child: GestureDetector(
+              onTap: _handleVideoTap,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  _buildThumbnail(item.videoThumbnail),
+
+                  // Subtle gradient overlay for contrast
+                  Container(
+                    color: Colors.black.withValues(alpha: 0.15),
+                  ),
+
+                  // Compact Category Badge (Top Left)
+                  if (item.category.isNotEmpty)
+                    Positioned(
+                      top: 10,
+                      left: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F172A).withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: Colors.white24, width: 0.8),
                         ),
-                      ),
-                      // Stop / Close player button (returns to HD thumbnail)
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: InkWell(
-                          onTap: _stopInAppVideo,
-                          borderRadius: BorderRadius.circular(16),
-                          child: Container(
-                            padding: const EdgeInsets.all(5),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.75),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white38),
-                            ),
-                            child: const Icon(Icons.close_rounded, color: Colors.white, size: 16),
+                        child: Text(
+                          item.category,
+                          style: const TextStyle(
+                            fontFamily: 'Outfit',
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            letterSpacing: 0.2,
                           ),
                         ),
                       ),
-                    ],
-                  )
-                : GestureDetector(
-                    onTap: _startInAppVideo,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        _buildThumbnail(item.videoThumbnail),
+                    ),
 
-                        // Subtle gradient overlay for contrast
-                        Container(
-                          color: Colors.black.withValues(alpha: 0.12),
-                        ),
-
-                        // Compact Category Badge (Top Left, Subtle & Non-Intrusive)
-                        if (item.category.isNotEmpty)
-                          Positioned(
-                            top: 8,
-                            left: 8,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF0F172A).withValues(alpha: 0.82),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: Colors.white24, width: 0.8),
-                              ),
-                              child: Text(
-                                item.category,
-                                style: const TextStyle(
-                                  fontFamily: 'Outfit',
-                                  fontSize: 9.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                  letterSpacing: 0.2,
-                                ),
-                              ),
-                            ),
+                  // Center Circular Blue Play Button with pulse feedback
+                  Center(
+                    child: Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFF2563EB),
+                        border: Border.all(color: Colors.white, width: 2.2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF2563EB).withValues(alpha: 0.5),
+                            blurRadius: 18,
+                            spreadRadius: 2,
+                            offset: const Offset(0, 4),
                           ),
-
-                        // Center Circular Blue Play Button -> Plays In-App
-                        Center(
-                          child: Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: const Color(0xFF2563EB),
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.9), width: 2.0),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.4),
-                                  blurRadius: 16,
-                                  spreadRadius: 1,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.play_arrow_rounded,
-                                color: Colors.white,
-                                size: 30,
-                              ),
-                            ),
-                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.play_arrow_rounded,
+                          color: Colors.white,
+                          size: 34,
                         ),
-                      ],
+                      ),
                     ),
                   ),
+                ],
+              ),
+            ),
           ),
 
           // 2. Body Details
@@ -352,25 +293,19 @@ class _ToolCardState extends State<ToolCard> {
 
   Widget _buildYouTubeThumbnail(String yId) {
     return CachedNetworkImage(
-      imageUrl: 'https://img.youtube.com/vi/$yId/maxresdefault.jpg',
+      imageUrl: 'https://img.youtube.com/vi/$yId/hqdefault.jpg',
       fit: BoxFit.cover,
       alignment: Alignment.center,
       filterQuality: FilterQuality.high,
       placeholder: (_, _) => Container(color: const Color(0xFF0F172A)),
       errorWidget: (_, _, _) => CachedNetworkImage(
-        imageUrl: 'https://img.youtube.com/vi/$yId/sddefault.jpg',
+        imageUrl: 'https://img.youtube.com/vi/$yId/mqdefault.jpg',
         fit: BoxFit.cover,
         alignment: Alignment.center,
         filterQuality: FilterQuality.high,
-        errorWidget: (_, _, _) => CachedNetworkImage(
-          imageUrl: 'https://img.youtube.com/vi/$yId/hqdefault.jpg',
+        errorWidget: (_, _, _) => Image.asset(
+          'assets/images/banner_esports.jpg',
           fit: BoxFit.cover,
-          alignment: Alignment.center,
-          filterQuality: FilterQuality.high,
-          errorWidget: (_, _, _) => Image.asset(
-            'assets/images/banner_esports.jpg',
-            fit: BoxFit.cover,
-          ),
         ),
       ),
     );

@@ -22,21 +22,20 @@ class _GoogleProfileSheetState extends State<GoogleProfileSheet> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _ffUidController = TextEditingController();
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    // Default name from Google user or prompt user
-    _nameController.text = widget.googleUser.displayName ?? '';
+    // Start completely empty so player manually enters their Name & Phone
+    _nameController.text = '';
+    _phoneController.text = '';
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
-    _ffUidController.dispose();
     super.dispose();
   }
 
@@ -50,7 +49,7 @@ class _GoogleProfileSheetState extends State<GoogleProfileSheet> {
         googleUser: widget.googleUser,
         customName: _nameController.text.trim(),
         phone: _phoneController.text.trim(),
-        ffUid: _ffUidController.text.trim(),
+        ffUid: '',
       );
 
       if (!mounted) return;
@@ -204,29 +203,7 @@ class _GoogleProfileSheetState extends State<GoogleProfileSheet> {
                   return null;
                 },
               ),
-              const SizedBox(height: 14),
-
-              // 3. Free Fire UID (Optional)
-              const Text(
-                'Free Fire UID (Optional)',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textMain,
-                ),
-              ),
-              const SizedBox(height: 6),
-              TextFormField(
-                controller: _ffUidController,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w600),
-                decoration: InputDecoration(
-                  hintText: 'e.g. 1234567890',
-                  prefixIcon: const Icon(Icons.sports_esports_outlined, size: 18, color: Color(0xFF64748B)),
-                ),
-              ),
-              const SizedBox(height: 22),
+              const SizedBox(height: 24),
 
               // Submit Button
               SizedBox(

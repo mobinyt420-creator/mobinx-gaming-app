@@ -5364,9 +5364,27 @@ function bindCurrentTabEvents() {
   // Helper: Dispatch FCM Push to Android Devices (Background & Terminated Wakeup)
   async function dispatchFcmToAllDevices(notif) {
     const serverKey = localStorage.getItem('mobinx_fcm_server_key') || '';
+
+    // 1. Dispatch via local/Vercel serverless proxy /api/send-fcm (Zero CORS issues)
+    try {
+      const resp = await fetch('/api/send-fcm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notification: notif, serverKey: serverKey })
+      });
+      if (resp.ok) {
+        const resData = await resp.json();
+        console.log('✅ Server FCM Proxy dispatch result:', resData);
+        if (resData.success) return true;
+      }
+    } catch (proxyErr) {
+      console.warn('Server proxy notice:', proxyErr.message);
+    }
+
     if (!serverKey) return false;
 
-    const topics = ['all_users', 'mobinx_broadcast', 'all'];
+    // 2. Direct FCM Legacy HTTP fallback
+    const topics = ['all', 'all_users', 'mobinx_broadcast', 'obin_broadcast'];
     const payloadBase = {
       priority: 'high',
       notification: {

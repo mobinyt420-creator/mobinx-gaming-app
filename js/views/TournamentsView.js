@@ -42,7 +42,7 @@ export function renderTournamentsView() {
           <div class="state-container">
             <div class="state-icon-circle">🎮</div>
             <h3 class="state-title">No BR Matches Scheduled</h3>
-            <p class="state-desc">New Battle Royale custom rooms are published daily by Mobin X Admin!</p>
+            <p class="state-desc">New Battle Royale custom rooms are published daily by OBIN Admin!</p>
           </div>
         ` : items.map(match => {
           const spotsLeft = Math.max(0, match.slotsTotal - match.slotsFilled);
@@ -192,7 +192,7 @@ export function renderTournamentsView() {
                   ${match.prize2nd ? `<div class="prize-item"><span>🥈 2nd Place:</span> <span class="prize-val" style="color:#3b82f6; font-weight:800;">${match.prize2nd}</span></div>` : ''}
                   ${match.prize3rd ? `<div class="prize-item"><span>🥉 3rd Place:</span> <span class="prize-val" style="color:#eab308; font-weight:800;">${match.prize3rd}</span></div>` : ''}
                   ${match.prizeKill ? `<div class="prize-item"><span>🎯 Per Kill / MVP:</span> <span class="prize-val" style="color:#06b6d4; font-weight:800;">${match.prizeKill}</span></div>` : ''}
-                  <p class="room-notice">🎁 Cash (bKash/Nagad) or Diamonds credited instantly upon match completion by Mobin X Admin.</p>
+                  <p class="room-notice">🎁 Cash (bKash/Nagad) or Diamonds credited instantly upon match completion by OBIN Admin.</p>
                 </div>
               </div>
 

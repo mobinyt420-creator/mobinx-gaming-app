@@ -244,7 +244,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const Divider(color: AppColors.borderLight, height: 1),
                   ListTile(
                     dense: true,
-                    title: Text('About Mobin X (v${AppConstants.appVersion})', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600)),
+                    title: Text('About OBIN (v${AppConstants.appVersion})', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600)),
                     trailing: const Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.textMuted),
                     onTap: () {
                       Navigator.push(context, SharedAxisPageRoute(page: const AboutScreen()));

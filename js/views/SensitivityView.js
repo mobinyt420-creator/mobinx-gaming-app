@@ -508,7 +508,7 @@ export function bindSensitivityEvents() {
   // Share Button
   document.getElementById('btn-sens-share')?.addEventListener('click', async () => {
     const preset = currentSensiData.presets[activePresetIndex];
-    const text = `🎯 Free Fire Headshot Sensi for ${currentSensiData.deviceName} (${preset.tabName}):\n• General: ${isNoDpiMode ? preset.noDpiGeneral : preset.general}\n• Red Dot: ${preset.redDot}\n• 2x Scope: ${preset.scope2x}\n• 4x Scope: ${preset.scope4x}\n• Button Size: ${preset.buttonSize}\n• DPI: ${isNoDpiMode ? 'Default (No DPI)' : preset.dpi}\n⚡ Get Mobin X App: https://mobinx-gaming-app.vercel.app/`;
+    const text = `🎯 Free Fire Headshot Sensi for ${currentSensiData.deviceName} (${preset.tabName}):\n• General: ${isNoDpiMode ? preset.noDpiGeneral : preset.general}\n• Red Dot: ${preset.redDot}\n• 2x Scope: ${preset.scope2x}\n• 4x Scope: ${preset.scope4x}\n• Button Size: ${preset.buttonSize}\n• DPI: ${isNoDpiMode ? 'Default (No DPI)' : preset.dpi}\n⚡ Get OBIN App: https://mobinx-gaming-app.vercel.app/`;
     
     if (navigator.clipboard) {
       try {

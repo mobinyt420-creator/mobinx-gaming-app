@@ -43,11 +43,9 @@ class DownloadService {
       } catch (_) {}
     }
 
-    // 2. Fetch latest live items asynchronously in background after initial render
-    Future.delayed(const Duration(milliseconds: 1600), () {
-      refresh();
-      _setupFirestoreListener();
-    });
+    // 2. Fetch latest live items and listen in real-time immediately
+    refresh();
+    _setupFirestoreListener();
   }
 
   void _setupFirestoreListener() {

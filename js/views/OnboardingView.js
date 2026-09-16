@@ -30,16 +30,16 @@ function renderWelcomeStep() {
       
       <!-- Top Branding -->
       <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-top: 6px;">
-        <div style="width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(37, 99, 235, 0.45); margin-bottom: 10px; border: 1.5px solid rgba(56, 189, 248, 0.4);">
-          <img src="assets/images/mobinx_icon_512.png" alt="Mobin X" style="width: 46px; height: 46px; border-radius: 12px; object-fit: cover;" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 24 24\\' fill=\\'white\\'><path d=\\'M4 5L12 13L20 5V19H16V10L12 14L8 10V19H4V5Z\\'/></svg>';" />
+        <div style="width: 58px; height: 58px; border-radius: 16px; overflow: hidden; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 24px rgba(2, 132, 199, 0.45); margin-bottom: 10px; border: 1.5px solid rgba(56, 189, 248, 0.4);">
+          <img src="assets/images/obin_icon_512.png" alt="OBIN" style="width: 100%; height: 100%; object-fit: cover;" />
         </div>
 
         <span style="font-size: 13.5px; font-weight: 600; color: #cbd5e1; letter-spacing: 0.2px;">Welcome to</span>
-        <h1 style="font-size: 32px; font-weight: 900; color: #38bdf8; margin: 2px 0 4px 0; font-family: var(--font-heading); letter-spacing: -0.5px; text-shadow: 0 0 20px rgba(56, 189, 248, 0.4);">
-          Mobin X
+        <h1 style="font-size: 32px; font-weight: 900; color: #38bdf8; margin: 2px 0 4px 0; font-family: var(--font-heading); letter-spacing: 0.5px; text-shadow: 0 0 20px rgba(56, 189, 248, 0.4);">
+          OBIN
         </h1>
         <p style="font-size: 13px; color: #94a3b8; margin: 0; font-weight: 500;">
-          Your Ultimate Gaming Hub
+          The Ultimate Super App
         </p>
       </div>
 
@@ -126,10 +126,10 @@ function renderAuthSelectionView() {
         
         <!-- Header Branding -->
         <div style="display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 22px;">
-          <div style="width: 58px; height: 58px; border-radius: 18px; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 25px rgba(37, 99, 235, 0.45); margin-bottom: 12px; border: 1.5px solid rgba(56, 189, 248, 0.45);">
-            <img src="assets/images/mobinx_icon_512.png" alt="Mobin X" style="width: 48px; height: 48px; border-radius: 14px; object-fit: cover;" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' viewBox=\\'0 0 24 24\\' fill=\\'white\\'><path d=\\'M4 5L12 13L20 5V19H16V10L12 14L8 10V19H4V5Z\\'/></svg>';" />
+          <div style="width: 58px; height: 58px; border-radius: 18px; overflow: hidden; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 25px rgba(2, 132, 199, 0.45); margin-bottom: 12px; border: 1.5px solid rgba(56, 189, 248, 0.45);">
+            <img src="assets/images/obin_icon_512.png" alt="OBIN" style="width: 100%; height: 100%; object-fit: cover;" />
           </div>
-          <h2 style="font-size: 24px; font-weight: 900; color: #ffffff; margin: 0; letter-spacing: 0.5px; font-family: var(--font-heading);">MOBIN X</h2>
+          <h2 style="font-size: 24px; font-weight: 900; color: #ffffff; margin: 0; letter-spacing: 0.5px; font-family: var(--font-heading);">OBIN</h2>
           <span style="font-size: 11px; font-weight: 800; color: #38bdf8; letter-spacing: 1.2px; text-transform: uppercase; margin-top: 3px;">Sign In to Continue</span>
         </div>
 

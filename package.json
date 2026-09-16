@@ -1,7 +1,7 @@
 {
-  "name": "mobin-x-app",
+  "name": "obin-super-app",
   "version": "1.0.0",
-  "description": "Mobin X Gaming Ecosystem - Official Android App",
+  "description": "OBIN Super App Ecosystem - Official App",
   "type": "module",
   "main": "server.js",
   "scripts": {

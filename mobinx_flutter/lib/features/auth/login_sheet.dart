@@ -246,7 +246,7 @@ class _LoginSheetState extends State<LoginSheet> {
 
             // Submit Button
             GamerButton(
-              label: 'Sign In to Mobin X',
+              label: 'Sign In to OBIN',
               isLoading: _isLoading,
               onPressed: _handleLogin,
               icon: Icons.login_rounded,
