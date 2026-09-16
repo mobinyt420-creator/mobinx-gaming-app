@@ -21,19 +21,82 @@ class AuthService {
     scopes: ['email', 'profile'],
   );
 
+  final ValueNotifier<Map<String, dynamic>> authSettingsNotifier = ValueNotifier<Map<String, dynamic>>({
+    'authSystemEnabled': true,
+    'googleLoginEnabled': true,
+    'googlePhoneVerificationEnabled': false,
+    'manualLoginEnabled': true,
+    'manualRegistrationEnabled': true,
+    'manualEmailVerificationEnabled': false,
+    'manualPhoneVerificationEnabled': false,
+    'allowGoogleAuth': true,
+    'allowManualLogin': true,
+    'allowManualRegistration': true,
+  });
+
+  bool get isManualLoginEnabled => authSettingsNotifier.value['manualLoginEnabled'] != false;
+  bool get isManualRegistrationEnabled => authSettingsNotifier.value['manualRegistrationEnabled'] != false;
+  bool get isGoogleLoginEnabled => authSettingsNotifier.value['googleLoginEnabled'] != false;
+
   /// Initialize user session on app launch
   Future<void> init() async {
     final cached = StorageService.getUser();
     if (cached != null) {
       userNotifier.value = cached;
     }
+
+    // 1. Load cached auth settings
+    try {
+      final cachedSettings = StorageService.getCache(AppConstants.keyAuthSettings);
+      if (cachedSettings is Map) {
+        authSettingsNotifier.value = {
+          ...authSettingsNotifier.value,
+          ...Map<String, dynamic>.from(cachedSettings),
+        };
+      }
+    } catch (_) {}
+
+    // 2. Real-time Firestore auth_settings listener
+    _setupAuthSettingsListener();
   }
 
-  final ValueNotifier<Map<String, dynamic>> authSettingsNotifier = ValueNotifier<Map<String, dynamic>>({
-    'allowGoogleAuth': true,
-    'allowManualLogin': true,
-    'allowManualRegistration': true,
-  });
+  void _setupAuthSettingsListener() {
+    try {
+      if (FirebaseService.isInitialized) {
+        FirebaseService.firestore
+            .collection('config')
+            .doc('auth_settings')
+            .snapshots()
+            .listen((snapshot) {
+          if (snapshot.exists && snapshot.data() != null) {
+            final data = snapshot.data()!;
+            final manualLogin = data['manualLoginEnabled'] ?? true;
+            final manualReg = data['manualRegistrationEnabled'] ?? true;
+            final googleLogin = data['googleLoginEnabled'] ?? true;
+
+            authSettingsNotifier.value = {
+              'authSystemEnabled': data['authSystemEnabled'] ?? true,
+              'googleLoginEnabled': googleLogin,
+              'googlePhoneVerificationEnabled': data['googlePhoneVerificationEnabled'] ?? false,
+              'manualLoginEnabled': manualLogin,
+              'manualRegistrationEnabled': manualReg,
+              'manualEmailVerificationEnabled': data['manualEmailVerificationEnabled'] ?? false,
+              'manualPhoneVerificationEnabled': data['manualPhoneVerificationEnabled'] ?? false,
+              'allowGoogleAuth': googleLogin,
+              'allowManualLogin': manualLogin,
+              'allowManualRegistration': manualReg,
+            };
+            StorageService.setCache(AppConstants.keyAuthSettings, authSettingsNotifier.value);
+            debugPrint('🔐 [AuthService] Updated authSettings live: ${authSettingsNotifier.value}');
+          }
+        }, onError: (err) {
+          debugPrint('Auth settings listener notice: $err');
+        });
+      }
+    } catch (e) {
+      debugPrint('Setup auth settings listener notice: $e');
+    }
+  }
 
   /// Pick Google account without immediate auto-login
   Future<GoogleSignInAccount?> pickGoogleAccount() async {

@@ -260,6 +260,12 @@ class NotificationService {
   /// Check if Push Notification Permission is currently granted
   Future<bool> isPermissionGranted() async {
     try {
+      final androidPlugin = _localNotifications
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      if (androidPlugin != null) {
+        final areEnabled = await androidPlugin.areNotificationsEnabled();
+        if (areEnabled != null) return areEnabled;
+      }
       final settings = await FirebaseMessaging.instance.getNotificationSettings();
       return settings.authorizationStatus == AuthorizationStatus.authorized ||
           settings.authorizationStatus == AuthorizationStatus.provisional;
@@ -272,28 +278,26 @@ class NotificationService {
   /// Request System Push Notification Permission (Android 13+ and iOS)
   Future<bool> requestPermission() async {
     try {
-      final messaging = FirebaseMessaging.instance;
-      final settings = await messaging.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-        provisional: false,
-      );
-
       final androidPlugin = _localNotifications
           .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
       if (androidPlugin != null) {
         await androidPlugin.requestNotificationsPermission();
       }
 
-      final granted = settings.authorizationStatus == AuthorizationStatus.authorized ||
-          settings.authorizationStatus == AuthorizationStatus.provisional;
+      final messaging = FirebaseMessaging.instance;
+      await messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+        provisional: false,
+      );
 
-      if (granted) {
+      final isGranted = await isPermissionGranted();
+      if (isGranted) {
         await _registerAndSubscribe(messaging);
       }
 
-      return granted;
+      return isGranted;
     } catch (e) {
       debugPrint('[NotificationService] Permission request error: $e');
       return false;

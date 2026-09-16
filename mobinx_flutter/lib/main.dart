@@ -8,6 +8,7 @@ import 'core/services/storage_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'core/services/notification_service.dart';
+import 'core/services/auth_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,6 +32,7 @@ void main() async {
   // 3. Initialize Firebase & Notification system asynchronously in background
   FirebaseService.init().then((_) {
     NotificationService.instance.init();
+    AuthService.instance.init();
   }).catchError((e) {
     debugPrint('Background Firebase init: $e');
   });

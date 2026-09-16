@@ -20,7 +20,6 @@ import '../referral/referral_screen.dart';
 import '../help/help_screen.dart';
 import '../settings/settings_screen.dart';
 import '../about/about_screen.dart';
-import '../../core/widgets/notification_permission_dialog.dart';
 import 'widgets/hero_banner_carousel.dart';
 import 'widgets/category_slider.dart';
 import 'widgets/popular_services_grid.dart';
@@ -46,8 +45,11 @@ class _HomeScreenState extends State<HomeScreen> {
     HomeDataService.instance.init();
     StoreService.instance.init();
     NotificationService.instance.init();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      NotificationPermissionDialog.showIfNeeded(context);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final isGranted = await NotificationService.instance.isPermissionGranted();
+      if (!isGranted) {
+        await NotificationService.instance.requestPermission();
+      }
     });
   }
 
