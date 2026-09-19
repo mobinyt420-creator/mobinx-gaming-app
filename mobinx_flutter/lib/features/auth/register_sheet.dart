@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/gamer_components.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/storage_service.dart';
 
 class RegisterSheet extends StatefulWidget {
   final VoidCallback onLoginTap;
@@ -24,9 +25,16 @@ class _RegisterSheetState extends State<RegisterSheet> {
   final _phoneCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _cpassCtrl = TextEditingController();
+  final _referralCtrl = TextEditingController();
   bool _obscurePass = true;
   bool _isLoading = false;
   String? _errorMsg;
+
+  @override
+  void initState() {
+    super.initState();
+    _referralCtrl.text = StorageService.getReferralCode();
+  }
 
   @override
   void dispose() {
@@ -35,6 +43,7 @@ class _RegisterSheetState extends State<RegisterSheet> {
     _phoneCtrl.dispose();
     _passCtrl.dispose();
     _cpassCtrl.dispose();
+    _referralCtrl.dispose();
     super.dispose();
   }
 
@@ -248,6 +257,28 @@ class _RegisterSheetState extends State<RegisterSheet> {
               obscureText: _obscurePass,
               style: const TextStyle(color: AppColors.textMain, fontSize: 14),
               decoration: _inputDeco('Re-enter password', Icons.lock_reset_rounded),
+            ),
+            const SizedBox(height: 12),
+
+            // Referral Code (Optional)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Invite / Referral Code (Optional)', style: GoogleFonts.outfit(fontSize: 12.5, fontWeight: FontWeight.w800, color: AppColors.textMain)),
+                Text('🎁 +100 💎 Bonus', style: GoogleFonts.outfit(fontSize: 11.5, fontWeight: FontWeight.w800, color: const Color(0xFF16A34A))),
+              ],
+            ),
+            const SizedBox(height: 5),
+            TextField(
+              controller: _referralCtrl,
+              textCapitalization: TextCapitalization.characters,
+              style: const TextStyle(color: AppColors.textMain, fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 1.0),
+              decoration: _inputDeco('e.g. MOBINXVIP', Icons.card_giftcard_rounded),
+              onChanged: (val) {
+                if (val.trim().isNotEmpty) {
+                  StorageService.setReferralCode(val.trim());
+                }
+              },
             ),
             const SizedBox(height: 22),
 

@@ -107,7 +107,9 @@ class _CategorySliderState extends State<CategorySlider> with SingleTickerProvid
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController();
+    // Start at a balanced middle index so users can scroll both left and right smoothly
+    const initialIndex = 50 * 7;
+    _scrollController = ScrollController(initialScrollOffset: initialIndex * _step);
 
     // Subtle breathing micro-animation controller for icons
     _pulseController = AnimationController(
@@ -116,27 +118,31 @@ class _CategorySliderState extends State<CategorySlider> with SingleTickerProvid
     )..repeat(reverse: true);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _startSmoothAutoScroll();
+      _startGentleAutoScroll();
     });
   }
 
-  void _startSmoothAutoScroll() {
+  void _startGentleAutoScroll() {
     _autoScrollTimer?.cancel();
-    // Silky smooth 50fps step micro-gliding (~32 pixels/sec)
-    _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 32), (_) {
+    // Gentle step glide every 2.6 seconds (smooth 850ms transition + ~1.75s pause)
+    _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 2600), (_) {
       if (!mounted || !_scrollController.hasClients || _isUserTouching) return;
 
       try {
         final currentOffset = _scrollController.offset;
-        final maxOffset = CategorySlider.categories.length * _step * 50;
+        final double loopWidth = CategorySlider.categories.length * _step;
 
-        double nextOffset = currentOffset + 1.0;
-        if (nextOffset >= maxOffset) {
-          nextOffset = nextOffset % (CategorySlider.categories.length * _step);
-          _scrollController.jumpTo(nextOffset);
-        } else {
-          _scrollController.jumpTo(nextOffset);
+        // Reset if scrolled extremely far to keep offsets within normal double ranges
+        if (currentOffset > loopWidth * 60) {
+          final normalized = currentOffset % loopWidth + (loopWidth * 20);
+          _scrollController.jumpTo(normalized);
         }
+
+        _scrollController.animateTo(
+          _scrollController.offset + _step,
+          duration: const Duration(milliseconds: 850),
+          curve: Curves.easeInOutCubic,
+        );
       } catch (_) {}
     });
   }
@@ -148,11 +154,9 @@ class _CategorySliderState extends State<CategorySlider> with SingleTickerProvid
 
   void _onUserInteractionEnd() {
     _resumeTimer?.cancel();
-    _resumeTimer = Timer(const Duration(milliseconds: 1800), () {
+    _resumeTimer = Timer(const Duration(milliseconds: 2200), () {
       if (mounted) {
-        setState(() {
-          _isUserTouching = false;
-        });
+        _isUserTouching = false;
       }
     });
   }
@@ -171,38 +175,28 @@ class _CategorySliderState extends State<CategorySlider> with SingleTickerProvid
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
       height: 98,
-      child: NotificationListener<ScrollNotification>(
-        onNotification: (notification) {
-          if (notification is ScrollStartNotification) {
-            _onUserInteractionStart();
-          } else if (notification is ScrollEndNotification) {
-            _onUserInteractionEnd();
-          }
-          return false;
-        },
-        child: Listener(
-          onPointerDown: (_) => _onUserInteractionStart(),
-          onPointerUp: (_) => _onUserInteractionEnd(),
-          onPointerCancel: (_) => _onUserInteractionEnd(),
-          child: ListView.builder(
-            controller: _scrollController,
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            itemCount: 10000,
-            itemBuilder: (context, index) {
-              final cat = CategorySlider.categories[index % CategorySlider.categories.length];
-              return Padding(
-                padding: const EdgeInsets.only(right: _itemGap),
-                child: _PressableCategoryItem(
-                  cat: cat,
-                  pulseAnimation: _pulseController,
-                  itemIndex: index % CategorySlider.categories.length,
-                  onTap: () => widget.onCategoryTap(cat.route),
-                ),
-              );
-            },
-          ),
+      child: Listener(
+        onPointerDown: (_) => _onUserInteractionStart(),
+        onPointerUp: (_) => _onUserInteractionEnd(),
+        onPointerCancel: (_) => _onUserInteractionEnd(),
+        child: ListView.builder(
+          controller: _scrollController,
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          itemCount: 10000,
+          itemBuilder: (context, index) {
+            final cat = CategorySlider.categories[index % CategorySlider.categories.length];
+            return Padding(
+              padding: const EdgeInsets.only(right: _itemGap),
+              child: _PressableCategoryItem(
+                cat: cat,
+                pulseAnimation: _pulseController,
+                itemIndex: index % CategorySlider.categories.length,
+                onTap: () => widget.onCategoryTap(cat.route),
+              ),
+            );
+          },
         ),
       ),
     );

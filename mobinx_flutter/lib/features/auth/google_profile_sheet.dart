@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/storage_service.dart';
 
 /// Modal Sheet asking for Player Name & Phone after choosing Google Account
 class GoogleProfileSheet extends StatefulWidget {
@@ -22,20 +23,23 @@ class _GoogleProfileSheetState extends State<GoogleProfileSheet> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _referralController = TextEditingController();
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    // Start completely empty so player manually enters their Name & Phone
+    // Start empty, pre-populate referral if stored
     _nameController.text = '';
     _phoneController.text = '';
+    _referralController.text = StorageService.getReferralCode();
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
+    _referralController.dispose();
     super.dispose();
   }
 
@@ -192,15 +196,56 @@ class _GoogleProfileSheetState extends State<GoogleProfileSheet> {
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 style: const TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w600),
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: '01XXXXXXXXX',
-                  prefixIcon: const Icon(Icons.phone_android_rounded, size: 18, color: Color(0xFF64748B)),
+                  prefixIcon: Icon(Icons.phone_android_rounded, size: 18, color: Color(0xFF64748B)),
                 ),
                 validator: (val) {
                   if (val == null || val.trim().length < 6) {
                     return 'Please enter your phone/WhatsApp number';
                   }
                   return null;
+                },
+              ),
+              const SizedBox(height: 14),
+
+              // 3. Referral Code (Optional)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: const [
+                  Text(
+                    'Invite / Referral Code (Optional)',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textMain,
+                    ),
+                  ),
+                  Text(
+                    '🎁 +100 💎 Bonus',
+                    style: TextStyle(
+                      fontFamily: 'Outfit',
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF16A34A),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              TextFormField(
+                controller: _referralController,
+                textCapitalization: TextCapitalization.characters,
+                style: const TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 1.0),
+                decoration: const InputDecoration(
+                  hintText: 'e.g. MOBINXVIP',
+                  prefixIcon: Icon(Icons.card_giftcard_rounded, size: 18, color: Color(0xFF16A34A)),
+                ),
+                onChanged: (val) {
+                  if (val.trim().isNotEmpty) {
+                    StorageService.setReferralCode(val.trim());
+                  }
                 },
               ),
               const SizedBox(height: 24),

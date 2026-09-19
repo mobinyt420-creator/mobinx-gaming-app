@@ -74,4 +74,13 @@ class StorageService {
     final today = DateTime.now().toIso8601String().substring(0, 10);
     await _prefs?.setString('notice_dismissed_$noticeId', today);
   }
+
+  // --- REFERRAL CODE PERSISTENCE ---
+  static String getReferralCode() {
+    return _prefs?.getString('pending_referral_code') ?? '';
+  }
+
+  static Future<void> setReferralCode(String code) async {
+    await _prefs?.setString('pending_referral_code', code.trim().toUpperCase());
+  }
 }
