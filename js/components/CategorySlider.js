@@ -104,7 +104,7 @@ export function renderCategorySlider() {
   });
 
   // Duplicate set to create seamless infinite loop animation
-  const duplicatedList = [...activeCategories, ...activeCategories, ...activeCategories];
+  const duplicatedList = [...activeCategories, ...activeCategories, ...activeCategories, ...activeCategories];
 
   return `
     <section class="category-section">
@@ -126,20 +126,25 @@ export function renderCategorySlider() {
 
 export function bindCategoryEvents() {
   const container = document.getElementById('category-track-container');
+  const track = document.getElementById('category-scroll-track');
   
-  if (container) {
+  let dragThreshold = 0;
+
+  if (container && track) {
     if (glideRaf) cancelAnimationFrame(glideRaf);
     if (resumeTimeout) clearTimeout(resumeTimeout);
 
-    const speed = 0.6; // Silky smooth 60fps glide speed
+    let offset = 0;
+    const speed = 0.35; // Gentle, smooth and easily readable glide speed
 
     function tick() {
-      if (!isInteracting && container) {
-        container.scrollLeft += speed;
-        const oneThird = container.scrollWidth / 3;
-        if (oneThird > 0 && container.scrollLeft >= oneThird * 2) {
-          container.scrollLeft -= oneThird;
+      if (!isInteracting && track) {
+        offset += speed;
+        const loopWidth = track.scrollWidth / 2;
+        if (loopWidth > 0 && offset >= loopWidth) {
+          offset -= loopWidth;
         }
+        track.style.transform = `translate3d(-${offset.toFixed(2)}px, 0, 0)`;
       }
       glideRaf = requestAnimationFrame(tick);
     }
@@ -147,50 +152,48 @@ export function bindCategoryEvents() {
     // Touch and pointer dragging support
     let isDown = false;
     let startX = 0;
-    let scrollLeftStart = 0;
-    let dragThreshold = 0;
+    let startOffset = 0;
 
-    container.addEventListener('pointerdown', (e) => {
+    const onPointerDown = (e) => {
       isDown = true;
       isInteracting = true;
       dragThreshold = 0;
-      startX = e.pageX || (e.touches && e.touches[0].pageX);
-      scrollLeftStart = container.scrollLeft;
+      startX = e.pageX || (e.touches && e.touches[0].pageX) || 0;
+      startOffset = offset;
       if (resumeTimeout) clearTimeout(resumeTimeout);
-    });
-
-    const onMove = (e) => {
-      if (!isDown) return;
-      const currentX = e.pageX || (e.touches && e.touches[0].pageX);
-      const walk = (currentX - startX) * 1.2;
-      dragThreshold += Math.abs(walk);
-      container.scrollLeft = scrollLeftStart - walk;
     };
 
-    const onUp = () => {
+    const onPointerMove = (e) => {
+      if (!isDown) return;
+      const currentX = e.pageX || (e.touches && e.touches[0].pageX) || 0;
+      const walk = currentX - startX;
+      dragThreshold += Math.abs(walk);
+      offset = startOffset - walk;
+      const loopWidth = track.scrollWidth / 2;
+      if (loopWidth > 0) {
+        if (offset < 0) offset += loopWidth;
+        if (offset >= loopWidth) offset -= loopWidth;
+      }
+      track.style.transform = `translate3d(-${offset.toFixed(2)}px, 0, 0)`;
+    };
+
+    const onPointerUp = () => {
       if (!isDown) return;
       isDown = false;
       if (resumeTimeout) clearTimeout(resumeTimeout);
       resumeTimeout = setTimeout(() => {
         isInteracting = false;
-      }, 1200);
+      }, 1000);
     };
 
-    container.addEventListener('pointermove', onMove);
-    window.addEventListener('pointerup', onUp);
-    window.addEventListener('pointercancel', onUp);
+    container.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointercancel', onPointerUp);
 
-    container.addEventListener('touchstart', () => {
-      isInteracting = true;
-      if (resumeTimeout) clearTimeout(resumeTimeout);
-    }, { passive: true });
-
-    container.addEventListener('touchend', () => {
-      if (resumeTimeout) clearTimeout(resumeTimeout);
-      resumeTimeout = setTimeout(() => {
-        isInteracting = false;
-      }, 1400);
-    }, { passive: true });
+    container.addEventListener('touchstart', onPointerDown, { passive: true });
+    window.addEventListener('touchmove', onPointerMove, { passive: true });
+    window.addEventListener('touchend', onPointerUp, { passive: true });
 
     glideRaf = requestAnimationFrame(tick);
   }
@@ -198,6 +201,7 @@ export function bindCategoryEvents() {
   // Bind shortcut card navigation
   document.querySelectorAll('.category-shortcut-card').forEach(card => {
     card.addEventListener('click', (e) => {
+      if (dragThreshold > 8) return;
       const route = card.getAttribute('data-category');
       if (route === 'topup') {
         const urls = authService.getUrls();

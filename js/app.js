@@ -20,6 +20,7 @@ import { renderReferralView, bindReferralEvents } from './views/ReferralView.js'
 import { renderSettingsView, bindSettingsEvents } from './views/SettingsView.js';
 import { renderHelpView, bindHelpEvents } from './views/HelpView.js';
 import { renderAboutView, bindAboutEvents } from './views/AboutView.js';
+import { renderAdminView, bindAdminEvents } from './views/AdminView.js';
 import { realtimeSyncManager } from './services/realtimeSyncManager.js';
 import { openExternalStore } from './services/browserService.js';
 import { NotificationPermissionModal } from './components/NotificationPermissionModal.js';
@@ -30,6 +31,15 @@ class App {
   }
 
   init() {
+    // Global Error & Promise Rejection Safety Shield (Crash Prevention)
+    window.addEventListener('unhandledrejection', (event) => {
+      console.warn('⚡ Mobin X Caught Unhandled Rejection:', event.reason);
+      event.preventDefault();
+    });
+    window.addEventListener('error', (event) => {
+      console.warn('⚡ Mobin X Caught Window Error:', event.message);
+    });
+
     // Check if user has completed first-time onboarding
     if (!authService.hasCompletedOnboarding()) {
       stateManager.setState({ currentView: 'onboarding', activeModal: null });
@@ -229,16 +239,20 @@ class App {
           mainContent.innerHTML = renderAboutView();
           bindAboutEvents();
           break;
+        case 'admin':
+          mainContent.innerHTML = renderAdminView();
+          bindAdminEvents();
+          break;
         default:
           mainContent.innerHTML = renderHomeView();
           bindHomeEvents();
       }
     }
 
-    // 3. Render Bottom Navigation (Hidden on Onboarding, TopUp, and Shop for seamless in-app webview)
+    // 3. Render Bottom Navigation (Hidden on Onboarding, TopUp, Shop, and Admin)
     const navRoot = document.getElementById('bottom-nav-root');
     if (navRoot) {
-      if (isOnboarding || currentView === 'topup' || currentView === 'shop') {
+      if (isOnboarding || currentView === 'topup' || currentView === 'shop' || currentView === 'admin') {
         navRoot.innerHTML = '';
         navRoot.style.display = 'none';
       } else {

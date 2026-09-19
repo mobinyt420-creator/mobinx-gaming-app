@@ -43,53 +43,69 @@ export function renderModal(activeModal) {
       `;
       break;
 
-    case 'googleLogin':
-      modalTitle = 'Account Authentication';
-      const currentUser = authService.getCurrentUser();
+    case 'googleLogin': {
+      modalTitle = 'Player Sign In';
+      const authSettings = authService.getAuthSettings();
+      const isGoogleEnabled = authSettings.googleLoginEnabled !== false;
+      const isManualEnabled = authSettings.manualLoginEnabled !== false;
+
       bodyContent = `
         <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px;">
-          <div style="width: 52px; height: 52px; border-radius: var(--radius-full); background: #ffffff; border: 1px solid var(--border-light); display: flex; align-items: center; justify-content: center; box-shadow: var(--shadow-sm);">
+          <div style="width: 54px; height: 54px; border-radius: 18px; background: rgba(56, 189, 248, 0.12); border: 1.5px solid rgba(56, 189, 248, 0.35); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);">
             <svg width="26" height="26" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
           </div>
 
           <div>
-            <h4 style="font-size: 15px; font-weight: 800; color: var(--text-main);">Sign In / Switch Account</h4>
-            <p style="font-size: 11.5px; color: var(--text-secondary); margin-top: 2px;">Sign in to sync your diamond top-ups, sensitivities, and tournaments.</p>
+            <h4 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin: 0 0 2px 0;">Sign In / Switch Account</h4>
+            <p style="font-size: 11.5px; color: var(--text-secondary); margin: 0;">Connect your player account to sync tournament matches, diamond top-ups & sensitivities.</p>
           </div>
 
-          <!-- PRIMARY GOOGLE BUTTON -->
-          <button class="btn-primary" id="btn-modal-google-direct" style="width: 100%; height: 48px; background: #ffffff; color: #0f172a; border: 2px solid #38bdf8; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 14px; font-weight: 800; box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2); cursor: pointer;">
-            <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
-            <span>Continue with Google</span>
-          </button>
-
-          <div style="display: flex; align-items: center; gap: 8px; width: 100%; margin: 2px 0;">
-            <div style="flex: 1; height: 1px; background: var(--border-light);"></div>
-            <span style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Or Email Sign In</span>
-            <div style="flex: 1; height: 1px; background: var(--border-light);"></div>
-          </div>
-
-          <div style="width: 100%; display: flex; flex-direction: column; gap: 8px; text-align: left;">
-            <div>
-              <label style="font-size: 11.5px; font-weight: 700; color: var(--text-main);">Email / Gmail Address</label>
-              <input type="email" id="input-modal-email" placeholder="Enter your email" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); font-size: 13px; margin-top: 4px; outline: none; box-sizing: border-box;" />
-            </div>
-
-            <div>
-              <label style="font-size: 11.5px; font-weight: 700; color: var(--text-main);">Password</label>
-              <input type="password" id="input-modal-password" placeholder="Enter your password" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); font-size: 13px; margin-top: 4px; outline: none; box-sizing: border-box;" />
-            </div>
-          </div>
-
-          <div style="display: flex; gap: 10px; width: 100%; margin-top: 4px;">
-            <button class="btn-secondary" id="btn-modal-cancel" style="flex: 1;">Cancel</button>
-            <button class="btn-primary" id="btn-confirm-email-login" style="flex: 1.5; display: flex; align-items: center; justify-content: center; gap: 6px;">
-              <span>Sign In</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          ${isGoogleEnabled ? `
+            <!-- PRIMARY GOOGLE BUTTON -->
+            <button class="btn-primary" id="btn-modal-google-direct" style="width: 100%; height: 48px; background: #ffffff; color: #0f172a; border: 1.5px solid #e2e8f0; border-radius: 14px; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 14.5px; font-weight: 800; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); cursor: pointer; transition: transform 0.15s ease;">
+              <svg width="22" height="22" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+              <span>Continue with Google</span>
             </button>
-          </div>
+          ` : ''}
+
+          ${isGoogleEnabled && isManualEnabled ? `
+            <div style="display: flex; align-items: center; gap: 8px; width: 100%; margin: 4px 0;">
+              <div style="flex: 1; height: 1px; background: var(--border-light);"></div>
+              <span style="font-size: 10.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Or Email Sign In</span>
+              <div style="flex: 1; height: 1px; background: var(--border-light);"></div>
+            </div>
+          ` : ''}
+
+          ${isManualEnabled ? `
+            <div style="width: 100%; display: flex; flex-direction: column; gap: 9px; text-align: left;">
+              <div>
+                <label style="font-size: 11.5px; font-weight: 700; color: var(--text-main);">Email / Gmail Address</label>
+                <input type="email" id="input-modal-email" placeholder="gamer@gmail.com" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); font-size: 13px; margin-top: 4px; outline: none; box-sizing: border-box; background: var(--bg-card);" />
+              </div>
+
+              <div>
+                <label style="font-size: 11.5px; font-weight: 700; color: var(--text-main);">Password</label>
+                <input type="password" id="input-modal-password" placeholder="Enter your password" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); font-size: 13px; margin-top: 4px; outline: none; box-sizing: border-box; background: var(--bg-card);" />
+              </div>
+
+              <div style="display: flex; gap: 10px; width: 100%; margin-top: 6px;">
+                <button class="btn-secondary" id="btn-modal-cancel" style="flex: 1;">Cancel</button>
+                <button class="btn-primary" id="btn-confirm-email-login" style="flex: 1.5; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  <span>Sign In</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+              </div>
+            </div>
+          ` : (!isGoogleEnabled ? `
+            <div style="font-size: 12px; color: var(--text-muted); padding: 14px;">Online sign-in is currently undergoing brief maintenance.</div>
+            <button class="btn-secondary" id="btn-modal-cancel" style="width: 100%;">Close</button>
+          ` : `
+            <button class="btn-secondary" id="btn-modal-cancel" style="width: 100%; margin-top: 4px;">Cancel</button>
+          `)}
         </div>
       `;
+      break;
+    }
       break;
 
     case 'downloadConfirm':
@@ -290,17 +306,106 @@ export function bindModalEvents(activeModal) {
       try {
         const googleUser = await firebaseService.signInWithGoogle();
         if (googleUser && googleUser.email) {
-          const user = await authService.loginWithGoogle(
-            googleUser.email, 
-            googleUser.displayName, 
-            '', 
-            '', 
-            googleUser.photoURL || '', 
-            googleUser.uid
-          );
-          stateManager.closeModal();
-          Toast.show(`Welcome back, ${user.username}!`, 'success');
-          stateManager.navigate('profile');
+          const email = googleUser.email.toLowerCase().trim();
+          const uid = googleUser.uid;
+          const displayName = googleUser.displayName || email.split('@')[0];
+          const avatar = googleUser.photoURL || 'assets/images/avatar_user.jpg';
+
+          // 1. Check local storage first
+          let existing = authService.findUserLocal(uid, email);
+
+          // 2. If not found locally or phone is missing, check Cloud Firestore
+          if (!existing || !(existing.phoneNumber || existing.phone)) {
+            Toast.show('Checking profile in cloud...', 'info');
+            const cloudUser = await authService.findUserInCloud(uid, email);
+            if (cloudUser) existing = cloudUser;
+          }
+
+          if (existing && (existing.phoneNumber || existing.phone)) {
+            // Returning user: Direct instant login!
+            const phone = existing.phoneNumber || existing.phone;
+            const finalName = existing.fullName || existing.username || existing.name || displayName;
+            const user = await authService.loginWithGoogle(
+              email, 
+              finalName, 
+              phone, 
+              existing.ffUid || '', 
+              avatar, 
+              uid, 
+              { phoneVerified: existing.phoneVerified }
+            );
+            stateManager.closeModal();
+            Toast.show(`🎉 Welcome back, ${user.username}!`, 'success');
+            stateManager.navigate('profile');
+            return;
+          }
+
+          // First-time user: Transform modal body to Complete Profile form
+          const modalBody = document.querySelector('.modal-body');
+          if (modalBody) {
+            modalBody.innerHTML = `
+              <div style="display: flex; flex-direction: column; gap: 12px; text-align: left;">
+                <div style="text-align: center; margin-bottom: 6px;">
+                  <div style="width: 50px; height: 50px; border-radius: 16px; background: rgba(56, 189, 248, 0.12); border: 1.5px solid rgba(56, 189, 248, 0.35); display: flex; align-items: center; justify-content: center; margin: 0 auto 8px auto;">
+                    <svg width="24" height="24" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                  </div>
+                  <h4 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin: 0 0 3px 0;">Complete Your Profile</h4>
+                  <p style="font-size: 11px; color: var(--text-secondary); margin: 0;">Connected as <b style="color: var(--primary);">${email}</b></p>
+                </div>
+
+                <div>
+                  <label style="font-size: 11.5px; font-weight: 700; color: var(--text-main);">Full Name *</label>
+                  <input type="text" id="modal-gp-name" placeholder="Enter your full name" style="width: 100%; padding: 10px 12px; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); font-size: 13px; margin-top: 4px; outline: none; box-sizing: border-box; background: var(--bg-card);" />
+                </div>
+
+                <div>
+                  <label style="font-size: 11.5px; font-weight: 700; color: var(--text-main);">Phone Number *</label>
+                  <div style="display: flex; align-items: center; border: 1.5px solid var(--border-light); border-radius: var(--radius-md); background: var(--bg-card); margin-top: 4px; padding: 0 10px; height: 42px;">
+                    <span style="font-size: 12px; font-weight: 700; color: var(--primary); padding-right: 8px; margin-right: 8px; border-right: 1px solid var(--border-light);">+880</span>
+                    <input type="tel" id="modal-gp-phone" placeholder="01XXXXXXXXX" maxlength="14" style="width: 100%; border: none; outline: none; background: transparent; font-size: 13px; color: var(--text-main); font-weight: 600;" />
+                  </div>
+                  <div style="font-size: 10px; color: var(--text-muted); margin-top: 3px;">Used for Free Fire rewards and account recovery.</div>
+                </div>
+
+                <div id="modal-gp-error" style="display: none; font-size: 11.5px; color: #ef4444; background: rgba(239, 68, 68, 0.1); padding: 7px 10px; border-radius: 8px; font-weight: 600;"></div>
+
+                <div style="display: flex; gap: 10px; margin-top: 4px;">
+                  <button class="btn-secondary" id="btn-modal-gp-cancel" style="flex: 1;">Cancel</button>
+                  <button class="btn-primary" id="btn-modal-gp-submit" style="flex: 1.6;">Finish & Login →</button>
+                </div>
+              </div>
+            `;
+
+            document.getElementById('btn-modal-gp-cancel')?.addEventListener('click', () => {
+              stateManager.closeModal();
+            });
+
+            document.getElementById('btn-modal-gp-submit')?.addEventListener('click', async () => {
+              const name = (document.getElementById('modal-gp-name')?.value || '').trim();
+              const phone = (document.getElementById('modal-gp-phone')?.value || '').trim();
+              let cleanP = phone.replace(/[^0-9]/g, '');
+              if (cleanP.startsWith('880')) cleanP = '0' + cleanP.slice(3);
+              else if (cleanP.length === 10 && cleanP.startsWith('1')) cleanP = '0' + cleanP;
+
+              const errBox = document.getElementById('modal-gp-error');
+              if (!name || name.length < 2) {
+                if (errBox) { errBox.textContent = 'Please enter your full name.'; errBox.style.display = 'block'; }
+                return;
+              }
+              if (cleanP.length < 11 || !cleanP.startsWith('01')) {
+                if (errBox) { errBox.textContent = 'Please enter a valid 11-digit mobile number.'; errBox.style.display = 'block'; }
+                return;
+              }
+
+              const submitBtn = document.getElementById('btn-modal-gp-submit');
+              if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Saving...'; }
+
+              const user = await authService.loginWithGoogle(email, name, cleanP, '', avatar, uid, { phoneVerified: false });
+              stateManager.closeModal();
+              Toast.show(`🎉 Welcome, ${user.username}!`, 'success');
+              stateManager.navigate('profile');
+            });
+          }
         }
       } catch (err) {
         console.warn('Modal Google Sign-In error:', err);
@@ -309,7 +414,7 @@ export function bindModalEvents(activeModal) {
         if (btn) {
           btn.disabled = false;
           btn.innerHTML = `
-            <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+            <svg width="22" height="22" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
             <span>Continue with Google</span>
           `;
         }
@@ -368,11 +473,12 @@ export function bindModalEvents(activeModal) {
       if (progressBox) progressBox.style.display = 'flex';
 
       let currentPercent = 0;
+      // High-speed verification in milliseconds (<250ms total)
       const interval = setInterval(() => {
-        currentPercent += 20;
+        currentPercent += 25;
         if (progressBar) progressBar.style.width = currentPercent + '%';
         if (progressPercent) progressPercent.textContent = currentPercent + '%';
-        if (progressLabel && currentPercent >= 60) {
+        if (progressLabel && currentPercent >= 50) {
           progressLabel.textContent = 'Step 2/2: Security verified! Unlocking target link...';
         }
 
@@ -383,9 +489,9 @@ export function bindModalEvents(activeModal) {
             stateManager.closeModal();
             Toast.show('Security verified! Opening high-speed download link...', 'success');
             window.open(targetUrl, '_blank');
-          }, 400);
+          }, 80);
         }
-      }, 350);
+      }, 45);
     });
   }
 

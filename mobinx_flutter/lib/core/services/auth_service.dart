@@ -108,6 +108,35 @@ class AuthService {
     }
   }
 
+  /// Find user from Cloud Firestore if they already registered previously
+  Future<UserModel?> findCloudUser(String email, {String? uid}) async {
+    final cleanEmail = email.trim().toLowerCase();
+    try {
+      if (uid != null && uid.isNotEmpty) {
+        final docSnap = await FirebaseService.firestore.collection('users').doc(uid).get();
+        if (docSnap.exists && docSnap.data() != null) {
+          return UserModel.fromJson(docSnap.data()!);
+        }
+      }
+      final sanitizedDocId = 'user_${cleanEmail.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_')}';
+      final docSnap = await FirebaseService.firestore.collection('users').doc(sanitizedDocId).get();
+      if (docSnap.exists && docSnap.data() != null) {
+        return UserModel.fromJson(docSnap.data()!);
+      }
+      final query = await FirebaseService.firestore
+          .collection('users')
+          .where('email', isEqualTo: cleanEmail)
+          .limit(1)
+          .get();
+      if (query.docs.isNotEmpty) {
+        return UserModel.fromJson(query.docs.first.data());
+      }
+    } catch (e) {
+      debugPrint('Cloud user lookup notice: $e');
+    }
+    return null;
+  }
+
   /// Complete Google Sign-In with user-provided custom Name & Phone
   Future<UserModel> completeGoogleSignIn({
     required GoogleSignInAccount googleUser,

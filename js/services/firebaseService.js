@@ -543,6 +543,58 @@ export async function sendPushBroadcast({ title, message, type = 'general', targ
   return notifData;
 }
 
+// Fetch single user document from Firestore (by UID, sanitized docId, or email index)
+export async function getUserFromFirestore(uid, email) {
+  if (!isFirebaseInitialized) await initFirebase();
+  if (!db) return null;
+
+  try {
+    const { doc, getDoc, collection, query, where, getDocs } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js');
+
+    // 1. Check direct doc by UID
+    if (uid) {
+      try {
+        const docRef = doc(db, 'users', uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          return { id: docSnap.id, ...data };
+        }
+      } catch (e) {}
+    }
+
+    // 2. Check direct doc by sanitized email
+    if (email) {
+      const cleanEmail = email.toLowerCase().trim();
+      const sanitizedDocId = `user_${cleanEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+      try {
+        const docRef = doc(db, 'users', sanitizedDocId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          return { id: docSnap.id, ...data };
+        }
+      } catch (e) {}
+
+      // 3. Query collection where email matches
+      try {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('email', '==', cleanEmail));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const firstDoc = querySnapshot.docs[0];
+          return { id: firstDoc.id, ...firstDoc.data() };
+        }
+      } catch (e) {}
+    }
+
+    return null;
+  } catch (err) {
+    console.warn('getUserFromFirestore note:', err.message);
+    return null;
+  }
+}
+
 export const firebaseService = {
   init: initFirebase,
   signInWithGoogle: signInWithGoogleFirebase,
@@ -555,6 +607,7 @@ export const firebaseService = {
   verifyPhoneOtp: verifyPhoneOtpFirebase,
   deleteFirebaseUser,
   deleteFromFirestore,
+  getUserFromFirestore,
   getFriendlyErrorMessage,
   saveDocument: saveToFirestore,
   saveToFirestore: saveToFirestore,

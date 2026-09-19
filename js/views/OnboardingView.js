@@ -192,50 +192,54 @@ function renderAuthSelectionView() {
 
           </div>
         ` : isGoogleEnabled ? `
-          <!-- ONLY GOOGLE ENABLED: PROMINENT CENTERED GOOGLE CARD -->
-          <div style="width: 100%; margin-bottom: 18px;">
+          <!-- ONLY GOOGLE ENABLED: SLEEK COMPACT PRO CARD -->
+          <div style="width: 100%; max-width: 320px; margin: 0 auto 16px auto;">
             <div 
               id="card-google-login" 
               role="button"
               tabindex="0"
-              style="background: #ffffff; border: 2px solid #ffffff; border-radius: 18px; padding: 20px 16px; display: flex; flex-direction: column; align-items: center; text-align: center; justify-content: center; cursor: pointer; box-shadow: 0 10px 30px rgba(56, 189, 248, 0.35); transition: transform 0.15s ease;"
+              style="background: #ffffff; border-radius: 14px; padding: 13px 18px; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), 0 0 16px rgba(56, 189, 248, 0.2); transition: transform 0.15s ease;"
+              onmouseover="this.style.transform='translateY(-2px)'"
+              onmouseout="this.style.transform='translateY(0)'"
             >
-              <div style="width: 50px; height: 50px; border-radius: 15px; background: #f8fafc; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.06);">
-                <svg width="28" height="28" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                </svg>
+              <svg width="24" height="24" viewBox="0 0 24 24" style="flex-shrink: 0;">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+              <div style="text-align: left; flex: 1;">
+                <div style="font-size: 14px; font-weight: 800; color: #0f172a; line-height: 1.2;">Continue with Google</div>
+                <div style="font-size: 11px; color: #64748b; font-weight: 600;">Fast & Secure One-Tap Login</div>
               </div>
-              <div style="font-size: 16px; font-weight: 900; color: #0f172a; margin-bottom: 2px;">Continue with Google</div>
-              <div style="font-size: 12px; color: #64748b; font-weight: 600; margin-bottom: 12px;">Fast & Secure One-Tap Login</div>
-              <div style="display: inline-flex; align-items: center; gap: 8px; background: #2563eb; color: #ffffff; padding: 9px 22px; border-radius: 22px; font-size: 13px; font-weight: 800; box-shadow: 0 4px 14px rgba(37,99,235,0.4);">
-                <span>Sign In with Google</span>
-                <span>→</span>
+              <div style="width: 28px; height: 28px; border-radius: 50%; background: #2563eb; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 13px; font-weight: bold; flex-shrink: 0; box-shadow: 0 2px 6px rgba(37,99,235,0.4);">
+                →
               </div>
             </div>
           </div>
         ` : isManualEnabled ? `
-          <!-- ONLY MANUAL ENABLED: PROMINENT CENTERED MANUAL CARD -->
-          <div style="width: 100%; margin-bottom: 18px;">
+          <!-- ONLY MANUAL ENABLED: SLEEK COMPACT PRO CARD -->
+          <div style="width: 100%; max-width: 320px; margin: 0 auto 16px auto;">
             <div 
               id="card-manual-login" 
               role="button"
               tabindex="0"
-              style="background: #0f172a; border: 1.5px solid rgba(56, 189, 248, 0.45); border-radius: 18px; padding: 20px 16px; display: flex; flex-direction: column; align-items: center; text-align: center; justify-content: center; cursor: pointer; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); transition: transform 0.15s ease;"
+              style="background: #0f172a; border: 1.5px solid rgba(56, 189, 248, 0.45); border-radius: 14px; padding: 13px 18px; display: flex; align-items: center; justify-content: center; gap: 12px; cursor: pointer; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5); transition: transform 0.15s ease;"
+              onmouseover="this.style.transform='translateY(-2px)'"
+              onmouseout="this.style.transform='translateY(0)'"
             >
-              <div style="width: 48px; height: 48px; border-radius: 14px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35); display: flex; align-items: center; justify-content: center; margin-bottom: 10px;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2">
+              <div style="width: 32px; height: 32px; border-radius: 10px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                   <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                 </svg>
               </div>
-              <div style="font-size: 16px; font-weight: 900; color: #ffffff; margin-bottom: 2px;">Manual Login</div>
-              <div style="font-size: 12px; color: #94a3b8; font-weight: 500; margin-bottom: 12px;">Sign in with Email & Password</div>
-              <div style="display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); color: #ffffff; padding: 9px 22px; border-radius: 22px; font-size: 13px; font-weight: 800; box-shadow: 0 4px 14px rgba(37,99,235,0.4);">
-                <span>Sign In with Email</span>
-                <span>→</span>
+              <div style="text-align: left; flex: 1;">
+                <div style="font-size: 14px; font-weight: 800; color: #ffffff; line-height: 1.2;">Manual Login</div>
+                <div style="font-size: 11px; color: #94a3b8; font-weight: 500;">Email & Password</div>
+              </div>
+              <div style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 13px; font-weight: bold; flex-shrink: 0; box-shadow: 0 2px 6px rgba(37,99,235,0.4);">
+                →
               </div>
             </div>
           </div>
@@ -271,40 +275,49 @@ function renderAuthSelectionView() {
 
     </div>
 
-    <!-- 1. GOOGLE COMPLETE PROFILE MODAL -->
-    <div id="modal-google-profile" style="display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(8px); z-index: 9999; align-items: center; justify-content: center; padding: 18px;">
-      <div style="background: #0f172a; border: 1.5px solid rgba(56, 189, 248, 0.35); border-radius: 22px; padding: 22px 18px; width: 100%; max-width: 360px; box-shadow: 0 20px 45px rgba(0, 0, 0, 0.6); color: #ffffff;">
-        <div style="text-align: center; margin-bottom: 16px;">
-          <div style="width: 48px; height: 48px; border-radius: 50%; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); display: flex; align-items: center; justify-content: center; font-size: 22px; margin: 0 auto 8px auto;">
-            👤
+    <!-- 1. GOOGLE COMPLETE PROFILE MODAL (PREMIUM GLASSMORPHIC) -->
+    <div id="modal-google-profile" style="display: none; position: fixed; inset: 0; background: rgba(3, 7, 18, 0.86); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 9999; align-items: center; justify-content: center; padding: 20px;">
+      <div style="background: linear-gradient(145deg, #0f172a 0%, #0a0f1d 100%); border: 1.5px solid rgba(56, 189, 248, 0.4); border-radius: 24px; padding: 24px 20px; width: 100%; max-width: 370px; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), 0 0 30px rgba(56, 189, 248, 0.15); color: #ffffff; animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
+        <div style="text-align: center; margin-bottom: 18px;">
+          <div style="width: 54px; height: 54px; border-radius: 18px; background: rgba(56, 189, 248, 0.12); border: 1.5px solid rgba(56, 189, 248, 0.35); display: flex; align-items: center; justify-content: center; margin: 0 auto 10px auto; box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);">
+            <svg width="26" height="26" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
           </div>
-          <h3 style="font-size: 17px; font-weight: 800; color: #ffffff; margin: 0 0 2px 0;">Complete Your Profile</h3>
-          <p style="font-size: 11.5px; color: #94a3b8; margin: 0;">Authenticated with <span id="gp-email-badge" style="color: #38bdf8; font-weight: 700;">Google</span></p>
+          <h3 style="font-size: 18px; font-weight: 800; color: #ffffff; margin: 0 0 4px 0; letter-spacing: -0.3px;">Complete Your Profile</h3>
+          <div style="font-size: 11.5px; color: #94a3b8; display: flex; align-items: center; justify-content: center; gap: 4px;">
+            <span>Connected:</span>
+            <span id="gp-email-badge" style="color: #38bdf8; font-weight: 700; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Google Account</span>
+          </div>
         </div>
 
-        <form id="form-google-profile" onsubmit="return false;" style="display: flex; flex-direction: column; gap: 12px;">
+        <form id="form-google-profile" onsubmit="return false;" style="display: flex; flex-direction: column; gap: 13px;">
           <div>
-            <label style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 4px;">Full Name *</label>
-            <div style="display: flex; align-items: center; border: 1.5px solid rgba(56, 189, 248, 0.3); border-radius: 12px; background: rgba(2, 6, 23, 0.6); padding: 0 12px; height: 44px;">
-              <input type="text" id="gp-fullname" placeholder="Your full name" style="border: none; outline: none; background: transparent; width: 100%; height: 100%; font-size: 13.5px; color: #ffffff; font-weight: 600;" />
+            <label style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 5px;">Full Name *</label>
+            <div style="display: flex; align-items: center; gap: 8px; border: 1.5px solid rgba(56, 189, 248, 0.3); border-radius: 12px; background: rgba(2, 6, 23, 0.7); padding: 0 12px; height: 46px; transition: border-color 0.2s;">
+              <span style="font-size: 16px; opacity: 0.8;">👤</span>
+              <input type="text" id="gp-fullname" placeholder="Enter your full name" style="border: none; outline: none; background: transparent; width: 100%; height: 100%; font-size: 13.5px; color: #ffffff; font-weight: 600;" />
             </div>
           </div>
 
           <div>
-            <label style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 4px;">Phone Number *</label>
-            <div style="display: flex; align-items: center; border: 1.5px solid rgba(56, 189, 248, 0.3); border-radius: 12px; background: rgba(2, 6, 23, 0.6); padding: 0 12px; height: 44px;">
-              <input type="tel" id="gp-phone" placeholder="01XXXXXXXXX (11 digits)" maxlength="14" style="border: none; outline: none; background: transparent; width: 100%; height: 100%; font-size: 13.5px; color: #ffffff; font-weight: 600;" />
+            <label style="display: block; font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 5px;">Phone Number *</label>
+            <div style="display: flex; align-items: center; border: 1.5px solid rgba(56, 189, 248, 0.3); border-radius: 12px; background: rgba(2, 6, 23, 0.7); padding: 0 12px; height: 46px; transition: border-color 0.2s;">
+              <div style="display: flex; align-items: center; gap: 4px; padding-right: 8px; margin-right: 8px; border-right: 1px solid rgba(255, 255, 255, 0.15); font-size: 12.5px; font-weight: 700; color: #38bdf8;">
+                <span>🇧🇩</span>
+                <span>+880</span>
+              </div>
+              <input type="tel" id="gp-phone" placeholder="1XXXXXXXXX (or 01...)" maxlength="14" style="border: none; outline: none; background: transparent; width: 100%; height: 100%; font-size: 13.5px; color: #ffffff; font-weight: 600;" />
             </div>
+            <div style="font-size: 10.5px; color: #64748b; margin-top: 4px;">Used for match alerts, prize delivery & diamond sync.</div>
           </div>
 
-          <div id="gp-error-msg" style="display: none; font-size: 11.5px; color: #fca5a5; background: rgba(239, 68, 68, 0.2); padding: 8px 10px; border-radius: 8px; font-weight: 600;"></div>
+          <div id="gp-error-msg" style="display: none; font-size: 11.5px; color: #fca5a5; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.3); padding: 8px 10px; border-radius: 10px; font-weight: 600;"></div>
 
           <div style="display: flex; gap: 10px; margin-top: 4px;">
-            <button type="button" id="btn-gp-cancel" style="flex: 1; height: 44px; background: rgba(255, 255, 255, 0.1); border: none; border-radius: 12px; font-size: 13px; font-weight: 700; color: #cbd5e1; cursor: pointer;">
+            <button type="button" id="btn-gp-cancel" style="flex: 1; height: 46px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; font-size: 13px; font-weight: 700; color: #cbd5e1; cursor: pointer; transition: background 0.15s;">
               Cancel
             </button>
-            <button type="button" id="btn-gp-submit" style="flex: 1.5; height: 44px; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); border: none; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #ffffff; cursor: pointer; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);">
-              Continue
+            <button type="button" id="btn-gp-submit" style="flex: 1.6; height: 46px; background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%); border: none; border-radius: 12px; font-size: 14px; font-weight: 800; color: #ffffff; cursor: pointer; box-shadow: 0 4px 16px rgba(37, 99, 235, 0.45); transition: transform 0.15s;">
+              Complete Profile →
             </button>
           </div>
         </form>
@@ -594,14 +607,31 @@ export function bindOnboardingEvents() {
         const avatar = googleUser.photoURL || 'assets/images/avatar_user.jpg';
         const uid = googleUser.uid;
 
-        // Check if user already exists
-        const existingUsers = authService.getAllUsers();
-        const existing = existingUsers.find(u => (u.uid && u.uid === uid) || (u.email && u.email.toLowerCase() === email));
+        // 1. Check local storage first
+        let existing = authService.findUserLocal(uid, email);
+
+        // 2. If not found locally or phone is missing, verify directly with Cloud Firestore
+        if (!existing || !(existing.phoneNumber || existing.phone)) {
+          Toast.show('Verifying account with cloud...', 'info');
+          const cloudUser = await authService.findUserInCloud(uid, email);
+          if (cloudUser) {
+            existing = cloudUser;
+          }
+        }
 
         if (existing && (existing.phoneNumber || existing.phone)) {
-          // Returning Google user with phone -> Direct instant login
+          // Returning user: Instant direct login! No Name or Phone re-prompt needed!
           const phone = existing.phoneNumber || existing.phone;
-          const user = await authService.loginWithGoogle(email, existing.fullName || existing.username || displayName, phone, existing.ffUid, avatar, uid, { phoneVerified: existing.phoneVerified });
+          const finalName = existing.fullName || existing.username || existing.name || displayName;
+          const user = await authService.loginWithGoogle(
+            email, 
+            finalName, 
+            phone, 
+            existing.ffUid || '', 
+            avatar, 
+            uid, 
+            { phoneVerified: existing.phoneVerified }
+          );
           Toast.show(`🎉 Welcome back, ${user.username}!`, 'success');
           stateManager.navigate('home');
           return;
@@ -653,7 +683,13 @@ export function bindOnboardingEvents() {
 
     const fullName = (nameInput?.value || '').trim();
     const phone = (phoneInput?.value || '').trim();
-    const cleanPhone = phone.replace(/[^0-9]/g, '');
+    let cleanPhone = phone.replace(/[^0-9]/g, '');
+
+    if (cleanPhone.startsWith('880')) {
+      cleanPhone = '0' + cleanPhone.slice(3);
+    } else if (cleanPhone.length === 10 && cleanPhone.startsWith('1')) {
+      cleanPhone = '0' + cleanPhone;
+    }
 
     if (errorBox) errorBox.style.display = 'none';
 
@@ -666,9 +702,9 @@ export function bindOnboardingEvents() {
       return;
     }
 
-    if (cleanPhone.length < 10) {
+    if (cleanPhone.length < 11 || !cleanPhone.startsWith('01')) {
       if (errorBox) {
-        errorBox.textContent = 'Please enter a valid 11-digit phone number.';
+        errorBox.textContent = 'Please enter a valid 11-digit mobile number (e.g., 017XXXXXXXX).';
         errorBox.style.display = 'block';
       }
       phoneInput?.focus();

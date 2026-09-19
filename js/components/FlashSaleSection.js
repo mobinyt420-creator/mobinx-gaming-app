@@ -25,7 +25,7 @@ export function renderFlashSaleSection() {
   const baseProducts = rawProducts.filter(p => p.isActive !== false && p.status !== 'inactive');
   if (baseProducts.length === 0) return '';
 
-  // Repeat for continuous seamless infinite glide
+  // Duplicate 4x for continuous seamless loop glide
   const duplicatedProducts = [...baseProducts, ...baseProducts, ...baseProducts, ...baseProducts];
 
   return `
@@ -48,7 +48,7 @@ export function renderFlashSaleSection() {
         </div>
       </div>
 
-      <!-- Horizontal Seamless Infinite Auto-Scrolling Diamond Carousel with Touch Support -->
+      <!-- Horizontal Continuous Smooth Lively Diamond Carousel with Touch Support -->
       <div class="flash-products-carousel" id="flash-products-track-container">
         <div class="flash-products-track" id="flash-products-track">
           ${duplicatedProducts.map((prod, idx) => `
@@ -140,13 +140,14 @@ export function initFlashSaleCountdown() {
     }
   }, 1000);
 
-  // Smooth Auto-Glide + Touch Drag for Flash Deals Track
+  // Smooth Continuous Lively Glide for Flash Deals Track
   const container = document.getElementById('flash-products-track-container');
   if (container) {
     if (flashGlideRaf) cancelAnimationFrame(flashGlideRaf);
     if (flashResumeTimeout) clearTimeout(flashResumeTimeout);
 
-    const speed = 0.55;
+    // Steady, gentle glide speed (0.42px per frame)
+    const speed = 0.42;
 
     function tick() {
       if (!flashIsInteracting && container) {
@@ -159,6 +160,15 @@ export function initFlashSaleCountdown() {
       flashGlideRaf = requestAnimationFrame(tick);
     }
 
+    // Hover pauses glide
+    container.addEventListener('mouseenter', () => {
+      flashIsInteracting = true;
+    });
+    container.addEventListener('mouseleave', () => {
+      flashIsInteracting = false;
+    });
+
+    // Touch and pointer interaction handling
     let isDown = false;
     let startX = 0;
     let scrollLeftStart = 0;
@@ -184,7 +194,7 @@ export function initFlashSaleCountdown() {
       if (flashResumeTimeout) clearTimeout(flashResumeTimeout);
       flashResumeTimeout = setTimeout(() => {
         flashIsInteracting = false;
-      }, 1200);
+      }, 1500);
     };
 
     container.addEventListener('pointermove', onMove);
@@ -200,7 +210,7 @@ export function initFlashSaleCountdown() {
       if (flashResumeTimeout) clearTimeout(flashResumeTimeout);
       flashResumeTimeout = setTimeout(() => {
         flashIsInteracting = false;
-      }, 1400);
+      }, 1500);
     }, { passive: true });
 
     flashGlideRaf = requestAnimationFrame(tick);

@@ -119,15 +119,32 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       if (!mounted) return;
 
       if (googleUser != null) {
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (context) => GoogleProfileSheet(
+        // 1. Check if user already exists in Cloud Firestore
+        final existing = await AuthService.instance.findCloudUser(googleUser.email);
+        if (existing != null && existing.phone.isNotEmpty) {
+          // Returning user: Instant direct login!
+          await AuthService.instance.completeGoogleSignIn(
             googleUser: googleUser,
-            onLoginSuccess: _navigateToHome,
-          ),
-        );
+            customName: existing.fullName.isNotEmpty ? existing.fullName : (googleUser.displayName ?? ''),
+            phone: existing.phone,
+            ffUid: existing.ffUid,
+          );
+          if (mounted) _navigateToHome();
+          return;
+        }
+
+        // 2. First-time user: Open Complete Profile Sheet
+        if (mounted) {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (context) => GoogleProfileSheet(
+              googleUser: googleUser,
+              onLoginSuccess: _navigateToHome,
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {

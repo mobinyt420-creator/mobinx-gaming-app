@@ -47,17 +47,26 @@ export function renderNotificationsView() {
             <p class="state-desc">You're all caught up! Match alerts and offers will appear here.</p>
           </div>
         ` : items.map(n => `
-          <div class="notification-card ${n.unread ? 'unread' : ''}" data-notif-id="${n.id}">
+          <div class="notification-card ${n.unread ? 'unread' : ''}" data-notif-id="${n.id}" data-action-url="${n.actionUrl || n.targetUrl || ''}" style="cursor: pointer;">
             <div class="notification-icon-box" style="background: var(--bg-card-subtle);">
               <span style="font-size: 20px;">${iconMap[n.type] || '🔔'}</span>
             </div>
-            <div style="flex: 1;">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                <h4 style="font-size: 13px; font-weight: 800; color: var(--text-main);">${n.title}</h4>
-                <span style="font-size: 10px; color: var(--text-muted);">${n.timeAgo}</span>
+            <div style="flex: 1; min-width: 0;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                <h4 style="font-size: 13.5px; font-weight: 800; color: var(--text-main); line-height: 1.3;">${n.title}</h4>
+                <span style="font-size: 10px; color: var(--text-muted); white-space: nowrap;">${n.timeAgo || n.time || 'Just now'}</span>
               </div>
-              <p style="font-size: 11.5px; color: var(--text-secondary); margin-top: 2px;">${n.desc}</p>
+              <p style="font-size: 11.5px; color: var(--text-secondary); margin-top: 3px; line-height: 1.4;">${n.desc || n.message || ''}</p>
+              ${(n.actionUrl || n.targetUrl) ? `
+                <div style="margin-top: 6px;">
+                  <span style="font-size: 10.5px; font-weight: 800; color: var(--primary); display: inline-flex; align-items: center; gap: 4px;">
+                    <span>View Details</span>
+                    <span>→</span>
+                  </span>
+                </div>
+              ` : ''}
             </div>
+            ${n.unread ? `<div style="width: 7px; height: 7px; border-radius: 50%; background: var(--primary); margin-left: 6px; flex-shrink: 0; align-self: center;"></div>` : ''}
           </div>
         `).join('')}
       </div>
@@ -86,8 +95,20 @@ export function bindNotificationsEvents() {
   document.querySelectorAll('.notification-card').forEach(card => {
     card.addEventListener('click', () => {
       const id = card.getAttribute('data-notif-id');
-      notificationService.markAsRead(id);
-      card.classList.remove('unread');
+      const actionUrl = card.getAttribute('data-action-url');
+      if (id) {
+        notificationService.markAsRead(id);
+        card.classList.remove('unread');
+      }
+      if (actionUrl) {
+        if (typeof window.handleNotificationClick === 'function') {
+          window.handleNotificationClick(actionUrl);
+        } else if (actionUrl.startsWith('http')) {
+          window.open(actionUrl, '_blank');
+        } else {
+          stateManager.navigate(actionUrl.replace('/', ''));
+        }
+      }
     });
   });
 }
