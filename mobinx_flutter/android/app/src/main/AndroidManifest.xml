@@ -45,9 +45,10 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@mipmap/ic_launcher" />
+        <!-- Google AdMob Application ID -->
         <meta-data
-            android:name="com.google.firebase.messaging.default_notification_color"
-            android:resource="@android:color/holo_blue_dark" />
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-8241003118710445~7492922686" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

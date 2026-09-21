@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/models/download_item_model.dart';
 import '../../../core/services/download_service.dart';
+import '../../../core/services/admob_service.dart';
 
 /// APK & Video Download Card with Full HD Thumbnail & In-App Player
 class ToolCard extends StatefulWidget {
@@ -37,6 +38,207 @@ class _ToolCardState extends State<ToolCard> {
     final yId = _getYoutubeId();
     // Safely open video directly in YouTube app or external player to avoid WebView OOM crash
     DownloadService.instance.launchUrlString('https://www.youtube.com/watch?v=$yId');
+  }
+
+  void _onDownloadButtonClick(BuildContext context, {required String label, required String targetUrl}) {
+    if (!AdMobService.instance.isAdsEnabled) {
+      DownloadService.instance.launchUrlString(targetUrl);
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 20,
+                offset: Offset(0, -4),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Drag handle
+              Container(
+                width: 44,
+                height: 4.5,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE2E8F0),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+              const SizedBox(height: 18),
+
+              // Animated Glowing Icon
+              Container(
+                width: 58,
+                height: 58,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF2563EB).withValues(alpha: 0.35),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Center(
+                  child: Icon(Icons.lock_open_rounded, color: Colors.white, size: 28),
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // Title
+              Text(
+                'ফাইলটি ডাউনলোড করতে আনলক করুন',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.outfit(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.textMain,
+                ),
+              ),
+              const SizedBox(height: 6),
+
+              // File badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFBFDBFE)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.file_present_rounded, size: 14, color: Color(0xFF2563EB)),
+                    const SizedBox(width: 5),
+                    Flexible(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF2563EB),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Description
+              Text(
+                'একটি ছোট স্পনসর ভিডিও দেখুন (১৫-৩০ সেকেন্ড)। ভিডিও শেষ হওয়ার সাথে সাথে কোনো অতিরিক্ত লিংক শর্টনারের ঝামেলা ছাড়াই ডিরেক্ট ক্রোম ব্রাউজারে ডাউনলোড লিংক ওপেন হবে।',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 12.5,
+                  height: 1.45,
+                  color: const Color(0xFF64748B),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Action Watch Video Button
+              SizedBox(
+                width: double.infinity,
+                height: 46,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(sheetContext);
+                    AdMobService.instance.showRewardedAd(
+                      context: context,
+                      onRewardEarned: () {
+                        DownloadService.instance.launchUrlString(targetUrl);
+                      },
+                      onCancelled: () {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Row(
+                                children: [
+                                  const Icon(Icons.info_outline, color: Colors.white, size: 18),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'ভিডিওটি সম্পূর্ণ না দেখায় ফাইলটি আনলক হয়নি।',
+                                      style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              backgroundColor: const Color(0xFF0F172A),
+                              duration: const Duration(seconds: 3),
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                          );
+                        }
+                      },
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.play_circle_fill_rounded, size: 20, color: Colors.white),
+                      const SizedBox(width: 8),
+                      Text(
+                        'ভিডিও দেখুন ও ডাউনলোড করুন',
+                        style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w800),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // Cancel button
+              SizedBox(
+                width: double.infinity,
+                height: 38,
+                child: TextButton(
+                  onPressed: () => Navigator.pop(sheetContext),
+                  child: Text(
+                    'বাতিল করুন',
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF94A3B8),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -200,7 +402,7 @@ class _ToolCardState extends State<ToolCard> {
                         height: 38,
                         child: OutlinedButton(
                           onPressed: () {
-                            DownloadService.instance.launchUrlString(btn.url);
+                            _onDownloadButtonClick(context, label: btn.label, targetUrl: btn.url);
                           },
                           style: OutlinedButton.styleFrom(
                             backgroundColor: const Color(0xFFEFF6FF),
@@ -238,7 +440,11 @@ class _ToolCardState extends State<ToolCard> {
                     height: 40,
                     child: OutlinedButton(
                       onPressed: () {
-                        DownloadService.instance.launchUrlString('https://mrmobin.blogspot.com/');
+                        _onDownloadButtonClick(
+                          context,
+                          label: item.title.isNotEmpty ? item.title : 'Download File',
+                          targetUrl: 'https://mrmobin.blogspot.com/',
+                        );
                       },
                       style: OutlinedButton.styleFrom(
                         backgroundColor: const Color(0xFFEFF6FF),

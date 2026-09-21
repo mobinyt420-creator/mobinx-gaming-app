@@ -226,6 +226,17 @@ async function initFirebase() {
       }
     }, (err) => console.warn('AppUpdate onSnapshot notice:', err.message));
 
+    // 8. Live AdMob Settings Listener
+    onSnapshot(doc(db, 'settings', 'admob'), (docSnap) => {
+      if (docSnap.exists()) {
+        state.admob = { ...state.admob, ...docSnap.data() };
+        setStorage('mobinx_admob_config', state.admob);
+        if (state.activeTab === 'downloads') {
+          renderCurrentTab();
+        }
+      }
+    }, (err) => console.warn('AdMob settings onSnapshot notice:', err.message));
+
     return { app, auth, db, doc, setDoc, deleteDoc, collection, getDocs };
   } catch (err) {
     console.warn('Firebase connection note (operating with local sync bridge):', err.message);
@@ -342,6 +353,13 @@ const defaultAppUpdate = {
   updateUrl: 'https://play.google.com/store/apps/details?id=com.mobinx.gaming'
 };
 
+const defaultAdMobConfig = {
+  enabled: true,
+  is_test_mode: true,
+  rewarded_ad_id: 'ca-app-pub-3940256099942544/5224354917',
+  banner_ad_id: 'ca-app-pub-3940256099942544/6300978111'
+};
+
 const defaultUsers = [
   {
     id: 'user_mobinyt420_gmail_com',
@@ -378,6 +396,7 @@ const state = {
   notices: getStorage('mobinx_notices_config', defaultNotices),
   homePopup: getStorage('mobinx_home_popup', defaultHomePopup),
   appUpdate: getStorage('mobinx_app_update', defaultAppUpdate),
+  admob: getStorage('mobinx_admob_config', defaultAdMobConfig),
   users: getStorage('mobinx_registered_users', defaultUsers).filter(u => !u.email || !legacyDummyEmails.includes(u.email.toLowerCase().trim())),
   userSearchQuery: '',
   modalCallback: null
@@ -844,9 +863,64 @@ function renderTournaments() {
 
 // TAB 3: APK DOWNLOADS
 function renderDownloads() {
+  const admob = state.admob || defaultAdMobConfig;
   return `
     <div class="tab-pane active" id="tab-downloads">
-      
+
+      <!-- AdMob Remote Control Card -->
+      <div class="card" style="border: 1px solid rgba(59, 130, 246, 0.4); background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.7)); margin-bottom: 20px;">
+        <div class="card-header" style="border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 12px; margin-bottom: 14px;">
+          <div>
+            <div class="card-title" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <span>💰 Google AdMob Monetization & Remote Control</span>
+              <span class="badge" style="background: ${admob.enabled ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'}; color: ${admob.enabled ? '#34d399' : '#f87171'}; border: 1px solid ${admob.enabled ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'};">
+                ${admob.enabled ? '● Ads Active' : '○ Ads Disabled'}
+              </span>
+              <span class="badge" style="background: ${admob.is_test_mode ? 'rgba(245, 158, 11, 0.2)' : 'rgba(59, 130, 246, 0.2)'}; color: ${admob.is_test_mode ? '#fbbf24' : '#60a5fa'}; border: 1px solid ${admob.is_test_mode ? 'rgba(245, 158, 11, 0.4)' : 'rgba(59, 130, 246, 0.4)'};">
+                ${admob.is_test_mode ? '🛡️ Test Mode (Safe)' : '🚀 Real Production Ads'}
+              </span>
+            </div>
+            <div class="card-subtitle">One-click toggle ads for self-testing or switch between Google Test IDs and Real Live Ad IDs in real-time without app update.</div>
+          </div>
+        </div>
+
+        <form id="form-admob-settings">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Ads Master Switch</label>
+              <select id="admob-enabled" class="form-control">
+                <option value="true" ${admob.enabled ? 'selected' : ''}>🟢 Enabled (Show Ads in App)</option>
+                <option value="false" ${!admob.enabled ? 'selected' : ''}>🔴 Disabled (Zero Ads - Clean Mode)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Ad Environment Mode</label>
+              <select id="admob-test-mode" class="form-control">
+                <option value="true" ${admob.is_test_mode ? 'selected' : ''}>🛡️ Test Mode (Safe Google Sample Ads)</option>
+                <option value="false" ${!admob.is_test_mode ? 'selected' : ''}>🚀 Live Mode (Real Revenue AdMob Ads)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Rewarded Ad Unit ID</label>
+              <input type="text" id="admob-rewarded-id" class="form-control" placeholder="ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy" value="${admob.rewarded_ad_id || ''}" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Banner Ad Unit ID</label>
+              <input type="text" id="admob-banner-id" class="form-control" placeholder="ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy" value="${admob.banner_ad_id || ''}" />
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; margin-top: 14px;">
+            <button type="submit" class="btn btn-primary" style="background: linear-gradient(135deg, #2563eb, #1d4ed8);">
+              💾 Save AdMob Settings (Sync Live to App)
+            </button>
+          </div>
+        </form>
+      </div>
+
       <!-- Add New Download Form -->
       <div class="card">
         <div class="card-header">
@@ -1888,6 +1962,30 @@ function bindCurrentTabEvents() {
     });
   });
 
+
+  // Downloads: AdMob Settings Save
+  document.getElementById('form-admob-settings')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const enabled = document.getElementById('admob-enabled')?.value === 'true';
+    const is_test_mode = document.getElementById('admob-test-mode')?.value === 'true';
+    const rewarded_ad_id = document.getElementById('admob-rewarded-id')?.value.trim() || '';
+    const banner_ad_id = document.getElementById('admob-banner-id')?.value.trim() || '';
+
+    state.admob = {
+      enabled,
+      is_test_mode,
+      rewarded_ad_id,
+      banner_ad_id,
+      updatedAt: new Date().toISOString()
+    };
+
+    setStorage('mobinx_admob_config', state.admob);
+    showToast('AdMob settings saved and broadcasted live to App!', 'success');
+    renderCurrentTab();
+
+    await syncToFirestore('settings', 'admob', state.admob);
+    broadcastSync('ADMOB_CONFIG_UPDATED', state.admob);
+  });
 
   // Downloads: Add Button Row
   document.getElementById('btn-add-action-row')?.addEventListener('click', () => {

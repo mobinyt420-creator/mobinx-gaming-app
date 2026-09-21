@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/models/download_item_model.dart';
 import '../../core/services/download_service.dart';
+import '../../core/services/admob_service.dart';
 import 'widgets/tool_card.dart';
 
 /// APK & Tool Downloads Screen (Exact Alignment with Screenshot 5)
@@ -189,6 +190,10 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
             ),
           ),
         ],
+      ),
+      bottomNavigationBar: const SafeArea(
+        top: false,
+        child: AdMobBannerWidget(),
       ),
     );
   }
