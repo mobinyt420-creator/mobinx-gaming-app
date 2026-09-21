@@ -76,34 +76,39 @@ class AdMobService {
 
   /// Pre-load Rewarded Ad in background so it's ready instantaneously
   void loadRewardedAd() {
-    if (kIsWeb || !isAdsEnabled) return;
-    if (_rewardedAd != null || _isRewardedAdLoading) return;
+    try {
+      if (kIsWeb || !isAdsEnabled) return;
+      if (_rewardedAd != null || _isRewardedAdLoading) return;
 
-    _isRewardedAdLoading = true;
-    RewardedAd.load(
-      adUnitId: rewardedAdUnitId,
-      request: const AdRequest(),
-      rewardedAdLoadCallback: RewardedAdLoadCallback(
-        onAdLoaded: (ad) {
-          debugPrint('✅ [AdMobService] Rewarded Ad Loaded and Ready');
-          _rewardedAd = ad;
-          _isRewardedAdLoading = false;
-          _rewardedRetryAttempts = 0;
-        },
-        onAdFailedToLoad: (LoadAdError error) {
-          debugPrint('⚠️ [AdMobService] Rewarded Ad Failed to Load: $error');
-          _rewardedAd = null;
-          _isRewardedAdLoading = false;
-          _rewardedRetryAttempts++;
-          // Exponential backoff retry up to 3 times
-          if (_rewardedRetryAttempts <= 3) {
-            Future.delayed(Duration(seconds: _rewardedRetryAttempts * 5), () {
-              loadRewardedAd();
-            });
-          }
-        },
-      ),
-    );
+      _isRewardedAdLoading = true;
+      RewardedAd.load(
+        adUnitId: rewardedAdUnitId,
+        request: const AdRequest(),
+        rewardedAdLoadCallback: RewardedAdLoadCallback(
+          onAdLoaded: (ad) {
+            debugPrint('✅ [AdMobService] Rewarded Ad Loaded and Ready');
+            _rewardedAd = ad;
+            _isRewardedAdLoading = false;
+            _rewardedRetryAttempts = 0;
+          },
+          onAdFailedToLoad: (LoadAdError error) {
+            debugPrint('⚠️ [AdMobService] Rewarded Ad Failed to Load: $error');
+            _rewardedAd = null;
+            _isRewardedAdLoading = false;
+            _rewardedRetryAttempts++;
+            // Exponential backoff retry up to 3 times
+            if (_rewardedRetryAttempts <= 3) {
+              Future.delayed(Duration(seconds: _rewardedRetryAttempts * 5), () {
+                loadRewardedAd();
+              });
+            }
+          },
+        ),
+      );
+    } catch (e) {
+      _isRewardedAdLoading = false;
+      debugPrint('⚠️ [AdMobService] loadRewardedAd exception: $e');
+    }
   }
 
   /// Show Rewarded Ad. If user watches and completes, [onRewardEarned] is fired.
@@ -213,7 +218,13 @@ class _AdMobBannerWidgetState extends State<AdMobBannerWidget> {
       ),
     );
 
-    _bannerAd!.load();
+    try {
+      _bannerAd!.load();
+    } catch (e) {
+      debugPrint('⚠️ [AdMobBanner] Load exception: $e');
+      _bannerAd?.dispose();
+      _bannerAd = null;
+    }
   }
 
   @override

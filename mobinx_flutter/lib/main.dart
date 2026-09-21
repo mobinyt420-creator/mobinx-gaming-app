@@ -30,14 +30,19 @@ void main() async {
     debugPrint('Storage init notice: $e');
   }
 
-  // 3. Initialize Firebase & Notification system asynchronously in background
+  // 3. Initialize Firebase, Notifications & AdMob asynchronously
   FirebaseService.init().then((_) {
     NotificationService.instance.init();
     AuthService.instance.init();
-    AdMobService.instance.init();
   }).catchError((e) {
     debugPrint('Background Firebase init: $e');
   });
+
+  try {
+    AdMobService.instance.init();
+  } catch (e) {
+    debugPrint('AdMob init caught: $e');
+  }
 
   // Lock to portrait orientation for esports gaming UX
   try {
