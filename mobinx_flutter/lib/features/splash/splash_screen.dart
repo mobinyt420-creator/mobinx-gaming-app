@@ -127,11 +127,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   children: [
                     // Brand Icon Container with Dual Border
                     Container(
-                      width: 90,
-                      height: 90,
+                      width: 92,
+                      height: 92,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: AppColors.brandGradient,
                         boxShadow: [
                           BoxShadow(
                             color: AppColors.primary.withValues(alpha: 0.35),
@@ -141,14 +140,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                           ),
                         ],
                       ),
-                      child: Center(
-                        child: Text(
-                          'M',
-                          style: GoogleFonts.outfit(
-                            fontSize: 48,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                          ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(46),
+                        child: Image.asset(
+                          'assets/images/obin_icon_512.png',
+                          fit: BoxFit.cover,
                         ),
                       ),
                     ),

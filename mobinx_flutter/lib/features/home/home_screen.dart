@@ -148,22 +148,13 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               title: Row(
                 children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE0F2FE),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'M',
-                        style: TextStyle(
-                          color: Color(0xFF0284C7),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.asset(
+                      'assets/images/obin_icon_512.png',
+                      width: 28,
+                      height: 28,
+                      fit: BoxFit.cover,
                     ),
                   ),
                   const SizedBox(width: 8),
