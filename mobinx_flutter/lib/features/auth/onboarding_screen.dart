@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../core/constants/app_constants.dart';
 import '../../core/services/auth_service.dart';
 import '../home/home_screen.dart';
 import 'login_sheet.dart';
@@ -87,9 +89,7 @@ class _GoogleGLogoPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// 2-Step Modernized Player Authentication & Onboarding Screen
-/// Step 0: Welcome Screen with "Let's Get Started" / "Continue" button
-/// Step 1: Authentication Screen with Google Login, Manual Login & Referral Code
+/// 2-Step Modernized Player Authentication & Onboarding Screen (Images 2 & 3)
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -98,7 +98,7 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerProviderStateMixin {
-  int _currentStep = 0; // 0 = Welcome Step, 1 = Auth Selection Step
+  int _currentStep = 0; // 0 = Welcome Step (Image 3), 1 = Auth Selection Step (Image 2)
   bool _isGoogleLoading = false;
 
   late final AnimationController _pulseController;
@@ -111,7 +111,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
       vsync: this,
       duration: const Duration(milliseconds: 2400),
     )..repeat(reverse: true);
-    _glowAnimation = Tween<double>(begin: 0.90, end: 1.10).animate(
+    _glowAnimation = Tween<double>(begin: 0.92, end: 1.08).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
   }
@@ -168,63 +168,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
           );
         }
       } else {
-        // If Google Sign-In didn't return an account, offer resilient direct login
-        if (mounted) {
-          _showQuickLoginDialog();
-        }
+        if (mounted) _openLoginSheet();
       }
     } catch (e) {
-      if (mounted) {
-        _showQuickLoginDialog();
-      }
+      if (mounted) _openLoginSheet();
     } finally {
       if (mounted) setState(() => _isGoogleLoading = false);
     }
-  }
-
-  void _showQuickLoginDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF0F172A),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Row(
-          children: [
-            const Icon(Icons.sports_esports_rounded, color: Color(0xFF38BDF8), size: 24),
-            const SizedBox(width: 10),
-            Text(
-              'Quick Player Access',
-              style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
-            ),
-          ],
-        ),
-        content: Text(
-          'Would you like to enter as a Player immediately or use Manual Login?',
-          style: GoogleFonts.inter(color: const Color(0xFF94A3B8), fontSize: 13.5),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _openLoginSheet();
-            },
-            child: Text('Manual Login', style: GoogleFonts.inter(color: const Color(0xFF38BDF8), fontWeight: FontWeight.w700)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0284C7),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            onPressed: () async {
-              Navigator.pop(context);
-              await AuthService.instance.signInWithGoogle();
-              if (mounted) _navigateToHome();
-            },
-            child: Text('Enter Now', style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w800)),
-          ),
-        ],
-      ),
-    );
   }
 
   void _openLoginSheet() {
@@ -251,18 +201,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
     );
   }
 
+  void _openLegalUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF060B18),
       body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 280),
         transitionBuilder: (child, animation) {
           return FadeTransition(
             opacity: animation,
             child: SlideTransition(
               position: Tween<Offset>(
-                begin: const Offset(0.05, 0),
+                begin: const Offset(0.04, 0),
                 end: Offset.zero,
               ).animate(animation),
               child: child,
@@ -274,7 +231,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
     );
   }
 
-  /// Screen 1: Welcome / Intro Flow ("Let's Get Started" / "Continue  /// Screen 1: Welcome / Intro Flow ("Let's Get Started" / "Continue")
+  /// Screen 1: Welcome Step (Image 3)
   Widget _buildWelcomeStep() {
     return Container(
       key: const ValueKey('welcome_step'),
@@ -283,158 +240,175 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0xFF132A54), // Lighter, richer navy-sapphire tone
-            Color(0xFF0B1936),
-            Color(0xFF061026),
+            Color(0xFF0F1E3D),
+            Color(0xFF0B172E),
+            Color(0xFF060B18),
           ],
         ),
       ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Top Branding
-              Column(
-                children: [
-                  const SizedBox(height: 6),
-                  Container(
-                    width: 62,
-                    height: 62,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: const Color(0xFF00F0FF).withValues(alpha: 0.55), width: 1.5),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF0284C7).withValues(alpha: 0.55),
-                          blurRadius: 28,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Image.asset(
-                      'assets/images/obin_icon_512.png',
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Container(
-                        color: const Color(0xFF0284C7),
-                        child: const Center(
-                          child: Text('M', style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    'Welcome to',
-                    style: GoogleFonts.inter(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFFCBD5E1),
-                      letterSpacing: 0.4,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
+      child: Stack(
+        children: [
+          // Background ambient gaming glow
+          Positioned(
+            top: -40,
+            right: -40,
+            child: Container(
+              width: 240,
+              height: 240,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFF0284C7).withValues(alpha: 0.28),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 60,
+            left: -40,
+            child: Container(
+              width: 260,
+              height: 260,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFF00E5FF).withValues(alpha: 0.18),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+            ),
+          ),
 
-                  // Stylized Gaming OBIN Brand Title
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // 1. Top Branding Header (Image 3)
+                  Column(
                     children: [
+                      const SizedBox(height: 4),
+                      // App Icon Squircle
                       Container(
-                        width: 22,
-                        height: 2,
+                        width: 64,
+                        height: 64,
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [Colors.transparent, const Color(0xFF00F0FF).withValues(alpha: 0.8)],
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: const Color(0xFF00E5FF).withValues(alpha: 0.6),
+                            width: 1.5,
                           ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF00E5FF).withValues(alpha: 0.35),
+                              blurRadius: 24,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: Image.asset(
+                          'assets/images/obin_icon_512.png',
+                          fit: BoxFit.cover,
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      ShaderMask(
-                        shaderCallback: (bounds) => const LinearGradient(
-                          colors: [Color(0xFF00F0FF), Color(0xFF38BDF8), Color(0xFF2563EB)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ).createShader(bounds),
-                        child: Text(
-                          'OBIN',
-                          style: GoogleFonts.orbitron(
-                            fontSize: 34,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                            letterSpacing: 4.5,
-                            shadows: [
-                              Shadow(
-                                color: const Color(0xFF00F0FF).withValues(alpha: 0.6),
-                                blurRadius: 22,
+                      const SizedBox(height: 10),
+                      Text(
+                        'Welcome to',
+                        style: GoogleFonts.outfit(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF94A3B8),
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 1),
+
+                      // — OBIN — Brand Title
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 24,
+                            height: 2.2,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [Colors.transparent, const Color(0xFF00E5FF).withValues(alpha: 0.9)],
                               ),
-                            ],
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          ShaderMask(
+                            shaderCallback: (bounds) => const LinearGradient(
+                              colors: [Color(0xFF00E5FF), Color(0xFF38BDF8), Color(0xFF60A5FA)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ).createShader(bounds),
+                            child: Text(
+                              'OBIN',
+                              style: GoogleFonts.outfit(
+                                fontSize: 34,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                                letterSpacing: 2.5,
+                                shadows: [
+                                  Shadow(
+                                    color: const Color(0xFF00E5FF).withValues(alpha: 0.65),
+                                    blurRadius: 20,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            width: 24,
+                            height: 2.2,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [const Color(0xFF00E5FF).withValues(alpha: 0.9), Colors.transparent],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Container(
-                        width: 22,
-                        height: 2,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [const Color(0xFF00F0FF).withValues(alpha: 0.8), Colors.transparent],
-                          ),
+                      const SizedBox(height: 1),
+                      Text(
+                        'The Ultimate Super App',
+                        style: GoogleFonts.outfit(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF94A3B8),
+                          letterSpacing: 0.2,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'The Ultimate Super App',
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF94A3B8),
-                      letterSpacing: 0.2,
-                    ),
-                  ),
-                ],
-              ),
 
-              // Center Pedestal Artwork (with ambient breathing glow animation)
-              AnimatedBuilder(
-                animation: _glowAnimation,
-                builder: (context, child) {
-                  return Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      // Ambient pulsing outer glow ring
-                      Transform.scale(
-                        scale: _glowAnimation.value,
-                        child: Container(
-                          width: 230,
-                          height: 230,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: RadialGradient(
-                              colors: [
-                                const Color(0xFF0284C7).withValues(alpha: 0.45 * _glowAnimation.value),
-                                const Color(0xFF00F0FF).withValues(alpha: 0.18 * _glowAnimation.value),
-                                Colors.transparent,
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Pedestal frame
-                      Container(
-                        width: 176,
-                        height: 176,
+                  // 2. Center Hero Card (Image 3)
+                  AnimatedBuilder(
+                    animation: _glowAnimation,
+                    builder: (context, child) {
+                      return Container(
+                        width: 250,
+                        height: 210,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(28),
-                          border: Border.all(color: const Color(0xFF00F0FF).withValues(alpha: 0.5), width: 1.8),
+                          borderRadius: BorderRadius.circular(26),
+                          border: Border.all(
+                            color: const Color(0xFF00E5FF).withValues(alpha: 0.55),
+                            width: 1.6,
+                          ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF0284C7).withValues(alpha: 0.5 * _glowAnimation.value),
-                              blurRadius: 38 * _glowAnimation.value,
-                              offset: const Offset(0, 12),
+                              color: const Color(0xFF00E5FF).withValues(alpha: 0.35 * _glowAnimation.value),
+                              blurRadius: 32 * _glowAnimation.value,
+                              offset: const Offset(0, 8),
                             ),
                           ],
                         ),
@@ -442,111 +416,108 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                         child: Image.asset(
                           'assets/images/onboarding_controller.jpg',
                           fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => Container(
-                            color: const Color(0xFF0F172A),
-                            child: const Icon(Icons.sports_esports_rounded, size: 70, color: Color(0xFF38BDF8)),
-                          ),
                         ),
+                      );
+                    },
+                  ),
+
+                  // 3. Three Feature Highlight Cards (Image 3)
+                  Column(
+                    children: [
+                      _buildFeatureTile(
+                        icon: Icons.diamond_rounded,
+                        iconColor: const Color(0xFF00E5FF),
+                        title: 'Top Up & Diamonds',
+                        desc: 'Fast & secure instant top up',
+                        borderColor: const Color(0xFF0284C7),
+                      ),
+                      const SizedBox(height: 9),
+                      _buildFeatureTile(
+                        icon: Icons.emoji_events_rounded,
+                        iconColor: const Color(0xFFF59E0B),
+                        title: 'Tournaments',
+                        desc: 'Join daily exciting battles',
+                        borderColor: const Color(0xFFD97706),
+                      ),
+                      const SizedBox(height: 9),
+                      _buildFeatureTile(
+                        icon: Icons.card_giftcard_rounded,
+                        iconColor: const Color(0xFFA855F7),
+                        title: 'Rewards & Pro Tools',
+                        desc: 'Custom sensitivity & downloads',
+                        borderColor: const Color(0xFF7C3AED),
                       ),
                     ],
-                  );
-                },
-              ),
+                  ),
 
-              // 3 Feature Highlight Cards (Rich Glassmorphism)
-              Column(
-                children: [
-                  _buildFeatureRow(
-                    icon: '💎',
-                    title: 'Top Up & Diamonds',
-                    desc: 'Fast & secure instant top up',
-                    borderColor: const Color(0xFF00F0FF),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildFeatureRow(
-                    icon: '🏆',
-                    title: 'Tournaments',
-                    desc: 'Join daily exciting battles',
-                    borderColor: const Color(0xFFF59E0B),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildFeatureRow(
-                    icon: '🎁',
-                    title: 'Rewards & Pro Tools',
-                    desc: 'Custom sensitivity & downloads',
-                    borderColor: const Color(0xFFA855F7),
+                  // 4. Bottom "Let's Get Started" Button (Image 3)
+                  AnimatedBuilder(
+                    animation: _glowAnimation,
+                    builder: (context, child) {
+                      return Container(
+                        width: double.infinity,
+                        height: 54,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(18),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF0072FF), Color(0xFF00D2FF)],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF00D2FF).withValues(alpha: 0.45 * _glowAnimation.value),
+                              blurRadius: 22 * _glowAnimation.value,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              _currentStep = 1;
+                            });
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                          ),
+                          child: Text(
+                            "Let's Get Started",
+                            style: GoogleFonts.outfit(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
-
-              // Bottom "Let's Get Started" Button with gradient & pulse
-              AnimatedBuilder(
-                animation: _glowAnimation,
-                builder: (context, child) {
-                  return Container(
-                    width: double.infinity,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF0066FF), Color(0xFF0284C7), Color(0xFF00C6FF)],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF0284C7).withValues(alpha: 0.55 * _glowAnimation.value),
-                          blurRadius: 22 * _glowAnimation.value,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          _currentStep = 1;
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            "Let's Get Started",
-                            style: GoogleFonts.outfit(fontSize: 16.5, fontWeight: FontWeight.w800, letterSpacing: 0.4),
-                          ),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.arrow_forward_rounded, size: 20),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget _buildFeatureRow({
-    required String icon,
+  Widget _buildFeatureTile({
+    required IconData icon,
+    required Color iconColor,
     required String title,
     required String desc,
     required Color borderColor,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(
-        color: const Color(0xFF102042).withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: borderColor.withValues(alpha: 0.35)),
+        color: const Color(0xFF0A1832).withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor.withValues(alpha: 0.4)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.25),
@@ -558,18 +529,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
       child: Row(
         children: [
           Container(
-            width: 38,
-            height: 38,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
-              color: borderColor.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: borderColor.withValues(alpha: 0.35)),
+              color: iconColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: iconColor.withValues(alpha: 0.35)),
             ),
-            child: Center(
-              child: Text(icon, style: const TextStyle(fontSize: 18)),
-            ),
+            child: Icon(icon, color: iconColor, size: 21),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 13),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -577,11 +546,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                 Text(
                   title,
                   style: GoogleFonts.outfit(
-                    fontSize: 13.5,
+                    fontSize: 14,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
                   ),
                 ),
+                const SizedBox(height: 1),
                 Text(
                   desc,
                   style: GoogleFonts.inter(
@@ -598,7 +568,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
     );
   }
 
-  /// Screen 2: Authentication Screen (Streamlined Google Login & Manual Login)
+  /// Screen 2: Authentication Screen (Image 2)
   Widget _buildAuthSelectionStep() {
     return Container(
       key: const ValueKey('auth_step'),
@@ -608,25 +578,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
           end: Alignment.bottomCenter,
           colors: [
             Color(0xFF0F1E3D),
-            Color(0xFF142B59),
             Color(0xFF0C1935),
+            Color(0xFF060D1E),
           ],
         ),
       ),
       child: Stack(
         children: [
-          // Dynamic ambient gaming glow spots (eliminates empty dark void)
+          // Background ambient light curves
           Positioned(
-            top: 60,
+            top: 40,
             left: -30,
             child: Container(
-              width: 260,
-              height: 260,
+              width: 250,
+              height: 250,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFF0284C7).withValues(alpha: 0.32),
+                    const Color(0xFF0284C7).withValues(alpha: 0.25),
                     Colors.transparent,
                   ],
                 ),
@@ -634,17 +604,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
             ),
           ),
           Positioned(
-            bottom: 30,
-            right: -40,
+            bottom: 40,
+            right: -30,
             child: Container(
-              width: 280,
-              height: 280,
+              width: 260,
+              height: 260,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    const Color(0xFF00F0FF).withValues(alpha: 0.22),
-                    const Color(0xFF2563EB).withValues(alpha: 0.16),
+                    const Color(0xFF00E5FF).withValues(alpha: 0.2),
                     Colors.transparent,
                   ],
                 ),
@@ -660,22 +629,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                   child: ConstrainedBox(
                     constraints: BoxConstraints(minHeight: constraints.maxHeight),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // 1. Top Bar with Back Button
+                          // 1. Top Bar with Glass Back Button (Image 2)
                           Row(
                             children: [
                               Container(
+                                width: 42,
+                                height: 42,
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                                  color: const Color(0xFF101C38).withValues(alpha: 0.8),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: const Color(0xFF38BDF8).withValues(alpha: 0.3),
+                                    width: 1.2,
+                                  ),
                                 ),
                                 child: IconButton(
-                                  icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 22),
+                                  padding: EdgeInsets.zero,
+                                  icon: const Icon(Icons.chevron_left_rounded, color: Colors.white, size: 28),
                                   onPressed: () {
                                     setState(() {
                                       _currentStep = 0;
@@ -686,107 +661,107 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                             ],
                           ),
 
-                          // 2. Middle Content: Centered Branding & Login Cards
+                          // 2. Center Branding & Action Cards (Image 2)
                           Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              // Glowing Brand Icon Container
+                              // Glowing Brand Icon Container (Image 2)
                               Container(
-                                width: 72,
-                                height: 72,
+                                width: 84,
+                                height: 84,
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(22),
+                                  borderRadius: BorderRadius.circular(24),
                                   border: Border.all(
-                                    color: const Color(0xFF00F0FF).withValues(alpha: 0.7),
+                                    color: const Color(0xFF00E5FF).withValues(alpha: 0.75),
                                     width: 2.0,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: const Color(0xFF00C6FF).withValues(alpha: 0.45),
-                                      blurRadius: 32,
-                                      spreadRadius: 2,
+                                      color: const Color(0xFF00E5FF).withValues(alpha: 0.45),
+                                      blurRadius: 36,
                                       offset: const Offset(0, 8),
                                     ),
                                   ],
                                 ),
                                 clipBehavior: Clip.antiAlias,
-                                child: Transform.scale(
-                                  scale: 1.12,
-                                  child: Image.asset(
-                                    'assets/images/obin_icon_512.png',
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, _, _) => Container(
-                                      color: const Color(0xFF0284C7),
-                                      child: const Center(
-                                        child: Text('M', style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.bold)),
-                                      ),
-                                    ),
-                                  ),
+                                child: Image.asset(
+                                  'assets/images/obin_icon_512.png',
+                                  fit: BoxFit.cover,
                                 ),
                               ),
                               const SizedBox(height: 16),
 
-                              // Stylized Gaming OBIN Typography
-                              ShaderMask(
-                                shaderCallback: (bounds) => const LinearGradient(
-                                  colors: [Color(0xFF00F0FF), Color(0xFF38BDF8), Color(0xFF60A5FA)],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ).createShader(bounds),
-                                child: Text(
-                                  'OBIN',
-                                  style: GoogleFonts.orbitron(
-                                    fontSize: 34,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.white,
-                                    letterSpacing: 4.2,
-                                    shadows: [
-                                      Shadow(
-                                        color: const Color(0xFF00F0FF).withValues(alpha: 0.7),
-                                        blurRadius: 24,
+                              // Stylized OBIN Title (Image 2)
+                              RichText(
+                                textAlign: TextAlign.center,
+                                text: TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: 'O',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 42,
+                                        fontWeight: FontWeight.w900,
+                                        color: const Color(0xFF00E5FF),
+                                        letterSpacing: 2.0,
+                                        shadows: [
+                                          Shadow(
+                                            color: const Color(0xFF00E5FF).withValues(alpha: 0.8),
+                                            blurRadius: 28,
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                    TextSpan(
+                                      text: 'BIN',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 42,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.white,
+                                        letterSpacing: 2.5,
+                                        shadows: [
+                                          Shadow(
+                                            color: const Color(0xFF38BDF8).withValues(alpha: 0.6),
+                                            blurRadius: 24,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                               const SizedBox(height: 6),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF0284C7).withValues(alpha: 0.25),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.4)),
-                                ),
-                                child: Text(
-                                  'SIGN IN TO CONTINUE',
-                                  style: GoogleFonts.rajdhani(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w800,
-                                    color: const Color(0xFF38BDF8),
-                                    letterSpacing: 1.8,
-                                  ),
+                              Text(
+                                'Your All-in-One\nGaming Companion',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.outfit(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFFCBD5E1),
+                                  height: 1.3,
+                                  letterSpacing: 0.3,
                                 ),
                               ),
-                              const SizedBox(height: 32),
+                              const SizedBox(height: 38),
 
-                              // 1. Google Sign-In Card
+                              // Button 1: "Continue with Google" (White Pill Card from Image 2)
                               Material(
                                 color: Colors.transparent,
                                 child: InkWell(
                                   onTap: _isGoogleLoading ? null : _handleGoogleSignIn,
-                                  borderRadius: BorderRadius.circular(18),
+                                  borderRadius: BorderRadius.circular(24),
                                   child: Container(
                                     width: double.infinity,
-                                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+                                    height: 62,
+                                    padding: const EdgeInsets.symmetric(horizontal: 16),
                                     decoration: BoxDecoration(
                                       color: Colors.white,
-                                      borderRadius: BorderRadius.circular(18),
+                                      borderRadius: BorderRadius.circular(24),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: const Color(0xFF38BDF8).withValues(alpha: 0.35),
-                                          blurRadius: 24,
-                                          offset: const Offset(0, 8),
+                                          color: Colors.white.withValues(alpha: 0.15),
+                                          blurRadius: 20,
+                                          offset: const Offset(0, 6),
                                         ),
                                       ],
                                     ),
@@ -795,7 +770,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                                             child: SizedBox(
                                               width: 24,
                                               height: 24,
-                                              child: CircularProgressIndicator(strokeWidth: 2.5, color: Color(0xFF2563EB)),
+                                              child: CircularProgressIndicator(strokeWidth: 2.5, color: Color(0xFF0284C7)),
                                             ),
                                           )
                                         : Row(
@@ -803,166 +778,145 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                                               Container(
                                                 width: 44,
                                                 height: 44,
-                                                decoration: BoxDecoration(
-                                                  color: const Color(0xFFF1F5F9),
-                                                  borderRadius: BorderRadius.circular(12),
+                                                decoration: const BoxDecoration(
+                                                  color: Color(0xFFF1F5F9),
+                                                  shape: BoxShape.circle,
                                                 ),
                                                 child: const Center(
-                                                  child: GoogleGLogo(size: 24),
+                                                  child: GoogleGLogo(size: 22),
                                                 ),
                                               ),
                                               const SizedBox(width: 14),
                                               Expanded(
-                                                child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                                  children: [
-                                                    Text(
-                                                      'Continue with Google',
-                                                      style: GoogleFonts.outfit(
-                                                        fontSize: 15.5,
-                                                        fontWeight: FontWeight.w800,
-                                                        color: const Color(0xFF0F172A),
-                                                      ),
-                                                    ),
-                                                    Text(
-                                                      'Fast & Direct One-Tap Login',
-                                                      style: GoogleFonts.inter(
-                                                        fontSize: 12,
-                                                        color: const Color(0xFF64748B),
-                                                        fontWeight: FontWeight.w600,
-                                                      ),
-                                                    ),
-                                                  ],
+                                                child: Text(
+                                                  'Continue with Google',
+                                                  style: GoogleFonts.outfit(
+                                                    fontSize: 16.5,
+                                                    fontWeight: FontWeight.w800,
+                                                    color: const Color(0xFF0F172A),
+                                                  ),
                                                 ),
                                               ),
                                               Container(
-                                                width: 34,
-                                                height: 34,
-                                                decoration: BoxDecoration(
-                                                  color: const Color(0xFFEFF6FF),
-                                                  borderRadius: BorderRadius.circular(10),
+                                                width: 38,
+                                                height: 38,
+                                                decoration: const BoxDecoration(
+                                                  color: Color(0xFFE0F2FE),
+                                                  shape: BoxShape.circle,
                                                 ),
-                                                child: const Icon(Icons.arrow_forward_rounded, color: Color(0xFF2563EB), size: 19),
+                                                child: const Icon(Icons.arrow_forward_rounded, color: Color(0xFF0284C7), size: 20),
                                               ),
                                             ],
                                           ),
                                   ),
                                 ),
                               ),
+                              const SizedBox(height: 16),
 
-                              // 2. Manual Login Card (Controlled live by Admin Panel auth_settings)
-                              ValueListenableBuilder<Map<String, dynamic>>(
-                                valueListenable: AuthService.instance.authSettingsNotifier,
-                                builder: (context, authSettings, _) {
-                                  final isManualEnabled = authSettings['manualLoginEnabled'] != false;
-                                  if (!isManualEnabled) return const SizedBox.shrink();
-                                  return Column(
-                                    children: [
-                                      const SizedBox(height: 14),
-                                      Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          onTap: _openLoginSheet,
-                                          borderRadius: BorderRadius.circular(18),
-                                          child: Container(
-                                            width: double.infinity,
-                                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
-                                            decoration: BoxDecoration(
-                                              color: const Color(0xFF102042).withValues(alpha: 0.9),
-                                              borderRadius: BorderRadius.circular(18),
-                                              border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.4), width: 1.5),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.black.withValues(alpha: 0.35),
-                                                  blurRadius: 18,
-                                                  offset: const Offset(0, 5),
-                                                ),
-                                              ],
-                                            ),
-                                            child: Row(
-                                              children: [
-                                                Container(
-                                                  width: 44,
-                                                  height: 44,
-                                                  decoration: BoxDecoration(
-                                                    color: const Color(0xFF38BDF8).withValues(alpha: 0.15),
-                                                    borderRadius: BorderRadius.circular(12),
-                                                    border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.3)),
-                                                  ),
-                                                  child: const Center(
-                                                    child: Icon(Icons.lock_outline_rounded, color: Color(0xFF38BDF8), size: 22),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 14),
-                                                Expanded(
-                                                  child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    children: [
-                                                      Text(
-                                                        'Manual Login',
-                                                        style: GoogleFonts.outfit(
-                                                          fontSize: 15.5,
-                                                          fontWeight: FontWeight.w800,
-                                                          color: Colors.white,
-                                                        ),
-                                                      ),
-                                                      Text(
-                                                        'Email & Password Sign In',
-                                                        style: GoogleFonts.inter(
-                                                          fontSize: 12,
-                                                          color: const Color(0xFF94A3B8),
-                                                          fontWeight: FontWeight.w500,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                Container(
-                                                  width: 34,
-                                                  height: 34,
-                                                  decoration: BoxDecoration(
-                                                    color: const Color(0xFF1E293B),
-                                                    borderRadius: BorderRadius.circular(10),
-                                                  ),
-                                                  child: const Icon(Icons.arrow_forward_rounded, color: Color(0xFF38BDF8), size: 19),
-                                                ),
-                                              ],
-                                            ),
+                              // Button 2: "Manual Login" (Dark Glass Pill Card from Image 2)
+                              Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: _openLoginSheet,
+                                  borderRadius: BorderRadius.circular(24),
+                                  child: Container(
+                                    width: double.infinity,
+                                    height: 68,
+                                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF08142C).withValues(alpha: 0.75),
+                                      borderRadius: BorderRadius.circular(24),
+                                      border: Border.all(
+                                        color: const Color(0xFF0284C7),
+                                        width: 1.5,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xFF0284C7).withValues(alpha: 0.25),
+                                          blurRadius: 18,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 44,
+                                          height: 44,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF0284C7),
+                                            borderRadius: BorderRadius.circular(14),
+                                          ),
+                                          child: const Center(
+                                            child: Icon(Icons.lock_rounded, color: Color(0xFF38BDF8), size: 22),
                                           ),
                                         ),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              ),
-                              const SizedBox(height: 28),
-
-                              // Trust & Security Badge
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF102042).withValues(alpha: 0.75),
-                                  borderRadius: BorderRadius.circular(22),
-                                  border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.25)),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(alpha: 0.2),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 3),
+                                        const SizedBox(width: 14),
+                                        Expanded(
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Manual Login',
+                                                style: GoogleFonts.outfit(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                              Text(
+                                                'Email & Password Sign In',
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 12,
+                                                  color: const Color(0xFF94A3B8),
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Container(
+                                          width: 38,
+                                          height: 38,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF0D254C),
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: const Color(0xFF0284C7).withValues(alpha: 0.5),
+                                            ),
+                                          ),
+                                          child: const Icon(Icons.arrow_forward_rounded, color: Color(0xFF00D2FF), size: 18),
+                                        ),
+                                      ],
                                     ),
-                                  ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+
+                              // Button 3: 100% Verified Gaming Account Badge (Image 2)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF071830).withValues(alpha: 0.65),
+                                  borderRadius: BorderRadius.circular(24),
+                                  border: Border.all(
+                                    color: const Color(0xFF0284C7).withValues(alpha: 0.45),
+                                    width: 1.2,
+                                  ),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(Icons.shield_rounded, color: Color(0xFF34D399), size: 16),
-                                    const SizedBox(width: 7),
+                                    const Icon(Icons.verified_user_rounded, color: Color(0xFF10B981), size: 17),
+                                    const SizedBox(width: 8),
                                     Text(
-                                      '100% Secure & Verified Gaming Account',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 11.5,
-                                        color: const Color(0xFF94A3B8),
-                                        fontWeight: FontWeight.w600,
+                                      '100% Verified Gaming Account',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 13,
+                                        color: const Color(0xFFE2E8F0),
+                                        fontWeight: FontWeight.w700,
                                       ),
                                     ),
                                   ],
@@ -971,17 +925,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                             ],
                           ),
 
-                          // 3. Bottom Terms & Privacy Policy
+                          // 3. Bottom Terms & Privacy Policy (Image 2)
                           Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: Text(
-                              'By continuing, you agree to our Terms of Service & Privacy Policy',
-                              style: GoogleFonts.inter(
-                                fontSize: 11.5,
-                                color: const Color(0xFF94A3B8),
-                                fontWeight: FontWeight.w500,
-                              ),
-                              textAlign: TextAlign.center,
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'By continuing, you agree to our ',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11.5,
+                                    color: const Color(0xFF94A3B8),
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () => _openLegalUrl(AppConstants.privacyPolicyUrl),
+                                  child: Text(
+                                    'Terms of Service & Privacy Policy',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11.5,
+                                      color: const Color(0xFF38BDF8),
+                                      fontWeight: FontWeight.w700,
+                                      decoration: TextDecoration.underline,
+                                      decorationColor: const Color(0xFF38BDF8),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],

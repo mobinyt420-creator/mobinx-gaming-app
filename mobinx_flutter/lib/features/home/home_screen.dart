@@ -157,13 +157,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: const Color(0xFF38BDF8).withValues(alpha: 0.35),
+                        color: const Color(0xFF38BDF8).withValues(alpha: 0.4),
                         width: 1.2,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF0284C7).withValues(alpha: 0.15),
-                          blurRadius: 8,
+                          color: const Color(0xFF0284C7).withValues(alpha: 0.18),
+                          blurRadius: 10,
                           offset: const Offset(0, 2),
                         ),
                       ],
@@ -177,15 +177,42 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'OBIN',
-                    style: GoogleFonts.outfit(
-                      fontSize: 23,
-                      fontWeight: FontWeight.w900,
-                      color: const Color(0xFF0284C7),
-                      letterSpacing: 1.5,
-                    ),
+                  const SizedBox(width: 9),
+                  // Stylized OBIN Logo with Cyan 'O', Dark Navy 'BIN' & Swoosh Wave (Image 1)
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: 'O',
+                              style: GoogleFonts.outfit(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                                color: const Color(0xFF00A3FF),
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'BIN',
+                              style: GoogleFonts.outfit(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w900,
+                                color: const Color(0xFF0B1936),
+                                letterSpacing: 1.8,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 1),
+                      CustomPaint(
+                        size: const Size(62, 3.5),
+                        painter: _ObinAppBarSwooshPainter(),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -479,4 +506,26 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+}
+
+class _ObinAppBarSwooshPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..shader = const LinearGradient(
+        colors: [Color(0xFF00E5FF), Color(0xFF0284C7), Color(0xFF38BDF8)],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..style = PaintingStyle.fill;
+
+    final path = Path()
+      ..moveTo(0, size.height * 0.3)
+      ..cubicTo(size.width * 0.2, size.height * 0.95, size.width * 0.7, size.height * 0.9, size.width, size.height * 0.05)
+      ..cubicTo(size.width * 0.65, size.height * 0.55, size.width * 0.25, size.height * 0.45, 0, size.height * 0.3)
+      ..close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

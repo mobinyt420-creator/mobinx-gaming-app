@@ -16,6 +16,8 @@ class AppConstants {
   static const String blogUrl = 'https://mrmobin.blogspot.com/';
   static const String topUpPartnerUrl = 'https://noobtopup.com/';
   static const String playStoreUrl = 'https://play.google.com/store/apps/details?id=com.mobinx.gaming';
+  static const String privacyPolicyUrl = 'https://mobinx-admin-console.vercel.app/privacy-policy';
+  static const String termsOfServiceUrl = 'https://mobinx-admin-console.vercel.app/privacy-policy';
 
   // Local Storage Keys
   static const String keyUserSession = 'mobinx_user_session';

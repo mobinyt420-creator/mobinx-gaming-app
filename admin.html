@@ -4214,10 +4214,13 @@ function renderNotifications() {
             <p style="font-size: 11.5px; color: #94a3b8; margin: 0 0 10px 0; line-height: 1.45;">
               এই সিস্টেমটি Google FCM v1 ও Cloud Firestore ডুয়াল-লেয়ার ব্যবহার করে ১০,০০০ থেকে ১,০০,০০০+ ইউজারের ফোনে ব্যাকগ্রাউন্ডে বা অ্যাপ বন্ধ/কিল্ড থাকলেও সাথে সাথে নোটিফিকেশন পৌঁছে দেয়।
             </p>
-            <div style="display: flex; gap: 8px; align-items: center;">
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
               <button type="button" id="btn-toggle-fcm-credentials" class="btn btn-secondary" style="padding: 6px 12px; font-size: 11.5px; background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; cursor: pointer;">
                 ⚙️ Service Account Credentials (FCM v1)
               </button>
+              <a href="https://console.firebase.google.com/project/obin-shop/notification/compose" target="_blank" rel="noopener noreferrer" class="btn btn-secondary" style="padding: 6px 12px; font-size: 11.5px; background: rgba(245, 158, 11, 0.12); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                🔥 Open Firebase Console (Direct Push)
+              </a>
               <span id="fcm-sa-saved-status" style="font-size: 11px; color: #64748b;">
                 Auto-syncs via Cloud Firestore
               </span>
