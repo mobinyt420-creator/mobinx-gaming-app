@@ -395,7 +395,10 @@ class NotificationService {
     }
 
     if (!FirebaseService.isInitialized) {
-      debugPrint('[NotificationService] Firestore listeners skipped: Firebase not initialized');
+      debugPrint('[NotificationService] Firebase not ready yet, retrying listener in 2s...');
+      Future.delayed(const Duration(seconds: 2), () {
+        _setupFirestoreListeners();
+      });
       return;
     }
 

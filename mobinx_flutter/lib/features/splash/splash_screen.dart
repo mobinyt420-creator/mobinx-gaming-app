@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/constants/app_constants.dart';
-import '../../core/services/storage_service.dart';
 import '../../core/services/auth_service.dart';
 import '../home/home_screen.dart';
 import '../auth/onboarding_screen.dart';
@@ -49,12 +48,12 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     await Future.delayed(const Duration(milliseconds: 150));
 
     if (!mounted) return;
-    bool isOnboardingDone = false;
+    bool isLoggedIn = false;
     try {
-      isOnboardingDone = StorageService.isOnboardingDone();
+      isLoggedIn = AuthService.instance.currentUser != null;
     } catch (_) {}
 
-    final Widget targetScreen = isOnboardingDone ? const HomeScreen() : const OnboardingScreen();
+    final Widget targetScreen = isLoggedIn ? const HomeScreen() : const OnboardingScreen();
 
     if (!mounted) return;
     Navigator.of(context).pushReplacement(

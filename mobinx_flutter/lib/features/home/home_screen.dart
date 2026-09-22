@@ -221,7 +221,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Stack(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.notifications_none_rounded, color: AppColors.textMain, size: 24),
+                      icon: const Icon(Icons.notifications_rounded, color: Color(0xFF0F172A), size: 26),
                       onPressed: () {
                         NotificationService.instance.markAllAsRead();
                         Navigator.push(
