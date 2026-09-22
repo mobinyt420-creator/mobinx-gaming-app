@@ -229,6 +229,13 @@ class NotificationService {
         _syncFCMToken(token);
       });
 
+      // Explicitly request Push Notification permission on first launch (essential for Android 13+)
+      try {
+        await requestPermission();
+      } catch (e) {
+        debugPrint('[NotificationService] Request permission notice: $e');
+      }
+
       // Unconditionally register FCM token and subscribe to broadcast topics
       // Ensures background push delivery to closed devices regardless of initial prompt timing
       await _registerAndSubscribe(messaging);
@@ -237,7 +244,7 @@ class NotificationService {
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         final notif = message.notification;
         final data = message.data;
-        final title = notif?.title ?? data['title'] ?? 'Mobin X Notification';
+        final title = notif?.title ?? data['title'] ?? 'OBIN Official Alert';
         final body = notif?.body ?? data['body'] ?? data['message'] ?? '';
 
         if (title.isNotEmpty || body.isNotEmpty) {
