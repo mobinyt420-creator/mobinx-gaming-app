@@ -178,26 +178,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  ShaderMask(
-                    shaderCallback: (bounds) => const LinearGradient(
-                      colors: [Color(0xFF0284C7), Color(0xFF0EA5E9), Color(0xFF2563EB)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ).createShader(bounds),
-                    child: Text(
-                      'OBIN',
-                      style: GoogleFonts.orbitron(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                        letterSpacing: 2.4,
-                        shadows: [
-                          Shadow(
-                            color: const Color(0xFF0284C7).withValues(alpha: 0.35),
-                            blurRadius: 10,
-                          ),
-                        ],
-                      ),
+                  Text(
+                    'OBIN',
+                    style: GoogleFonts.outfit(
+                      fontSize: 23,
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF0284C7),
+                      letterSpacing: 1.5,
                     ),
                   ),
                 ],

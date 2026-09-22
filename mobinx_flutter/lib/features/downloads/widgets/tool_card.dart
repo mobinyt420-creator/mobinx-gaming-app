@@ -408,53 +408,54 @@ class _ToolCardState extends State<ToolCard> {
                 ),
                 const SizedBox(height: 10),
 
-                // Action Buttons: Sleek, balanced proportions
+                // Action Buttons: Sleek, medium-sized, perfectly balanced
                 if (item.actionButtons.isNotEmpty)
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: item.actionButtons.length,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 8,
-                      mainAxisSpacing: 8,
-                      childAspectRatio: 3.5,
-                    ),
-                    itemBuilder: (context, idx) {
-                      final btn = item.actionButtons[idx];
-                      return SizedBox(
-                        height: 38,
-                        child: OutlinedButton(
-                          onPressed: () {
-                            _onDownloadButtonClick(context, label: btn.label, targetUrl: btn.url);
-                          },
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: const Color(0xFFEFF6FF),
-                            side: const BorderSide(color: Color(0xFFBFDBFE), width: 1.1),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            padding: const EdgeInsets.symmetric(horizontal: 6),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.download_rounded, color: Color(0xFF2563EB), size: 15),
-                              const SizedBox(width: 4),
-                              Flexible(
-                                child: Text(
-                                  btn.label,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF2563EB),
-                                  ),
-                                ),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final count = item.actionButtons.length;
+                      final double btnWidth = count == 1
+                          ? constraints.maxWidth
+                          : (constraints.maxWidth - 8) / 2;
+                      return Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: item.actionButtons.map((btn) {
+                          return SizedBox(
+                            width: btnWidth,
+                            height: 38,
+                            child: OutlinedButton(
+                              onPressed: () {
+                                _onDownloadButtonClick(context, label: btn.label, targetUrl: btn.url);
+                              },
+                              style: OutlinedButton.styleFrom(
+                                backgroundColor: const Color(0xFFEFF6FF),
+                                side: const BorderSide(color: Color(0xFFBFDBFE), width: 1.1),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
                               ),
-                            ],
-                          ),
-                        ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.download_rounded, color: Color(0xFF2563EB), size: 15),
+                                  const SizedBox(width: 5),
+                                  Flexible(
+                                    child: Text(
+                                      btn.label,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 11.5,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF2563EB),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
                       );
                     },
                   )
