@@ -34,9 +34,39 @@ class AuthService {
     'allowManualRegistration': true,
   });
 
-  bool get isManualLoginEnabled => authSettingsNotifier.value['manualLoginEnabled'] != false;
-  bool get isManualRegistrationEnabled => authSettingsNotifier.value['manualRegistrationEnabled'] != false;
-  bool get isGoogleLoginEnabled => authSettingsNotifier.value['googleLoginEnabled'] != false;
+  /// Robust boolean parser that safely handles bools, strings ("false", "0", "off"), numbers, and nulls
+  static bool parseBool(dynamic val, {bool defaultValue = true}) {
+    if (val == null) return defaultValue;
+    if (val is bool) return val;
+    if (val is num) return val != 0;
+    final str = val.toString().trim().toLowerCase();
+    if (str == 'false' || str == '0' || str == 'disabled' || str == 'off' || str == 'no') return false;
+    if (str == 'true' || str == '1' || str == 'enabled' || str == 'on' || str == 'yes') return true;
+    return defaultValue;
+  }
+
+  bool get isManualLoginEnabled {
+    final s = authSettingsNotifier.value;
+    if (s.containsKey('manualLoginEnabled') && !parseBool(s['manualLoginEnabled'])) return false;
+    if (s.containsKey('allowManualLogin') && !parseBool(s['allowManualLogin'])) return false;
+    if (s.containsKey('manualLogin') && !parseBool(s['manualLogin'])) return false;
+    if (s.containsKey('manual_login') && !parseBool(s['manual_login'])) return false;
+    return true;
+  }
+
+  bool get isManualRegistrationEnabled {
+    final s = authSettingsNotifier.value;
+    if (s.containsKey('manualRegistrationEnabled') && !parseBool(s['manualRegistrationEnabled'])) return false;
+    if (s.containsKey('allowManualRegistration') && !parseBool(s['allowManualRegistration'])) return false;
+    if (s.containsKey('manualRegistration') && !parseBool(s['manualRegistration'])) return false;
+    if (s.containsKey('manualSignUpEnabled') && !parseBool(s['manualSignUpEnabled'])) return false;
+    return true;
+  }
+
+  bool get isGoogleLoginEnabled {
+    final s = authSettingsNotifier.value;
+    return parseBool(s['googleLoginEnabled'] ?? s['allowGoogleAuth'] ?? s['googleSignUpEnabled'], defaultValue: true);
+  }
 
   /// Initialize user session on app launch
   Future<void> init() async {
@@ -70,24 +100,35 @@ class AuthService {
             .listen((snapshot) {
           if (snapshot.exists && snapshot.data() != null) {
             final data = snapshot.data()!;
-            final manualLogin = data['manualLoginEnabled'] ?? true;
-            final manualReg = data['manualRegistrationEnabled'] ?? true;
-            final googleLogin = data['googleLoginEnabled'] ?? true;
+            final manualLogin = parseBool(
+              data['manualLoginEnabled'] ?? data['allowManualLogin'] ?? data['manualLogin'] ?? data['manual_login'],
+              defaultValue: true,
+            );
+            final manualReg = parseBool(
+              data['manualRegistrationEnabled'] ?? data['allowManualRegistration'] ?? data['manualRegistration'] ?? data['manualSignUpEnabled'],
+              defaultValue: true,
+            );
+            final googleLogin = parseBool(
+              data['googleLoginEnabled'] ?? data['allowGoogleAuth'] ?? data['googleSignUpEnabled'],
+              defaultValue: true,
+            );
 
             authSettingsNotifier.value = {
-              'authSystemEnabled': data['authSystemEnabled'] ?? true,
+              'authSystemEnabled': parseBool(data['authSystemEnabled'], defaultValue: true),
               'googleLoginEnabled': googleLogin,
-              'googlePhoneVerificationEnabled': data['googlePhoneVerificationEnabled'] ?? false,
+              'googlePhoneVerificationEnabled': parseBool(data['googlePhoneVerificationEnabled'], defaultValue: false),
               'manualLoginEnabled': manualLogin,
               'manualRegistrationEnabled': manualReg,
-              'manualEmailVerificationEnabled': data['manualEmailVerificationEnabled'] ?? false,
-              'manualPhoneVerificationEnabled': data['manualPhoneVerificationEnabled'] ?? false,
+              'manualEmailVerificationEnabled': parseBool(data['manualEmailVerificationEnabled'], defaultValue: false),
+              'manualPhoneVerificationEnabled': parseBool(data['manualPhoneVerificationEnabled'], defaultValue: false),
               'allowGoogleAuth': googleLogin,
               'allowManualLogin': manualLogin,
               'allowManualRegistration': manualReg,
+              'manualLogin': manualLogin,
+              'manualRegistration': manualReg,
             };
             StorageService.setCache(AppConstants.keyAuthSettings, authSettingsNotifier.value);
-            debugPrint('🔐 [AuthService] Updated authSettings live: ${authSettingsNotifier.value}');
+            debugPrint('🔐 [AuthService] Updated authSettings live: manualLoginEnabled=$manualLogin, googleLoginEnabled=$googleLogin');
           }
         }, onError: (err) {
           debugPrint('Auth settings listener notice: $err');

@@ -97,7 +97,7 @@ async function sendFcmV1Topic(projectId, accessToken, topic, notif) {
           default_sound: true,
           default_vibrate_timings: true,
           icon: 'ic_launcher',
-          color: '#0284C7',
+          color: '#1482FF',
           click_action: 'FLUTTER_NOTIFICATION_CLICK',
           visibility: 'PUBLIC'
         }
@@ -123,6 +123,108 @@ async function sendFcmV1Topic(projectId, accessToken, topic, notif) {
     });
     req.on('error', (err) => resolve({ topic, error: err.message }));
     req.write(bodyStr);
+    req.end();
+  });
+}
+
+/**
+ * Dispatch FCM HTTP v1 message directly to a registered device token
+ */
+async function sendFcmV1Token(projectId, accessToken, token, notif) {
+  const fcmMessage = {
+    message: {
+      token: token,
+      notification: {
+        title: notif.title || 'OBIN Official Alert',
+        body: notif.message || notif.desc || ''
+      },
+      data: {
+        title: String(notif.title || 'OBIN Official Alert'),
+        body: String(notif.message || notif.desc || ''),
+        message: String(notif.message || notif.desc || ''),
+        type: String(notif.type || 'general'),
+        targetUrl: String(notif.targetUrl || notif.actionUrl || 'home'),
+        actionUrl: String(notif.actionUrl || notif.targetUrl || 'home'),
+        id: String(notif.id || `notif_${Date.now()}`),
+        broadcastId: String(notif.broadcastId || `bc_${Date.now()}`),
+        timestamp: String(notif.timestamp || Date.now()),
+        imageUrl: String(notif.imageUrl || notif.extraUrl || '')
+      },
+      android: {
+        priority: 'HIGH',
+        notification: {
+          channel_id: 'mobinx_high_importance_channel',
+          notification_priority: 'PRIORITY_MAX',
+          default_sound: true,
+          default_vibrate_timings: true,
+          icon: 'ic_launcher',
+          color: '#1482FF',
+          click_action: 'FLUTTER_NOTIFICATION_CLICK',
+          visibility: 'PUBLIC'
+        }
+      }
+    }
+  };
+
+  const bodyStr = JSON.stringify(fcmMessage);
+  return new Promise((resolve) => {
+    const req = https.request(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Length': Buffer.byteLength(bodyStr)
+      }
+    }, (res) => {
+      let respBody = '';
+      res.on('data', chunk => { respBody += chunk; });
+      res.on('end', () => {
+        resolve({ token: token.substring(0, 12) + '...', status: res.statusCode, body: respBody });
+      });
+    });
+    req.on('error', (err) => resolve({ token: token.substring(0, 12) + '...', error: err.message }));
+    req.write(bodyStr);
+    req.end();
+  });
+}
+
+/**
+ * Fetch all registered Android device tokens from Firestore collection `fcm_tokens`
+ */
+async function fetchFirestoreTokens(projectId, accessToken) {
+  return new Promise((resolve) => {
+    const req = https.request(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/fcm_tokens`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Accept': 'application/json'
+      }
+    }, (res) => {
+      let data = '';
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        try {
+          if (res.statusCode === 200) {
+            const parsed = JSON.parse(data);
+            const tokens = [];
+            if (Array.isArray(parsed.documents)) {
+              for (const doc of parsed.documents) {
+                const tokenVal = doc.fields?.token?.stringValue;
+                if (tokenVal && tokenVal.length > 20) {
+                  tokens.push(tokenVal);
+                }
+              }
+            }
+            resolve(tokens);
+          } else {
+            resolve([]);
+          }
+        } catch (_) {
+          resolve([]);
+        }
+      });
+    });
+    req.on('error', () => resolve([]));
     req.end();
   });
 }
@@ -168,17 +270,29 @@ export default async function handler(req, res) {
     if (serviceAccount && serviceAccount.client_email && serviceAccount.private_key) {
       const projectId = serviceAccount.project_id || 'obin-shop';
       const accessToken = await getGoogleOAuth2Token(serviceAccount);
-      const results = await Promise.all(
+
+      // Fetch registered device tokens for direct instant delivery
+      const deviceTokens = await fetchFirestoreTokens(projectId, accessToken);
+
+      const topicResults = await Promise.all(
         topics.map(t => sendFcmV1Topic(projectId, accessToken, t, notif))
       );
 
-      const allSuccess = results.every(r => r.status === 200);
+      const tokenResults = await Promise.all(
+        deviceTokens.map(tok => sendFcmV1Token(projectId, accessToken, tok, notif))
+      );
+
+      const allResults = [...topicResults, ...tokenResults];
+      const hasSuccess = allResults.some(r => r.status === 200);
+
       return res.status(200).json({
-        success: true,
+        success: hasSuccess || topicResults.length > 0,
         protocol: 'fcm_v1',
         projectId,
-        delivered: allSuccess,
-        results
+        topicsDelivered: topicResults.filter(r => r.status === 200).length,
+        tokensDelivered: tokenResults.filter(r => r.status === 200).length,
+        totalDevicesTargeted: deviceTokens.length,
+        results: allResults
       });
     }
 

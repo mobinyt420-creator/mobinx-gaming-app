@@ -83,11 +83,11 @@ class StoreService {
     }
   }
 
-  /// Top Up opens with brand Deep Sapphire Blue (#004F9F) matching Screenshot 2
+  /// Top Up opens with brand NoobTopUp Electric Blue (#1482FF) matching Reference Screenshot
   Future<bool> openTopUp() => openStore(
         url: _topUpUrl,
         title: 'NoobTopUp',
-        colorHex: '#004F9F',
+        colorHex: '#1482FF',
       );
 
   /// Shop opens with brand Warm Orange (#F97316)

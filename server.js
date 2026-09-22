@@ -105,41 +105,75 @@ const server = http.createServer((req, res) => {
           });
 
           const accessToken = tokenData.access_token;
-          const results = await Promise.all(topics.map(topic => {
-            const fcmMsg = {
-              message: {
-                topic: topic,
+
+          // Helper to fetch tokens from Firestore
+          const deviceTokens = await new Promise((resolve) => {
+            const reqFs = https.request(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/fcm_tokens`, {
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Accept': 'application/json'
+              }
+            }, (resFs) => {
+              let dFs = '';
+              resFs.on('data', c => { dFs += c; });
+              resFs.on('end', () => {
+                try {
+                  if (resFs.statusCode === 200) {
+                    const parsed = JSON.parse(dFs);
+                    const tokens = [];
+                    if (Array.isArray(parsed.documents)) {
+                      for (const doc of parsed.documents) {
+                        const tokenVal = doc.fields?.token?.stringValue;
+                        if (tokenVal && tokenVal.length > 20) tokens.push(tokenVal);
+                      }
+                    }
+                    resolve(tokens);
+                  } else { resolve([]); }
+                } catch (_) { resolve([]); }
+              });
+            });
+            reqFs.on('error', () => resolve([]));
+            reqFs.end();
+          });
+
+          const createPayload = (targetKey, targetVal) => ({
+            message: {
+              [targetKey]: targetVal,
+              notification: {
+                title: notif.title || 'OBIN Official Alert',
+                body: notif.message || notif.desc || ''
+              },
+              data: {
+                title: String(notif.title || 'OBIN Official Alert'),
+                body: String(notif.message || notif.desc || ''),
+                message: String(notif.message || notif.desc || ''),
+                type: String(notif.type || 'general'),
+                targetUrl: String(notif.targetUrl || notif.actionUrl || 'home'),
+                actionUrl: String(notif.actionUrl || notif.targetUrl || 'home'),
+                id: String(notif.id || `notif_${Date.now()}`),
+                broadcastId: String(notif.broadcastId || `bc_${Date.now()}`),
+                timestamp: String(notif.timestamp || Date.now()),
+                imageUrl: String(notif.imageUrl || notif.extraUrl || '')
+              },
+              android: {
+                priority: 'HIGH',
                 notification: {
-                  title: notif.title || 'OBIN Official Alert',
-                  body: notif.message || notif.desc || ''
-                },
-                data: {
-                  title: String(notif.title || 'OBIN Official Alert'),
-                  body: String(notif.message || notif.desc || ''),
-                  message: String(notif.message || notif.desc || ''),
-                  type: String(notif.type || 'general'),
-                  targetUrl: String(notif.targetUrl || notif.actionUrl || 'home'),
-                  actionUrl: String(notif.actionUrl || notif.targetUrl || 'home'),
-                  id: String(notif.id || `notif_${Date.now()}`),
-                  broadcastId: String(notif.broadcastId || `bc_${Date.now()}`),
-                  timestamp: String(notif.timestamp || Date.now())
-                },
-                android: {
-                  priority: 'HIGH',
-                  notification: {
-                    channel_id: 'mobinx_high_importance_channel',
-                    notification_priority: 'PRIORITY_MAX',
-                    default_sound: true,
-                    default_vibrate_timings: true,
-                    icon: 'ic_launcher',
-                    color: '#0284C7',
-                    click_action: 'FLUTTER_NOTIFICATION_CLICK',
-                    visibility: 'PUBLIC'
-                  }
+                  channel_id: 'mobinx_high_importance_channel',
+                  notification_priority: 'PRIORITY_MAX',
+                  default_sound: true,
+                  default_vibrate_timings: true,
+                  icon: 'ic_launcher',
+                  color: '#1482FF',
+                  click_action: 'FLUTTER_NOTIFICATION_CLICK',
+                  visibility: 'PUBLIC'
                 }
               }
-            };
-            const postStr = JSON.stringify(fcmMsg);
+            }
+          });
+
+          const sendOne = (targetKey, targetVal) => {
+            const postStr = JSON.stringify(createPayload(targetKey, targetVal));
             return new Promise(resolve => {
               const reqMsg = https.request(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
                 method: 'POST',
@@ -151,16 +185,28 @@ const server = http.createServer((req, res) => {
               }, (resMsg) => {
                 let rd = '';
                 resMsg.on('data', c => { rd += c; });
-                resMsg.on('end', () => { resolve({ topic, status: resMsg.statusCode, body: rd }); });
+                resMsg.on('end', () => { resolve({ target: targetVal, status: resMsg.statusCode, body: rd }); });
               });
-              reqMsg.on('error', err => resolve({ topic, error: err.message }));
+              reqMsg.on('error', err => resolve({ target: targetVal, error: err.message }));
               reqMsg.write(postStr);
               reqMsg.end();
             });
-          }));
+          };
 
-          res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-          res.end(JSON.stringify({ success: true, protocol: 'fcm_v1', results }));
+          const topicResults = await Promise.all(topics.map(topic => sendOne('topic', topic)));
+          const tokenResults = await Promise.all(deviceTokens.map(tok => sendOne('token', tok)));
+          const allResults = [...topicResults, ...tokenResults];
+
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            success: true,
+            protocol: 'fcm_v1',
+            projectId,
+            topicsDelivered: topicResults.filter(r => r.status === 200).length,
+            tokensDelivered: tokenResults.filter(r => r.status === 200).length,
+            totalDevicesTargeted: deviceTokens.length,
+            results: allResults
+          }));
           return;
         }
 

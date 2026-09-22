@@ -705,9 +705,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                 ValueListenableBuilder<Map<String, dynamic>>(
                   valueListenable: AuthService.instance.authSettingsNotifier,
                   builder: (context, authSettings, _) {
-                    final isManualLoginEnabled =
-                        authSettings['manualLoginEnabled'] != false &&
-                        authSettings['allowManualLogin'] != false;
+                    final isManualLoginEnabled = AuthService.instance.isManualLoginEnabled;
                     if (!isManualLoginEnabled) {
                       return const SizedBox.shrink();
                     }
