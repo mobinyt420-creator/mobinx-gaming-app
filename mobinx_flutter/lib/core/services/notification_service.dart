@@ -9,8 +9,10 @@ import 'firebase_service.dart';
 /// Top-level background message handler for FCM
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  WidgetsFlutterBinding.ensureInitialized();
   try {
-    debugPrint('[FCM Background] Received message: ${message.messageId}');
+    await FirebaseService.init();
+    debugPrint('[FCM Background] Received message: ${message.messageId} | data: ${message.data}');
     // If it's a data-only message without an automatic OS notification, render local notification
     if (message.notification == null && message.data.isNotEmpty) {
       final title = message.data['title']?.toString() ?? 'OBIN Alert';

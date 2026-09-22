@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/services/auth_service.dart';
+import '../../core/services/notification_service.dart';
 import '../home/home_screen.dart';
 import '../auth/onboarding_screen.dart';
 
@@ -42,6 +43,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   Future<void> _initializeApp() async {
     try {
       await AuthService.instance.init();
+      NotificationService.instance.init();
     } catch (_) {}
 
     // Minimal delay for smooth visual frame render

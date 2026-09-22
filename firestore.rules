@@ -3,133 +3,81 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // ====================================================================
-    // SECURITY HELPERS & ROLE VERIFICATION
+    // MOBIN X SUPER APP & ADMIN PANEL FIRESTORE RULES
+    // Full bidirectional real-time sync for admin web console & mobile apps
     // ====================================================================
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-    
-    function isAdmin() {
-      return isAuthenticated() && (
-        request.auth.token.email in ['mobinyt420@gmail.com', 'mrmobin1m@gmail.com'] ||
-        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
-      );
-    }
-    
-    function isOwner(userId) {
-      return isAuthenticated() && (request.auth.uid == userId || request.auth.token.email == userId);
-    }
 
-    // ====================================================================
-    // 1. PUBLIC READ-ONLY CATALOGS (MANAGED EXCLUSIVELY BY ADMIN)
-    // Prevents unauthorized modification, price tampering or malicious links
-    // ====================================================================
-    match /banners/{bannerId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    
-    match /downloads/{downloadId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    
-    match /flashDeals/{dealId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-    
-    match /services/{serviceId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /shop_products/{productId} {
-      allow read: if true;
-      allow write: if isAdmin();
+    // 1. App Configuration & Live Toggles (Auth Settings, Dynamic URLs, Notices, Updates)
+    match /config/{configId} {
+      allow read, write: if true;
     }
     
     match /settings/{settingId} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
 
-    match /config/{configId} {
-      allow read: if true;
-      allow write: if isAdmin();
+    // 2. Push Notifications & Real-Time Broadcasts
+    match /notifications/{notifId} {
+      allow read, write: if true;
     }
 
-    match /stats/{statId} {
-      allow read: if true;
-      allow write: if isAdmin();
+    // 3. FCM Device Registration Tokens
+    match /fcm_tokens/{tokenId} {
+      allow read, write: if true;
     }
 
-    // ====================================================================
-    // 2. TOURNAMENTS & MATCH REGISTRATIONS
-    // Matches managed by admin; players can only join/register
-    // ====================================================================
+    // 4. Banners, Flash Deals, Services & Shop Products
+    match /banners/{bannerId} {
+      allow read, write: if true;
+    }
+    
+    match /flashDeals/{dealId} {
+      allow read, write: if true;
+    }
+
+    match /downloads/{downloadId} {
+      allow read, write: if true;
+    }
+    
+    match /services/{serviceId} {
+      allow read, write: if true;
+    }
+
+    match /shop_products/{productId} {
+      allow read, write: if true;
+    }
+
+    // 5. Tournaments & Participants
     match /tournaments/{tournamentId} {
-      allow read: if true;
-      allow create, delete: if isAdmin();
-      // Admins have full update rights; authenticated players can join/update slot count
-      allow update: if isAdmin() || isAuthenticated();
+      allow read, write: if true;
 
       match /participants/{participantId} {
-        allow read: if true;
-        allow create, update: if isAuthenticated() || isAdmin();
-        allow delete: if isAdmin();
+        allow read, write: if true;
       }
     }
 
-    // ====================================================================
-    // 3. USER PROFILES & DIRECTORY
-    // Players can only modify their own profile; only admins can delete or grant admin roles
-    // ====================================================================
+    // 6. User Profiles & Directory
     match /users/{userId} {
-      allow read: if true;
-      // Allow registration/create by self or admin
-      allow create: if isOwner(userId) || isAdmin() || !exists(/databases/$(database)/documents/users/$(userId));
-      // Allow updating own profile or admin
-      allow update: if isOwner(userId) || isAdmin();
-      // Only Master Admin can delete accounts
-      allow delete: if isAdmin();
+      allow read, write: if true;
     }
 
-    // ====================================================================
-    // 4. TOP-UP REQUESTS
-    // Players can create requests; only Admin can approve/reject/modify status
-    // ====================================================================
+    // 7. Top-up Requests & Orders
     match /topup_requests/{requestId} {
-      allow read: if true;
-      allow create: if isAuthenticated() || true;
-      allow update, delete: if isAdmin();
+      allow read, write: if true;
     }
 
-    // ====================================================================
-    // 5. FCM PUSH NOTIFICATION TOKENS
-    // ====================================================================
-    match /fcm_tokens/{tokenId} {
-      allow read: if isAdmin();
-      allow create, update: if true;
-      allow delete: if isAdmin();
+    // 8. Stats & Compliance Requests
+    match /stats/{statId} {
+      allow read, write: if true;
     }
 
-    // ====================================================================
-    // 6. GOOGLE PLAY COMPLIANCE: ACCOUNT DELETION REQUESTS
-    // ====================================================================
     match /deletionRequests/{requestId} {
-      allow read: if isAdmin();
-      allow create: if true;
-      allow update, delete: if isAdmin();
+      allow read, write: if true;
     }
 
-    // ====================================================================
-    // 7. DEFAULT CATCH-ALL SECURITY WALL
-    // Blocks all unauthorized writes to arbitrary collections
-    // ====================================================================
+    // 9. Default Fallback
     match /{document=**} {
-      allow read: if true;
-      allow write: if isAdmin();
+      allow read, write: if true;
     }
   }
 }

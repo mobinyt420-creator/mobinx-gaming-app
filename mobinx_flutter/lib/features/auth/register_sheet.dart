@@ -56,6 +56,11 @@ class _RegisterSheetState extends State<RegisterSheet> {
 
     setState(() => _errorMsg = null);
 
+    if (!AuthService.instance.isManualRegistrationEnabled) {
+      setState(() => _errorMsg = 'Manual registration has been temporarily disabled by administrator.');
+      return;
+    }
+
     if (name.length < 2) {
       setState(() => _errorMsg = 'Please enter your full in-game name.');
       return;

@@ -701,102 +701,115 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                 ),
                 const SizedBox(height: 14),
 
-                // 2. "Manual Login" Action Button
-                Container(
-                  width: double.infinity,
-                  height: 66,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF08142A).withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(29),
-                    border: Border.all(
-                      color: const Color(0xFF1E3A6E),
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.5),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(29),
-                      splashColor: const Color(0xFF00E5FF).withValues(alpha: 0.5),
-                      onTap: _openLoginSheet,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF0284C7).withValues(alpha: 0.5),
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: const Color(0xFF00E5FF).withValues(alpha: 0.5),
-                                  width: 1.1,
-                                ),
-                              ),
-                              child: const Icon(
-                                Icons.lock_outline_rounded,
-                                color: Color(0xFF00E5FF),
-                                size: 22,
-                              ),
+                // 2. "Manual Login" Action Button (Reacts live to Admin Panel Toggle)
+                ValueListenableBuilder<Map<String, dynamic>>(
+                  valueListenable: AuthService.instance.authSettingsNotifier,
+                  builder: (context, authSettings, _) {
+                    final isManualLoginEnabled =
+                        authSettings['manualLoginEnabled'] != false &&
+                        authSettings['allowManualLogin'] != false;
+                    if (!isManualLoginEnabled) {
+                      return const SizedBox.shrink();
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 18),
+                      child: Container(
+                        width: double.infinity,
+                        height: 66,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF08142A).withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(29),
+                          border: Border.all(
+                            color: const Color(0xFF1E3A6E),
+                            width: 1.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.5),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
                             ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(29),
+                            splashColor: const Color(0xFF00E5FF).withValues(alpha: 0.5),
+                            onTap: _openLoginSheet,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: Row(
                                 children: [
-                                  Text(
-                                    'Manual Login',
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w800,
-                                      color: Colors.white,
+                                  Container(
+                                    width: 44,
+                                    height: 44,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF0284C7).withValues(alpha: 0.5),
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(
+                                        color: const Color(0xFF00E5FF).withValues(alpha: 0.5),
+                                        width: 1.1,
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      Icons.lock_outline_rounded,
+                                      color: Color(0xFF00E5FF),
+                                      size: 22,
                                     ),
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'Email & Password Sign In',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: const Color(0xFF64748B),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          'Manual Login',
+                                          style: GoogleFonts.outfit(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w800,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          'Email & Password Sign In',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                            color: const Color(0xFF64748B),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 34,
+                                    height: 34,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF0E2247),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: const Color(0xFF00E5FF).withValues(alpha: 0.5),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      Icons.arrow_forward_rounded,
+                                      size: 18,
+                                      color: Color(0xFF00E5FF),
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            Container(
-                              width: 34,
-                              height: 34,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF0E2247),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: const Color(0xFF00E5FF).withValues(alpha: 0.5),
-                                  width: 1,
-                                ),
-                              ),
-                              child: const Icon(
-                                Icons.arrow_forward_rounded,
-                                size: 18,
-                                color: Color(0xFF00E5FF),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
-                  ),
+                    );
+                  },
                 ),
-                const SizedBox(height: 18),
 
                 // 3. 100% Verified Gaming Account Badge
                 Container(

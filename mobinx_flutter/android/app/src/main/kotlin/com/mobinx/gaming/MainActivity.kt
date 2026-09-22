@@ -16,7 +16,7 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             if (call.method == "openCustomTab") {
                 val url = call.argument<String>("url")
-                val colorHex = call.argument<String>("color") ?: "#0284C7"
+                val colorHex = call.argument<String>("color") ?: "#004F9F"
                 if (url != null) {
                     try {
                         val parsedColor = Color.parseColor(colorHex)
@@ -25,11 +25,20 @@ class MainActivity : FlutterActivity() {
                             .setNavigationBarColor(parsedColor)
                             .build()
 
-                        val customTabsIntent = CustomTabsIntent.Builder()
+                        val builder = CustomTabsIntent.Builder()
                             .setDefaultColorSchemeParams(colorSchemeParams)
                             .setShowTitle(true)
-                            .build()
+                            .setUrlBarHidingEnabled(false)
+                            .setShareState(CustomTabsIntent.SHARE_STATE_ON)
 
+                        try {
+                            val displayMetrics = resources.displayMetrics
+                            val initialHeight = (displayMetrics.heightPixels * 0.92).toInt()
+                            builder.setInitialActivityHeightPx(initialHeight, CustomTabsIntent.ACTIVITY_HEIGHT_DEFAULT)
+                            builder.setToolbarCornerRadiusDp(16)
+                        } catch (_: Exception) {}
+
+                        val customTabsIntent = builder.build()
                         customTabsIntent.launchUrl(this, Uri.parse(url))
                         result.success(true)
                     } catch (e: Exception) {
