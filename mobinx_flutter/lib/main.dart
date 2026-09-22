@@ -7,6 +7,7 @@ import 'core/services/firebase_service.dart';
 import 'core/services/storage_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/auth_service.dart';
 import 'core/services/admob_service.dart';
@@ -30,13 +31,15 @@ void main() async {
     debugPrint('Storage init notice: $e');
   }
 
-  // 3. Initialize Firebase, Notifications & AdMob asynchronously
-  FirebaseService.init().then((_) {
-    NotificationService.instance.init();
-    AuthService.instance.init();
-  }).catchError((e) {
-    debugPrint('Background Firebase init: $e');
-  });
+  // 3. Initialize Firebase & Register FCM Background Handler before runApp (ensures notifications arrive even when app is closed)
+  try {
+    await FirebaseService.init();
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+    await NotificationService.instance.init();
+    await AuthService.instance.init();
+  } catch (e) {
+    debugPrint('Background Firebase/Notification init: $e');
+  }
 
   try {
     AdMobService.instance.init();

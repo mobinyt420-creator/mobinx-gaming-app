@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/services/auth_service.dart';
-import '../../core/services/storage_service.dart';
 import '../home/home_screen.dart';
 import 'login_sheet.dart';
 import 'register_sheet.dart';
@@ -101,9 +100,6 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerProviderStateMixin {
   int _currentStep = 0; // 0 = Welcome Step, 1 = Auth Selection Step
   bool _isGoogleLoading = false;
-  final TextEditingController _referralController = TextEditingController();
-  bool _isReferralApplied = false;
-  bool _isReferralExpanded = false;
 
   late final AnimationController _pulseController;
   late final Animation<double> _glowAnimation;
@@ -118,35 +114,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
     _glowAnimation = Tween<double>(begin: 0.90, end: 1.10).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
-
-    final savedCode = StorageService.getReferralCode();
-    if (savedCode.isNotEmpty) {
-      _referralController.text = savedCode;
-      _isReferralApplied = true;
-    }
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
-    _referralController.dispose();
     super.dispose();
-  }
-
-  void _applyReferralCode() {
-    final code = _referralController.text.trim().toUpperCase();
-    if (code.isEmpty) return;
-    setState(() {
-      _isReferralApplied = true;
-    });
-    StorageService.setReferralCode(code);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('🎁 Referral Code "$code" applied! +100 Diamonds Bonus on signup'),
-        backgroundColor: const Color(0xFF16A34A),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
   }
 
   void _navigateToHome() {
@@ -301,18 +274,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
     );
   }
 
-  /// Screen 1: Welcome / Intro Flow ("Let's Get Started" / "Continue")
+  /// Screen 1: Welcome / Intro Flow ("Let's Get Started" / "Continue  /// Screen 1: Welcome / Intro Flow ("Let's Get Started" / "Continue")
   Widget _buildWelcomeStep() {
     return Container(
       key: const ValueKey('welcome_step'),
       decoration: const BoxDecoration(
-        gradient: RadialGradient(
-          center: Alignment(0, -0.4),
-          radius: 1.3,
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
           colors: [
-            Color(0xFF0E2C60),
-            Color(0xFF081B3E),
-            Color(0xFF040C1E),
+            Color(0xFF132A54), // Lighter, richer navy-sapphire tone
+            Color(0xFF0B1936),
+            Color(0xFF061026),
           ],
         ),
       ),
@@ -327,15 +300,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                 children: [
                   const SizedBox(height: 6),
                   Container(
-                    width: 60,
-                    height: 60,
+                    width: 62,
+                    height: 62,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.5), width: 1.5),
+                      border: Border.all(color: const Color(0xFF00F0FF).withValues(alpha: 0.55), width: 1.5),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF0284C7).withValues(alpha: 0.5),
-                          blurRadius: 26,
+                          color: const Color(0xFF0284C7).withValues(alpha: 0.55),
+                          blurRadius: 28,
                           offset: const Offset(0, 8),
                         ),
                       ],
@@ -359,37 +332,73 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                       fontSize: 13.5,
                       fontWeight: FontWeight.w600,
                       color: const Color(0xFFCBD5E1),
-                      letterSpacing: 0.2,
+                      letterSpacing: 0.4,
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    'OBIN',
-                    style: GoogleFonts.outfit(
-                      fontSize: 34,
-                      fontWeight: FontWeight.w900,
-                      color: const Color(0xFF38BDF8),
-                      letterSpacing: 0.8,
-                      shadows: [
-                        Shadow(
-                          color: const Color(0xFF38BDF8).withValues(alpha: 0.5),
-                          blurRadius: 22,
+
+                  // Stylized Gaming OBIN Brand Title
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 22,
+                        height: 2,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.transparent, const Color(0xFF00F0FF).withValues(alpha: 0.8)],
+                          ),
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 8),
+                      ShaderMask(
+                        shaderCallback: (bounds) => const LinearGradient(
+                          colors: [Color(0xFF00F0FF), Color(0xFF38BDF8), Color(0xFF2563EB)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ).createShader(bounds),
+                        child: Text(
+                          'OBIN',
+                          style: GoogleFonts.orbitron(
+                            fontSize: 34,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: 4.5,
+                            shadows: [
+                              Shadow(
+                                color: const Color(0xFF00F0FF).withValues(alpha: 0.6),
+                                blurRadius: 22,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 22,
+                        height: 2,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [const Color(0xFF00F0FF).withValues(alpha: 0.8), Colors.transparent],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 2),
                   Text(
                     'The Ultimate Super App',
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                       color: const Color(0xFF94A3B8),
+                      letterSpacing: 0.2,
                     ),
                   ),
                 ],
               ),
 
-              // Center Pedestal Artwork (with subtle pulsing ambient glow animation)
+              // Center Pedestal Artwork (with ambient breathing glow animation)
               AnimatedBuilder(
                 animation: _glowAnimation,
                 builder: (context, child) {
@@ -400,14 +409,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                       Transform.scale(
                         scale: _glowAnimation.value,
                         child: Container(
-                          width: 220,
-                          height: 220,
+                          width: 230,
+                          height: 230,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             gradient: RadialGradient(
                               colors: [
-                                const Color(0xFF0284C7).withValues(alpha: 0.42 * _glowAnimation.value),
-                                const Color(0xFF38BDF8).withValues(alpha: 0.15 * _glowAnimation.value),
+                                const Color(0xFF0284C7).withValues(alpha: 0.45 * _glowAnimation.value),
+                                const Color(0xFF00F0FF).withValues(alpha: 0.18 * _glowAnimation.value),
                                 Colors.transparent,
                               ],
                             ),
@@ -416,15 +425,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                       ),
                       // Pedestal frame
                       Container(
-                        width: 172,
-                        height: 172,
+                        width: 176,
+                        height: 176,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(26),
-                          border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.45), width: 1.8),
+                          borderRadius: BorderRadius.circular(28),
+                          border: Border.all(color: const Color(0xFF00F0FF).withValues(alpha: 0.5), width: 1.8),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF0284C7).withValues(alpha: 0.45 * _glowAnimation.value),
-                              blurRadius: 36 * _glowAnimation.value,
+                              color: const Color(0xFF0284C7).withValues(alpha: 0.5 * _glowAnimation.value),
+                              blurRadius: 38 * _glowAnimation.value,
                               offset: const Offset(0, 12),
                             ),
                           ],
@@ -444,14 +453,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                 },
               ),
 
-              // 3 Feature Highlight Cards
+              // 3 Feature Highlight Cards (Rich Glassmorphism)
               Column(
                 children: [
                   _buildFeatureRow(
                     icon: '💎',
                     title: 'Top Up & Diamonds',
                     desc: 'Fast & secure instant top up',
-                    borderColor: const Color(0xFF38BDF8),
+                    borderColor: const Color(0xFF00F0FF),
                   ),
                   const SizedBox(height: 8),
                   _buildFeatureRow(
@@ -470,13 +479,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                 ],
               ),
 
-              // Bottom "Let's Get Started" Button with subtle pulse
+              // Bottom "Let's Get Started" Button with gradient & pulse
               AnimatedBuilder(
                 animation: _glowAnimation,
                 builder: (context, child) {
-                  return SizedBox(
+                  return Container(
                     width: double.infinity,
                     height: 52,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF0066FF), Color(0xFF0284C7), Color(0xFF00C6FF)],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF0284C7).withValues(alpha: 0.55 * _glowAnimation.value),
+                          blurRadius: 22 * _glowAnimation.value,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
                     child: ElevatedButton(
                       onPressed: () {
                         setState(() {
@@ -484,18 +508,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                         });
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0066FF),
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
                         foregroundColor: Colors.white,
-                        elevation: 8,
-                        shadowColor: const Color(0xFF0066FF).withValues(alpha: 0.5 * _glowAnimation.value),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
                             "Let's Get Started",
-                            style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 0.3),
+                            style: GoogleFonts.outfit(fontSize: 16.5, fontWeight: FontWeight.w800, letterSpacing: 0.4),
                           ),
                           const SizedBox(width: 8),
                           const Icon(Icons.arrow_forward_rounded, size: 20),
@@ -521,9 +544,16 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A).withValues(alpha: 0.75),
+        color: const Color(0xFF102042).withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: borderColor.withValues(alpha: 0.25)),
+        border: Border.all(color: borderColor.withValues(alpha: 0.35)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -531,9 +561,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: borderColor.withValues(alpha: 0.15),
+              color: borderColor.withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: borderColor.withValues(alpha: 0.3)),
+              border: Border.all(color: borderColor.withValues(alpha: 0.35)),
             ),
             child: Center(
               child: Text(icon, style: const TextStyle(fontSize: 18)),
@@ -568,12 +598,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
     );
   }
 
-  /// Screen 2: Authentication Screen (Google Login, Manual Login & Referral)
+  /// Screen 2: Authentication Screen (Streamlined Google Login & Manual Login)
   Widget _buildAuthSelectionStep() {
     return Container(
       key: const ValueKey('auth_step'),
       decoration: const BoxDecoration(
-        color: Color(0xFF060B18),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFF132A54),
+            Color(0xFF0B1936),
+            Color(0xFF061026),
+          ],
+        ),
       ),
       child: SafeArea(
         child: SingleChildScrollView(
@@ -602,15 +640,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
 
               // Header Branding
               Container(
-                width: 58,
-                height: 58,
+                width: 60,
+                height: 60,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.45), width: 1.5),
+                  border: Border.all(color: const Color(0xFF00F0FF).withValues(alpha: 0.55), width: 1.5),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF0284C7).withValues(alpha: 0.45),
-                      blurRadius: 25,
+                      color: const Color(0xFF0284C7).withValues(alpha: 0.5),
+                      blurRadius: 26,
                       offset: const Offset(0, 8),
                     ),
                   ],
@@ -628,25 +666,41 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                 ),
               ),
               const SizedBox(height: 10),
-              Text(
-                'OBIN',
-                style: GoogleFonts.outfit(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                  letterSpacing: 0.5,
+
+              // Stylized Gaming OBIN Typography
+              ShaderMask(
+                shaderCallback: (bounds) => const LinearGradient(
+                  colors: [Color(0xFF00F0FF), Color(0xFF38BDF8), Color(0xFF2563EB)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ).createShader(bounds),
+                child: Text(
+                  'OBIN',
+                  style: GoogleFonts.orbitron(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: 3.8,
+                    shadows: [
+                      Shadow(
+                        color: const Color(0xFF00F0FF).withValues(alpha: 0.6),
+                        blurRadius: 20,
+                      ),
+                    ],
+                  ),
                 ),
               ),
+              const SizedBox(height: 3),
               Text(
                 'SIGN IN TO CONTINUE',
                 style: GoogleFonts.outfit(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                   color: const Color(0xFF38BDF8),
-                  letterSpacing: 1.2,
+                  letterSpacing: 1.4,
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 28),
 
               // 1. Google Sign-In Card
               Material(
@@ -662,9 +716,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF38BDF8).withValues(alpha: 0.3),
-                          blurRadius: 20,
-                          offset: const Offset(0, 5),
+                          color: const Color(0xFF38BDF8).withValues(alpha: 0.35),
+                          blurRadius: 22,
+                          offset: const Offset(0, 6),
                         ),
                       ],
                     ),
@@ -727,7 +781,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
 
               // 2. Manual Login Card (Controlled live by Admin Panel auth_settings)
               ValueListenableBuilder<Map<String, dynamic>>(
@@ -737,7 +790,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                   if (!isManualEnabled) return const SizedBox.shrink();
                   return Column(
                     children: [
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
                       Material(
                         color: Colors.transparent,
                         child: InkWell(
@@ -747,12 +800,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF0F172A),
+                              color: const Color(0xFF102042).withValues(alpha: 0.9),
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.35), width: 1.5),
+                              border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.4), width: 1.5),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.4),
+                                  color: Colors.black.withValues(alpha: 0.35),
                                   blurRadius: 18,
                                   offset: const Offset(0, 5),
                                 ),
@@ -814,128 +867,33 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                   );
                 },
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 32),
 
-              // 3. Streamlined Referral Code Trigger (Lightweight & Uncluttered)
-              _isReferralApplied
-                  ? Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF16A34A).withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFF16A34A).withValues(alpha: 0.4)),
+              // Trust & Security Badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF102042).withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.2)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.shield_rounded, color: Color(0xFF34D399), size: 15),
+                    const SizedBox(width: 6),
+                    Text(
+                      '100% Secure & Verified Gaming Account',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: const Color(0xFF94A3B8),
+                        fontWeight: FontWeight.w600,
                       ),
-                      child: Row(
-                        children: [
-                          const Text('🎁', style: TextStyle(fontSize: 16)),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              'Referral Bonus Active: ${_referralController.text} (+100 💎)',
-                              style: GoogleFonts.outfit(
-                                color: const Color(0xFF4ADE80),
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                          const Icon(Icons.check_circle_rounded, color: Color(0xFF4ADE80), size: 18),
-                        ],
-                      ),
-                    )
-                  : Column(
-                      children: [
-                        InkWell(
-                          onTap: () => setState(() => _isReferralExpanded = !_isReferralExpanded),
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0F172A).withValues(alpha: 0.65),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: _isReferralExpanded
-                                    ? const Color(0xFF38BDF8).withValues(alpha: 0.5)
-                                    : const Color(0xFF334155).withValues(alpha: 0.5),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                const Text('🎁', style: TextStyle(fontSize: 15)),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Text(
-                                    'Have an Invite / Referral Code? (+100 💎)',
-                                    style: GoogleFonts.outfit(
-                                      color: const Color(0xFFCBD5E1),
-                                      fontSize: 12.5,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                                Icon(
-                                  _isReferralExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
-                                  color: const Color(0xFF94A3B8),
-                                  size: 20,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        if (_isReferralExpanded) ...[
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  height: 40,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF0B1120),
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.35)),
-                                  ),
-                                  child: TextField(
-                                    controller: _referralController,
-                                    textCapitalization: TextCapitalization.characters,
-                                    style: GoogleFonts.inter(
-                                      color: Colors.white,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 1.1,
-                                    ),
-                                    decoration: const InputDecoration(
-                                      hintText: 'Enter code (e.g. MOBINXVIP)',
-                                      hintStyle: TextStyle(color: Color(0xFF64748B), fontSize: 11.5),
-                                      border: InputBorder.none,
-                                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              SizedBox(
-                                height: 40,
-                                child: ElevatedButton(
-                                  onPressed: _applyReferralCode,
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF0284C7),
-                                    foregroundColor: Colors.white,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                                  ),
-                                  child: Text(
-                                    'Apply',
-                                    style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 12.5),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ],
                     ),
-              const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
 
               // Terms & Privacy Policy
               Text(
