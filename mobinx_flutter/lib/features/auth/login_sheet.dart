@@ -33,6 +33,10 @@ class _LoginSheetState extends State<LoginSheet> {
   }
 
   Future<void> _handleLogin() async {
+    if (!AuthService.instance.isManualLoginEnabled) {
+      setState(() => _errorMsg = 'Manual login has been temporarily disabled by administrator.');
+      return;
+    }
     final email = _emailCtrl.text.trim();
     final pass = _passCtrl.text;
 
@@ -110,7 +114,7 @@ class _LoginSheetState extends State<LoginSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Manual Player Login',
+                      'Manual Player Access',
                       style: GoogleFonts.outfit(
                         fontSize: 18,
                         fontWeight: FontWeight.w900,
@@ -118,7 +122,7 @@ class _LoginSheetState extends State<LoginSheet> {
                       ),
                     ),
                     Text(
-                      'Sign in with your registered email & password',
+                      'Sign in or register a new player account',
                       style: GoogleFonts.inter(
                         fontSize: 11.5,
                         color: const Color(0xFF64748B),
@@ -128,7 +132,66 @@ class _LoginSheetState extends State<LoginSheet> {
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 16),
+
+            // Segmented Switch: [ Sign In ] | [ Create Account ]
+            Container(
+              height: 42,
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(9),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          'Sign In',
+                          style: GoogleFonts.outfit(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.pop(context);
+                        widget.onRegisterTap();
+                      },
+                      borderRadius: BorderRadius.circular(9),
+                      child: Center(
+                        child: Text(
+                          'Create Account',
+                          style: GoogleFonts.outfit(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF64748B),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
 
             // Error Banner
             if (_errorMsg != null) ...[

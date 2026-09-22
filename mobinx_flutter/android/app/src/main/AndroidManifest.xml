@@ -10,6 +10,8 @@
         android:label="OBIN"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:usesCleartextTraffic="false"
         android:extractNativeLibs="true">
         <activity
             android:name="com.mobinx.gaming.MainActivity"

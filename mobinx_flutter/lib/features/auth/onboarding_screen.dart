@@ -98,26 +98,37 @@ class OnboardingScreen extends StatefulWidget {
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerProviderStateMixin {
   int _currentStep = 0; // 0 = Welcome Step, 1 = Auth Selection Step
   bool _isGoogleLoading = false;
   final TextEditingController _referralController = TextEditingController();
   bool _isReferralApplied = false;
-  String? _referralMessage;
+  bool _isReferralExpanded = false;
+
+  late final AnimationController _pulseController;
+  late final Animation<double> _glowAnimation;
 
   @override
   void initState() {
     super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2400),
+    )..repeat(reverse: true);
+    _glowAnimation = Tween<double>(begin: 0.90, end: 1.10).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
     final savedCode = StorageService.getReferralCode();
     if (savedCode.isNotEmpty) {
       _referralController.text = savedCode;
       _isReferralApplied = true;
-      _referralMessage = '100 Diamonds Bonus Active!';
     }
   }
 
   @override
   void dispose() {
+    _pulseController.dispose();
     _referralController.dispose();
     super.dispose();
   }
@@ -127,7 +138,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     if (code.isEmpty) return;
     setState(() {
       _isReferralApplied = true;
-      _referralMessage = '100 Diamonds Bonus Active!';
     });
     StorageService.setReferralCode(code);
     ScaffoldMessenger.of(context).showSnackBar(
@@ -297,12 +307,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       key: const ValueKey('welcome_step'),
       decoration: const BoxDecoration(
         gradient: RadialGradient(
-          center: Alignment(0, -0.5),
-          radius: 1.2,
+          center: Alignment(0, -0.4),
+          radius: 1.3,
           colors: [
-            Color(0xFF061E4F),
-            Color(0xFF030D24),
-            Color(0xFF010614),
+            Color(0xFF0E2C60),
+            Color(0xFF081B3E),
+            Color(0xFF040C1E),
           ],
         ),
       ),
@@ -317,15 +327,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 children: [
                   const SizedBox(height: 6),
                   Container(
-                    width: 58,
-                    height: 58,
+                    width: 60,
+                    height: 60,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.4), width: 1.5),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.5), width: 1.5),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF0284C7).withValues(alpha: 0.45),
-                          blurRadius: 24,
+                          color: const Color(0xFF0284C7).withValues(alpha: 0.5),
+                          blurRadius: 26,
                           offset: const Offset(0, 8),
                         ),
                       ],
@@ -342,7 +352,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Text(
                     'Welcome to',
                     style: GoogleFonts.inter(
@@ -356,14 +366,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   Text(
                     'OBIN',
                     style: GoogleFonts.outfit(
-                      fontSize: 32,
+                      fontSize: 34,
                       fontWeight: FontWeight.w900,
                       color: const Color(0xFF38BDF8),
-                      letterSpacing: 0.5,
+                      letterSpacing: 0.8,
                       shadows: [
                         Shadow(
-                          color: const Color(0xFF38BDF8).withValues(alpha: 0.45),
-                          blurRadius: 20,
+                          color: const Color(0xFF38BDF8).withValues(alpha: 0.5),
+                          blurRadius: 22,
                         ),
                       ],
                     ),
@@ -379,48 +389,59 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ],
               ),
 
-              // Center Pedestal Artwork (Controller with ambient glow)
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    width: 200,
-                    height: 200,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: RadialGradient(
-                        colors: [
-                          const Color(0xFF0284C7).withValues(alpha: 0.35),
-                          Colors.transparent,
-                        ],
-                      ),
-                    ),
-                  ),
-                  Container(
-                    width: 170,
-                    height: 170,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.35), width: 1.5),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF0284C7).withValues(alpha: 0.4),
-                          blurRadius: 32,
-                          offset: const Offset(0, 10),
+              // Center Pedestal Artwork (with subtle pulsing ambient glow animation)
+              AnimatedBuilder(
+                animation: _glowAnimation,
+                builder: (context, child) {
+                  return Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Ambient pulsing outer glow ring
+                      Transform.scale(
+                        scale: _glowAnimation.value,
+                        child: Container(
+                          width: 220,
+                          height: 220,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: [
+                                const Color(0xFF0284C7).withValues(alpha: 0.42 * _glowAnimation.value),
+                                const Color(0xFF38BDF8).withValues(alpha: 0.15 * _glowAnimation.value),
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
                         ),
-                      ],
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Image.asset(
-                      'assets/images/onboarding_controller.jpg',
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Container(
-                        color: const Color(0xFF0F172A),
-                        child: const Icon(Icons.sports_esports_rounded, size: 70, color: Color(0xFF38BDF8)),
                       ),
-                    ),
-                  ),
-                ],
+                      // Pedestal frame
+                      Container(
+                        width: 172,
+                        height: 172,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(26),
+                          border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.45), width: 1.8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF0284C7).withValues(alpha: 0.45 * _glowAnimation.value),
+                              blurRadius: 36 * _glowAnimation.value,
+                              offset: const Offset(0, 12),
+                            ),
+                          ],
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: Image.asset(
+                          'assets/images/onboarding_controller.jpg',
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => Container(
+                            color: const Color(0xFF0F172A),
+                            child: const Icon(Icons.sports_esports_rounded, size: 70, color: Color(0xFF38BDF8)),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
 
               // 3 Feature Highlight Cards
@@ -449,35 +470,40 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ],
               ),
 
-              // Bottom "Let's Get Started" / "Continue" Button
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _currentStep = 1;
-                    });
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0066FF),
-                    foregroundColor: Colors.white,
-                    elevation: 10,
-                    shadowColor: const Color(0xFF0066FF).withValues(alpha: 0.5),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Let's Get Started",
-                        style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 0.3),
+              // Bottom "Let's Get Started" Button with subtle pulse
+              AnimatedBuilder(
+                animation: _glowAnimation,
+                builder: (context, child) {
+                  return SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _currentStep = 1;
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0066FF),
+                        foregroundColor: Colors.white,
+                        elevation: 8,
+                        shadowColor: const Color(0xFF0066FF).withValues(alpha: 0.5 * _glowAnimation.value),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.arrow_forward_rounded, size: 20),
-                    ],
-                  ),
-                ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Let's Get Started",
+                            style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 0.3),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(Icons.arrow_forward_rounded, size: 20),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -568,15 +594,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       });
                     },
                   ),
-                  Text(
-                    'MOBIN X GAMING',
-                    style: GoogleFonts.outfit(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF64748B),
-                      letterSpacing: 1.2,
-                    ),
-                  ),
+                  const Spacer(),
                   const SizedBox(width: 48), // Balance spacing
                 ],
               ),
@@ -711,227 +729,212 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
               const SizedBox(height: 12),
 
-              // 2. Manual Login Card
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: _openLoginSheet,
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0F172A),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.35), width: 1.5),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.4),
-                          blurRadius: 18,
-                          offset: const Offset(0, 5),
+              // 2. Manual Login Card (Controlled live by Admin Panel auth_settings)
+              ValueListenableBuilder<Map<String, dynamic>>(
+                valueListenable: AuthService.instance.authSettingsNotifier,
+                builder: (context, authSettings, _) {
+                  final isManualEnabled = authSettings['manualLoginEnabled'] != false;
+                  if (!isManualEnabled) return const SizedBox.shrink();
+                  return Column(
+                    children: [
+                      const SizedBox(height: 12),
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: _openLoginSheet,
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0F172A),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.35), width: 1.5),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.4),
+                                  blurRadius: 18,
+                                  offset: const Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 42,
+                                  height: 42,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF38BDF8).withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.3)),
+                                  ),
+                                  child: const Center(
+                                    child: Icon(Icons.lock_outline_rounded, color: Color(0xFF38BDF8), size: 22),
+                                  ),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Manual Login',
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Email & Password Sign In',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 11.5,
+                                          color: const Color(0xFF94A3B8),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF1E293B),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(Icons.arrow_forward_rounded, color: Color(0xFF38BDF8), size: 18),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ],
-                    ),
-                    child: Row(
+                      ),
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(height: 18),
+
+              // 3. Streamlined Referral Code Trigger (Lightweight & Uncluttered)
+              _isReferralApplied
+                  ? Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF16A34A).withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFF16A34A).withValues(alpha: 0.4)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Text('🎁', style: TextStyle(fontSize: 16)),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Referral Bonus Active: ${_referralController.text} (+100 💎)',
+                              style: GoogleFonts.outfit(
+                                color: const Color(0xFF4ADE80),
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          const Icon(Icons.check_circle_rounded, color: Color(0xFF4ADE80), size: 18),
+                        ],
+                      ),
+                    )
+                  : Column(
                       children: [
-                        Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF38BDF8).withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.3)),
-                          ),
-                          child: const Center(
-                            child: Icon(Icons.lock_outline_rounded, color: Color(0xFF38BDF8), size: 22),
+                        InkWell(
+                          onTap: () => setState(() => _isReferralExpanded = !_isReferralExpanded),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF0F172A).withValues(alpha: 0.65),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: _isReferralExpanded
+                                    ? const Color(0xFF38BDF8).withValues(alpha: 0.5)
+                                    : const Color(0xFF334155).withValues(alpha: 0.5),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Text('🎁', style: TextStyle(fontSize: 15)),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    'Have an Invite / Referral Code? (+100 💎)',
+                                    style: GoogleFonts.outfit(
+                                      color: const Color(0xFFCBD5E1),
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                                Icon(
+                                  _isReferralExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                                  color: const Color(0xFF94A3B8),
+                                  size: 20,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                        if (_isReferralExpanded) ...[
+                          const SizedBox(height: 10),
+                          Row(
                             children: [
-                              Text(
-                                'Manual Login',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
+                              Expanded(
+                                child: Container(
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF0B1120),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.35)),
+                                  ),
+                                  child: TextField(
+                                    controller: _referralController,
+                                    textCapitalization: TextCapitalization.characters,
+                                    style: GoogleFonts.inter(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 1.1,
+                                    ),
+                                    decoration: const InputDecoration(
+                                      hintText: 'Enter code (e.g. MOBINXVIP)',
+                                      hintStyle: TextStyle(color: Color(0xFF64748B), fontSize: 11.5),
+                                      border: InputBorder.none,
+                                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                    ),
+                                  ),
                                 ),
                               ),
-                              Text(
-                                'Email & Password Sign In',
-                                style: GoogleFonts.inter(
-                                  fontSize: 11.5,
-                                  color: const Color(0xFF94A3B8),
-                                  fontWeight: FontWeight.w500,
+                              const SizedBox(width: 8),
+                              SizedBox(
+                                height: 40,
+                                child: ElevatedButton(
+                                  onPressed: _applyReferralCode,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF0284C7),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                                  ),
+                                  child: Text(
+                                    'Apply',
+                                    style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 12.5),
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1E293B),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(Icons.arrow_forward_rounded, color: Color(0xFF38BDF8), size: 18),
-                        ),
+                        ],
                       ],
                     ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // 3. Referral Code Card ("আমাদের রেফার ইয়াটা")
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      const Color(0xFF1E1B4B).withValues(alpha: 0.85),
-                      const Color(0xFF0F172A).withValues(alpha: 0.95),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: _isReferralApplied ? const Color(0xFF16A34A) : const Color(0xFF6366F1).withValues(alpha: 0.35),
-                    width: 1.4,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            const Text('🎁', style: TextStyle(fontSize: 18)),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Have an Invite / Referral Code?',
-                              style: GoogleFonts.outfit(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Text(
-                          '+100 💎',
-                          style: GoogleFonts.outfit(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w900,
-                            color: const Color(0xFFFACC15),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Enter friend\'s code to claim 100 bonus diamonds on sign up!',
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        color: const Color(0xFF94A3B8),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            height: 42,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0B1120),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: _isReferralApplied ? const Color(0xFF16A34A) : const Color(0xFF334155),
-                              ),
-                            ),
-                            child: TextField(
-                              controller: _referralController,
-                              textCapitalization: TextCapitalization.characters,
-                              style: GoogleFonts.inter(
-                                color: Colors.white,
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 1.2,
-                              ),
-                              decoration: const InputDecoration(
-                                hintText: 'Enter code (e.g. MOBINXVIP)',
-                                hintStyle: TextStyle(color: Color(0xFF64748B), fontSize: 12),
-                                border: InputBorder.none,
-                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        SizedBox(
-                          height: 42,
-                          child: ElevatedButton(
-                            onPressed: _applyReferralCode,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _isReferralApplied ? const Color(0xFF16A34A) : const Color(0xFF4F46E5),
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                            ),
-                            child: Text(
-                              _isReferralApplied ? 'Applied ✓' : 'Apply',
-                              style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 13),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (_isReferralApplied && _referralMessage != null) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        '✓ $_referralMessage',
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          color: const Color(0xFF4ADE80),
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // 4. Create New Account Button (Manual Registration)
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: OutlinedButton.icon(
-                  onPressed: _openRegisterSheet,
-                  icon: const Icon(Icons.person_add_alt_1_rounded, size: 18, color: Color(0xFF38BDF8)),
-                  label: Text(
-                    'Create New Player Account',
-                    style: GoogleFonts.outfit(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFF0284C7), width: 1.2),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    backgroundColor: const Color(0xFF0284C7).withValues(alpha: 0.12),
-                  ),
-                ),
-              ),
               const SizedBox(height: 24),
 
               // Terms & Privacy Policy

@@ -16,8 +16,12 @@
 # Google Sign-In
 -keep class com.google.android.gms.auth.** { *; }
 
-# AndroidX Browser (Chrome Custom Tabs)
--keep class androidx.browser.** { *; }
+# MobinX Application
+-keep class com.mobinx.gaming.** { *; }
+
+# Google Mobile Ads
+-keep class com.google.android.gms.ads.** { *; }
+-dontwarn com.google.android.gms.ads.**
 
 # Keep annotations
 -keepattributes *Annotation*
