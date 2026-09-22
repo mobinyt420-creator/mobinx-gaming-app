@@ -31,22 +31,6 @@ void main() async {
     debugPrint('Storage init notice: $e');
   }
 
-  // 3. Initialize Firebase & Register FCM Background Handler before runApp (ensures notifications arrive even when app is closed)
-  try {
-    await FirebaseService.init();
-    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-    await NotificationService.instance.init();
-    await AuthService.instance.init();
-  } catch (e) {
-    debugPrint('Background Firebase/Notification init: $e');
-  }
-
-  try {
-    AdMobService.instance.init();
-  } catch (e) {
-    debugPrint('AdMob init caught: $e');
-  }
-
   // Lock to portrait orientation for esports gaming UX
   try {
     await SystemChrome.setPreferredOrientations([
@@ -67,7 +51,38 @@ void main() async {
     );
   } catch (_) {}
 
+  // 3. Launch UI immediately for instant cold-start (<50ms)
   runApp(const MobinXApp());
+
+  // 4. Initialize Firebase, Notifications, and Cloud Services concurrently without blocking first frame
+  _initBackgroundServices();
+}
+
+void _initBackgroundServices() async {
+  try {
+    await FirebaseService.init().timeout(const Duration(seconds: 3));
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  } catch (e) {
+    debugPrint('Firebase init notice: $e');
+  }
+
+  try {
+    NotificationService.instance.init();
+  } catch (e) {
+    debugPrint('Notification init notice: $e');
+  }
+
+  try {
+    AuthService.instance.init();
+  } catch (e) {
+    debugPrint('Auth init notice: $e');
+  }
+
+  try {
+    AdMobService.instance.init();
+  } catch (e) {
+    debugPrint('AdMob init notice: $e');
+  }
 }
 
 class MobinXApp extends StatelessWidget {

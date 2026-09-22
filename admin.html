@@ -5834,20 +5834,42 @@ function bindCurrentTabEvents() {
   const fcmInput = document.getElementById('input-fcm-server-key');
   const btnSaveFcm = document.getElementById('btn-save-fcm-key');
   const fcmBadge = document.getElementById('fcm-status-badge');
-  const savedFcmKey = localStorage.getItem('mobinx_fcm_server_key') || '';
-  if (fcmInput && savedFcmKey) {
-    fcmInput.value = savedFcmKey;
-    if (fcmBadge) {
-      fcmBadge.textContent = 'FCM Cloud Active';
-      fcmBadge.style.background = 'rgba(16,185,129,0.2)';
-      fcmBadge.style.color = '#34d399';
+  let savedFcmKey = localStorage.getItem('mobinx_fcm_server_key') || '';
+
+  function checkAndUpdateFcmBadge(key) {
+    if (fcmInput && key) {
+      fcmInput.value = key;
     }
+    if (fcmBadge) {
+      if (key) {
+        fcmBadge.textContent = 'FCM Cloud Active';
+        fcmBadge.style.background = 'rgba(16,185,129,0.2)';
+        fcmBadge.style.color = '#34d399';
+      } else {
+        fcmBadge.textContent = 'Key Required for Closed Apps';
+        fcmBadge.style.background = 'rgba(239,68,68,0.2)';
+        fcmBadge.style.color = '#f87171';
+      }
+    }
+  }
+
+  if (savedFcmKey) {
+    checkAndUpdateFcmBadge(savedFcmKey);
+  } else if (typeof db !== 'undefined') {
+    db.collection('config').doc('fcm_settings').get().then(doc => {
+      if (doc.exists && doc.data()?.serverKey) {
+        savedFcmKey = doc.data().serverKey;
+        localStorage.setItem('mobinx_fcm_server_key', savedFcmKey);
+        checkAndUpdateFcmBadge(savedFcmKey);
+      }
+    }).catch(() => {});
   }
 
   btnSaveFcm?.addEventListener('click', async () => {
     const keyVal = fcmInput?.value.trim() || '';
     if (!keyVal) {
       localStorage.removeItem('mobinx_fcm_server_key');
+      checkAndUpdateFcmBadge('');
       showToast('FCM Key cleared.', 'info');
       return;
     }
@@ -5855,17 +5877,23 @@ function bindCurrentTabEvents() {
     try {
       await syncToFirestore('config', 'fcm_settings', { serverKey: keyVal, updatedAt: Date.now() });
     } catch(e) {}
+    checkAndUpdateFcmBadge(keyVal);
     showToast('✅ FCM Server Key saved successfully!', 'success');
-    if (fcmBadge) {
-      fcmBadge.textContent = 'FCM Cloud Active';
-      fcmBadge.style.background = 'rgba(16,185,129,0.2)';
-      fcmBadge.style.color = '#34d399';
-    }
   });
 
   // Helper: Dispatch FCM Push to Android Devices (Background & Terminated Wakeup)
   async function dispatchFcmToAllDevices(notif) {
-    const serverKey = localStorage.getItem('mobinx_fcm_server_key') || '';
+    let serverKey = localStorage.getItem('mobinx_fcm_server_key') || '';
+    if (!serverKey && typeof db !== 'undefined') {
+      try {
+        const snap = await db.collection('config').doc('fcm_settings').get();
+        if (snap.exists && snap.data()?.serverKey) {
+          serverKey = snap.data().serverKey;
+          localStorage.setItem('mobinx_fcm_server_key', serverKey);
+          checkAndUpdateFcmBadge(serverKey);
+        }
+      } catch (_) {}
+    }
 
     // 1. Dispatch via local/Vercel serverless proxy /api/send-fcm (Zero CORS issues)
     try {

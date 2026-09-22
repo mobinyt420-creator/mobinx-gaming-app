@@ -607,308 +607,392 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            Color(0xFF132A54),
-            Color(0xFF0B1936),
-            Color(0xFF061026),
+            Color(0xFF0F1E3D),
+            Color(0xFF142B59),
+            Color(0xFF0C1935),
           ],
         ),
       ),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Top Bar with Back Button
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-                    onPressed: () {
-                      setState(() {
-                        _currentStep = 0;
-                      });
-                    },
-                  ),
-                  const Spacer(),
-                  const SizedBox(width: 48), // Balance spacing
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Header Branding
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: const Color(0xFF00F0FF).withValues(alpha: 0.55), width: 1.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF0284C7).withValues(alpha: 0.5),
-                      blurRadius: 26,
-                      offset: const Offset(0, 8),
-                    ),
+      child: Stack(
+        children: [
+          // Dynamic ambient gaming glow spots (eliminates empty dark void)
+          Positioned(
+            top: 60,
+            left: -30,
+            child: Container(
+              width: 260,
+              height: 260,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFF0284C7).withValues(alpha: 0.32),
+                    Colors.transparent,
                   ],
                 ),
-                clipBehavior: Clip.antiAlias,
-                child: Image.asset(
-                  'assets/images/obin_icon_512.png',
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => Container(
-                    color: const Color(0xFF0284C7),
-                    child: const Center(
-                      child: Text('M', style: TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 30,
+            right: -40,
+            child: Container(
+              width: 280,
+              height: 280,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    const Color(0xFF00F0FF).withValues(alpha: 0.22),
+                    const Color(0xFF2563EB).withValues(alpha: 0.16),
+                    Colors.transparent,
+                  ],
                 ),
               ),
-              const SizedBox(height: 10),
+            ),
+          ),
 
-              // Stylized Gaming OBIN Typography
-              ShaderMask(
-                shaderCallback: (bounds) => const LinearGradient(
-                  colors: [Color(0xFF00F0FF), Color(0xFF38BDF8), Color(0xFF2563EB)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ).createShader(bounds),
-                child: Text(
-                  'OBIN',
-                  style: GoogleFonts.orbitron(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    letterSpacing: 3.8,
-                    shadows: [
-                      Shadow(
-                        color: const Color(0xFF00F0FF).withValues(alpha: 0.6),
-                        blurRadius: 20,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                'SIGN IN TO CONTINUE',
-                style: GoogleFonts.outfit(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF38BDF8),
-                  letterSpacing: 1.4,
-                ),
-              ),
-              const SizedBox(height: 28),
-
-              // 1. Google Sign-In Card
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: _isGoogleLoading ? null : _handleGoogleSignIn,
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF38BDF8).withValues(alpha: 0.35),
-                          blurRadius: 22,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: _isGoogleLoading
-                        ? const Center(
-                            child: SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(strokeWidth: 2.5, color: Color(0xFF2563EB)),
-                            ),
-                          )
-                        : Row(
+          SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // 1. Top Bar with Back Button
+                          Row(
                             children: [
                               Container(
-                                width: 42,
-                                height: 42,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF1F5F9),
+                                  color: Colors.white.withValues(alpha: 0.08),
                                   borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
                                 ),
-                                child: const Center(
-                                  child: GoogleGLogo(size: 22),
+                                child: IconButton(
+                                  icon: const Icon(Icons.arrow_back_rounded, color: Colors.white, size: 22),
+                                  onPressed: () {
+                                    setState(() {
+                                      _currentStep = 0;
+                                    });
+                                  },
                                 ),
                               ),
-                              const SizedBox(width: 14),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Continue with Google',
-                                      style: GoogleFonts.outfit(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w800,
-                                        color: const Color(0xFF0F172A),
+                            ],
+                          ),
+
+                          // 2. Middle Content: Centered Branding & Login Cards
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // Glowing Brand Icon Container
+                              Container(
+                                width: 72,
+                                height: 72,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(22),
+                                  border: Border.all(
+                                    color: const Color(0xFF00F0FF).withValues(alpha: 0.7),
+                                    width: 2.0,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF00C6FF).withValues(alpha: 0.45),
+                                      blurRadius: 32,
+                                      spreadRadius: 2,
+                                      offset: const Offset(0, 8),
+                                    ),
+                                  ],
+                                ),
+                                clipBehavior: Clip.antiAlias,
+                                child: Transform.scale(
+                                  scale: 1.12,
+                                  child: Image.asset(
+                                    'assets/images/obin_icon_512.png',
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, _, _) => Container(
+                                      color: const Color(0xFF0284C7),
+                                      child: const Center(
+                                        child: Text('M', style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.bold)),
                                       ),
                                     ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Stylized Gaming OBIN Typography
+                              ShaderMask(
+                                shaderCallback: (bounds) => const LinearGradient(
+                                  colors: [Color(0xFF00F0FF), Color(0xFF38BDF8), Color(0xFF60A5FA)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ).createShader(bounds),
+                                child: Text(
+                                  'OBIN',
+                                  style: GoogleFonts.orbitron(
+                                    fontSize: 34,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.white,
+                                    letterSpacing: 4.2,
+                                    shadows: [
+                                      Shadow(
+                                        color: const Color(0xFF00F0FF).withValues(alpha: 0.7),
+                                        blurRadius: 24,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF0284C7).withValues(alpha: 0.25),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.4)),
+                                ),
+                                child: Text(
+                                  'SIGN IN TO CONTINUE',
+                                  style: GoogleFonts.rajdhani(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                    color: const Color(0xFF38BDF8),
+                                    letterSpacing: 1.8,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 32),
+
+                              // 1. Google Sign-In Card
+                              Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: _isGoogleLoading ? null : _handleGoogleSignIn,
+                                  borderRadius: BorderRadius.circular(18),
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(18),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xFF38BDF8).withValues(alpha: 0.35),
+                                          blurRadius: 24,
+                                          offset: const Offset(0, 8),
+                                        ),
+                                      ],
+                                    ),
+                                    child: _isGoogleLoading
+                                        ? const Center(
+                                            child: SizedBox(
+                                              width: 24,
+                                              height: 24,
+                                              child: CircularProgressIndicator(strokeWidth: 2.5, color: Color(0xFF2563EB)),
+                                            ),
+                                          )
+                                        : Row(
+                                            children: [
+                                              Container(
+                                                width: 44,
+                                                height: 44,
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFFF1F5F9),
+                                                  borderRadius: BorderRadius.circular(12),
+                                                ),
+                                                child: const Center(
+                                                  child: GoogleGLogo(size: 24),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 14),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      'Continue with Google',
+                                                      style: GoogleFonts.outfit(
+                                                        fontSize: 15.5,
+                                                        fontWeight: FontWeight.w800,
+                                                        color: const Color(0xFF0F172A),
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      'Fast & Direct One-Tap Login',
+                                                      style: GoogleFonts.inter(
+                                                        fontSize: 12,
+                                                        color: const Color(0xFF64748B),
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              Container(
+                                                width: 34,
+                                                height: 34,
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFFEFF6FF),
+                                                  borderRadius: BorderRadius.circular(10),
+                                                ),
+                                                child: const Icon(Icons.arrow_forward_rounded, color: Color(0xFF2563EB), size: 19),
+                                              ),
+                                            ],
+                                          ),
+                                  ),
+                                ),
+                              ),
+
+                              // 2. Manual Login Card (Controlled live by Admin Panel auth_settings)
+                              ValueListenableBuilder<Map<String, dynamic>>(
+                                valueListenable: AuthService.instance.authSettingsNotifier,
+                                builder: (context, authSettings, _) {
+                                  final isManualEnabled = authSettings['manualLoginEnabled'] != false;
+                                  if (!isManualEnabled) return const SizedBox.shrink();
+                                  return Column(
+                                    children: [
+                                      const SizedBox(height: 14),
+                                      Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          onTap: _openLoginSheet,
+                                          borderRadius: BorderRadius.circular(18),
+                                          child: Container(
+                                            width: double.infinity,
+                                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF102042).withValues(alpha: 0.9),
+                                              borderRadius: BorderRadius.circular(18),
+                                              border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.4), width: 1.5),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black.withValues(alpha: 0.35),
+                                                  blurRadius: 18,
+                                                  offset: const Offset(0, 5),
+                                                ),
+                                              ],
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Container(
+                                                  width: 44,
+                                                  height: 44,
+                                                  decoration: BoxDecoration(
+                                                    color: const Color(0xFF38BDF8).withValues(alpha: 0.15),
+                                                    borderRadius: BorderRadius.circular(12),
+                                                    border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.3)),
+                                                  ),
+                                                  child: const Center(
+                                                    child: Icon(Icons.lock_outline_rounded, color: Color(0xFF38BDF8), size: 22),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 14),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        'Manual Login',
+                                                        style: GoogleFonts.outfit(
+                                                          fontSize: 15.5,
+                                                          fontWeight: FontWeight.w800,
+                                                          color: Colors.white,
+                                                        ),
+                                                      ),
+                                                      Text(
+                                                        'Email & Password Sign In',
+                                                        style: GoogleFonts.inter(
+                                                          fontSize: 12,
+                                                          color: const Color(0xFF94A3B8),
+                                                          fontWeight: FontWeight.w500,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                Container(
+                                                  width: 34,
+                                                  height: 34,
+                                                  decoration: BoxDecoration(
+                                                    color: const Color(0xFF1E293B),
+                                                    borderRadius: BorderRadius.circular(10),
+                                                  ),
+                                                  child: const Icon(Icons.arrow_forward_rounded, color: Color(0xFF38BDF8), size: 19),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 28),
+
+                              // Trust & Security Badge
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF102042).withValues(alpha: 0.75),
+                                  borderRadius: BorderRadius.circular(22),
+                                  border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.25)),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.2),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.shield_rounded, color: Color(0xFF34D399), size: 16),
+                                    const SizedBox(width: 7),
                                     Text(
-                                      'Fast & Direct One-Tap Login',
+                                      '100% Secure & Verified Gaming Account',
                                       style: GoogleFonts.inter(
                                         fontSize: 11.5,
-                                        color: const Color(0xFF64748B),
+                                        color: const Color(0xFF94A3B8),
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                              Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFEFF6FF),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Icon(Icons.arrow_forward_rounded, color: Color(0xFF2563EB), size: 18),
-                              ),
                             ],
                           ),
-                  ),
-                ),
-              ),
 
-              // 2. Manual Login Card (Controlled live by Admin Panel auth_settings)
-              ValueListenableBuilder<Map<String, dynamic>>(
-                valueListenable: AuthService.instance.authSettingsNotifier,
-                builder: (context, authSettings, _) {
-                  final isManualEnabled = authSettings['manualLoginEnabled'] != false;
-                  if (!isManualEnabled) return const SizedBox.shrink();
-                  return Column(
-                    children: [
-                      const SizedBox(height: 14),
-                      Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: _openLoginSheet,
-                          borderRadius: BorderRadius.circular(16),
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF102042).withValues(alpha: 0.9),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.4), width: 1.5),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.35),
-                                  blurRadius: 18,
-                                  offset: const Offset(0, 5),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 42,
-                                  height: 42,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF38BDF8).withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.3)),
-                                  ),
-                                  child: const Center(
-                                    child: Icon(Icons.lock_outline_rounded, color: Color(0xFF38BDF8), size: 22),
-                                  ),
-                                ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Manual Login',
-                                        style: GoogleFonts.outfit(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w800,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      Text(
-                                        'Email & Password Sign In',
-                                        style: GoogleFonts.inter(
-                                          fontSize: 11.5,
-                                          color: const Color(0xFF94A3B8),
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  width: 32,
-                                  height: 32,
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF1E293B),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Icon(Icons.arrow_forward_rounded, color: Color(0xFF38BDF8), size: 18),
-                                ),
-                              ],
+                          // 3. Bottom Terms & Privacy Policy
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Text(
+                              'By continuing, you agree to our Terms of Service & Privacy Policy',
+                              style: GoogleFonts.inter(
+                                fontSize: 11.5,
+                                color: const Color(0xFF94A3B8),
+                                fontWeight: FontWeight.w500,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
                           ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(height: 32),
-
-              // Trust & Security Badge
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF102042).withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.2)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.shield_rounded, color: Color(0xFF34D399), size: 15),
-                    const SizedBox(width: 6),
-                    Text(
-                      '100% Secure & Verified Gaming Account',
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        color: const Color(0xFF94A3B8),
-                        fontWeight: FontWeight.w600,
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 18),
-
-              // Terms & Privacy Policy
-              Text(
-                'By continuing, you agree to our Terms of Service & Privacy Policy',
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  color: const Color(0xFF64748B),
-                  fontWeight: FontWeight.w500,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 10),
-            ],
+                  ),
+                );
+              },
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

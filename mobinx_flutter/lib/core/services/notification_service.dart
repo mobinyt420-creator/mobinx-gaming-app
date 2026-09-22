@@ -229,11 +229,9 @@ class NotificationService {
         _syncFCMToken(token);
       });
 
-      // Check existing permission; if already granted, sync token & topics immediately
-      final isGranted = await isPermissionGranted();
-      if (isGranted) {
-        await _registerAndSubscribe(messaging);
-      }
+      // Unconditionally register FCM token and subscribe to broadcast topics
+      // Ensures background push delivery to closed devices regardless of initial prompt timing
+      await _registerAndSubscribe(messaging);
 
       // Foreground message listener: Trigger native system notification in status bar
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -522,19 +520,22 @@ class NotificationService {
     for (final item in notificationsNotifier.value) {
       _readIds.add(item.id);
     }
+    unreadCountNotifier.value = 0;
     _persistReadIds();
 
     final updated = notificationsNotifier.value.map((item) {
       return item.copyWith(unread: false);
     }).toList();
 
-    _updateList(updated);
+    notificationsNotifier.value = updated;
   }
 
   Future<void> _persistReadIds() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setStringList('mobinx_read_notifications', _readIds.toList());
+      final list = _readIds.toList();
+      await prefs.setStringList('obin_read_notifications', list);
+      await prefs.setStringList('mobinx_read_notifications', list);
     } catch (_) {}
   }
 }

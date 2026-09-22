@@ -25,6 +25,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   void initState() {
     super.initState();
     NotificationService.instance.init();
+    // Mark all notifications as read immediately upon opening (clears red badge unconditionally)
+    NotificationService.instance.markAllAsRead();
   }
 
   @override

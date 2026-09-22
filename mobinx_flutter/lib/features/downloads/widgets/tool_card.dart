@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/models/download_item_model.dart';
 import '../../../core/services/download_service.dart';
 import '../../../core/services/admob_service.dart';
+import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 
 /// APK & Video Download Card with Full HD Thumbnail & In-App Player
 class ToolCard extends StatefulWidget {
@@ -17,6 +18,15 @@ class ToolCard extends StatefulWidget {
 }
 
 class _ToolCardState extends State<ToolCard> {
+  YoutubePlayerController? _ytController;
+  bool _isPlayingInApp = false;
+
+  @override
+  void dispose() {
+    _ytController?.close();
+    super.dispose();
+  }
+
   String _getYoutubeId() {
     var raw = widget.item.youtubeId.trim();
     if (raw.contains('watch?v=')) {
@@ -29,16 +39,29 @@ class _ToolCardState extends State<ToolCard> {
     return raw.isNotEmpty ? raw : 'dQw4w9WgXcQ';
   }
 
+  void _startInlineVideo() {
+    final yId = _getYoutubeId();
+    _ytController = YoutubePlayerController(
+      params: const YoutubePlayerParams(
+        showControls: true,
+        showFullscreenButton: true,
+        playsInline: true,
+        mute: false,
+        loop: false,
+        enableCaption: false,
+      ),
+    );
+    _ytController!.loadVideoById(videoId: yId);
+    setState(() {
+      _isPlayingInApp = true;
+    });
+  }
+
   void _openYouTubeApp(BuildContext context) {
     final yId = _getYoutubeId();
     DownloadService.instance.launchUrlString('https://www.youtube.com/watch?v=$yId');
   }
 
-  void _handleVideoTap() {
-    final yId = _getYoutubeId();
-    // Safely open video directly in YouTube app or external player to avoid WebView OOM crash
-    DownloadService.instance.launchUrlString('https://www.youtube.com/watch?v=$yId');
-  }
 
   void _onDownloadButtonClick(BuildContext context, {required String label, required String targetUrl}) {
     if (!AdMobService.instance.isAdsEnabled) {
@@ -262,76 +285,77 @@ class _ToolCardState extends State<ToolCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. 16:9 Video Player / Instant High-Res Thumbnail Preview
+          // 1. 16:9 Video Player (Inline playback right inside card or crystal-clear preview)
           AspectRatio(
             aspectRatio: 16 / 9,
-            child: GestureDetector(
-              onTap: _handleVideoTap,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  _buildThumbnail(item.videoThumbnail),
+            child: _isPlayingInApp && _ytController != null
+                ? YoutubePlayer(
+                    controller: _ytController!,
+                    aspectRatio: 16 / 9,
+                  )
+                : GestureDetector(
+                    onTap: _startInlineVideo,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        // 100% Bright crystal-clear thumbnail without dark tint
+                        _buildThumbnail(item.videoThumbnail),
 
-                  // Subtle gradient overlay for contrast
-                  Container(
-                    color: Colors.black.withValues(alpha: 0.15),
-                  ),
+                        // Compact Category Badge (Top Left)
+                        if (item.category.isNotEmpty)
+                          Positioned(
+                            top: 10,
+                            left: 10,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF0F172A).withValues(alpha: 0.85),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: Colors.white24, width: 0.8),
+                              ),
+                              child: Text(
+                                item.category,
+                                style: const TextStyle(
+                                  fontFamily: 'Outfit',
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ),
+                          ),
 
-                  // Compact Category Badge (Top Left)
-                  if (item.category.isNotEmpty)
-                    Positioned(
-                      top: 10,
-                      left: 10,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0F172A).withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: Colors.white24, width: 0.8),
-                        ),
-                        child: Text(
-                          item.category,
-                          style: const TextStyle(
-                            fontFamily: 'Outfit',
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            letterSpacing: 0.2,
+                        // Center Circular Glassy Frosted Neon Play Button
+                        Center(
+                          child: Container(
+                            width: 54,
+                            height: 54,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: const Color(0xFF0284C7).withValues(alpha: 0.82),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.95), width: 2.2),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF00F0FF).withValues(alpha: 0.65),
+                                  blurRadius: 26,
+                                  spreadRadius: 2,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: const Center(
+                              child: Icon(
+                                Icons.play_arrow_rounded,
+                                color: Colors.white,
+                                size: 34,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-
-                  // Center Circular Blue Play Button with pulse feedback
-                  Center(
-                    child: Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFF2563EB),
-                        border: Border.all(color: Colors.white, width: 2.2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF2563EB).withValues(alpha: 0.5),
-                            blurRadius: 18,
-                            spreadRadius: 2,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.play_arrow_rounded,
-                          color: Colors.white,
-                          size: 34,
-                        ),
-                      ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ),
           ),
 
           // 2. Body Details
@@ -384,7 +408,7 @@ class _ToolCardState extends State<ToolCard> {
                 ),
                 const SizedBox(height: 10),
 
-                // Action Buttons: Sleek, medium-sized, perfectly balanced
+                // Action Buttons: Sleek, balanced proportions
                 if (item.actionButtons.isNotEmpty)
                   GridView.builder(
                     shrinkWrap: true,
@@ -394,7 +418,7 @@ class _ToolCardState extends State<ToolCard> {
                       crossAxisCount: 2,
                       crossAxisSpacing: 8,
                       mainAxisSpacing: 8,
-                      childAspectRatio: 3.6,
+                      childAspectRatio: 3.5,
                     ),
                     itemBuilder: (context, idx) {
                       final btn = item.actionButtons[idx];
@@ -408,13 +432,13 @@ class _ToolCardState extends State<ToolCard> {
                             backgroundColor: const Color(0xFFEFF6FF),
                             side: const BorderSide(color: Color(0xFFBFDBFE), width: 1.1),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.download_rounded, color: Color(0xFF2563EB), size: 16),
-                              const SizedBox(width: 5),
+                              const Icon(Icons.download_rounded, color: Color(0xFF2563EB), size: 15),
+                              const SizedBox(width: 4),
                               Flexible(
                                 child: Text(
                                   btn.label,
@@ -422,7 +446,7 @@ class _ToolCardState extends State<ToolCard> {
                                   overflow: TextOverflow.ellipsis,
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.inter(
-                                    fontSize: 12,
+                                    fontSize: 11.5,
                                     fontWeight: FontWeight.w700,
                                     color: const Color(0xFF2563EB),
                                   ),
@@ -499,19 +523,25 @@ class _ToolCardState extends State<ToolCard> {
 
   Widget _buildYouTubeThumbnail(String yId) {
     return CachedNetworkImage(
-      imageUrl: 'https://img.youtube.com/vi/$yId/hqdefault.jpg',
+      imageUrl: 'https://img.youtube.com/vi/$yId/maxresdefault.jpg',
       fit: BoxFit.cover,
       alignment: Alignment.center,
       filterQuality: FilterQuality.high,
       placeholder: (_, _) => Container(color: const Color(0xFF0F172A)),
       errorWidget: (_, _, _) => CachedNetworkImage(
-        imageUrl: 'https://img.youtube.com/vi/$yId/mqdefault.jpg',
+        imageUrl: 'https://img.youtube.com/vi/$yId/hqdefault.jpg',
         fit: BoxFit.cover,
         alignment: Alignment.center,
         filterQuality: FilterQuality.high,
-        errorWidget: (_, _, _) => Image.asset(
-          'assets/images/banner_esports.jpg',
+        errorWidget: (_, _, _) => CachedNetworkImage(
+          imageUrl: 'https://img.youtube.com/vi/$yId/mqdefault.jpg',
           fit: BoxFit.cover,
+          alignment: Alignment.center,
+          filterQuality: FilterQuality.high,
+          errorWidget: (_, _, _) => Image.asset(
+            'assets/images/banner_esports.jpg',
+            fit: BoxFit.cover,
+          ),
         ),
       ),
     );

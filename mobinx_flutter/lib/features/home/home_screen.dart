@@ -10,6 +10,7 @@ import '../../core/services/auth_service.dart';
 import '../../core/services/home_data_service.dart';
 import '../../core/services/store_service.dart';
 import '../../core/services/notification_service.dart';
+import '../../core/services/download_service.dart';
 import '../../core/models/banner_model.dart';
 import '../downloads/downloads_screen.dart';
 import '../notifications/notifications_screen.dart';
@@ -45,6 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
     HomeDataService.instance.init();
     StoreService.instance.init();
     NotificationService.instance.init();
+    DownloadService.instance.init();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final isGranted = await NotificationService.instance.isPermissionGranted();
       if (!isGranted) {
@@ -83,6 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
         SharedAxisPageRoute(page: const ReferralScreen()),
       );
     } else if (route == 'notifications') {
+      NotificationService.instance.markAllAsRead();
       Navigator.push(
         context,
         SharedAxisPageRoute(page: const NotificationsScreen()),
@@ -148,33 +151,50 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               title: Row(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.asset(
-                      'assets/images/obin_icon_512.png',
-                      width: 28,
-                      height: 28,
-                      fit: BoxFit.cover,
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: const Color(0xFF38BDF8).withValues(alpha: 0.35),
+                        width: 1.2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF0284C7).withValues(alpha: 0.15),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Transform.scale(
+                      scale: 1.15,
+                      child: Image.asset(
+                        'assets/images/obin_icon_512.png',
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 9),
+                  const SizedBox(width: 10),
                   ShaderMask(
                     shaderCallback: (bounds) => const LinearGradient(
-                      colors: [Color(0xFF00F0FF), Color(0xFF38BDF8), Color(0xFF2563EB)],
+                      colors: [Color(0xFF0284C7), Color(0xFF0EA5E9), Color(0xFF2563EB)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ).createShader(bounds),
                     child: Text(
                       'OBIN',
                       style: GoogleFonts.orbitron(
-                        fontSize: 18,
+                        fontSize: 22,
                         fontWeight: FontWeight.w900,
                         color: Colors.white,
                         letterSpacing: 2.4,
                         shadows: [
                           Shadow(
-                            color: const Color(0xFF00F0FF).withValues(alpha: 0.5),
-                            blurRadius: 14,
+                            color: const Color(0xFF0284C7).withValues(alpha: 0.35),
+                            blurRadius: 10,
                           ),
                         ],
                       ),
@@ -183,12 +203,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
               actions: [
-                // Notification Bell with Badge '4' (Image 1)
+                // Notification Bell with Badge (Image 1)
                 Stack(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.notifications_none_rounded, color: AppColors.textMain, size: 23),
+                      icon: const Icon(Icons.notifications_none_rounded, color: AppColors.textMain, size: 24),
                       onPressed: () {
+                        NotificationService.instance.markAllAsRead();
                         Navigator.push(
                           context,
                           SharedAxisPageRoute(page: const NotificationsScreen()),
