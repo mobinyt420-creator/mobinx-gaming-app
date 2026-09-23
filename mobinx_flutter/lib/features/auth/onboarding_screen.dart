@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/services/auth_service.dart';
 import '../../core/services/storage_service.dart';
+import '../../core/services/notification_service.dart';
 import '../home/home_screen.dart';
 import 'login_sheet.dart';
 import 'register_sheet.dart';
@@ -105,6 +106,18 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerProviderStateMixin {
   int _currentStep = 0; // 0 = Welcome Step, 1 = Auth Selection Step
   bool _isGoogleLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final isGranted = await NotificationService.instance.isPermissionGranted();
+      if (!isGranted) {
+        await Future.delayed(const Duration(milliseconds: 350));
+        await NotificationService.instance.requestPermission();
+      }
+    });
+  }
 
   void _navigateToHome() {
     try {

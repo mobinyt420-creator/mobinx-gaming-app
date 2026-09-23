@@ -264,13 +264,13 @@ class AuthService {
     } catch (e) {
       debugPrint('Google Sign-In error: $e');
       // If native Google Sign-In isn't available in test runner, provide a resilient demo player profile
-      final fallbackEmail = 'player@mobinx.gaming';
+      final fallbackEmail = 'player@obin.gaming';
       final fallbackUser = UserModel(
         id: 'google_fallback_${DateTime.now().millisecondsSinceEpoch}',
         uid: 'google_fallback_${DateTime.now().millisecondsSinceEpoch}',
-        name: 'Mobin X Player',
-        username: 'MobinX_Player',
-        fullName: 'Mobin X Player',
+        name: 'OBIN Player',
+        username: 'OBIN_Player',
+        fullName: 'OBIN Player',
         email: fallbackEmail,
         emailVerified: true,
         phone: phone.isNotEmpty ? phone : '01700000000',
@@ -446,7 +446,7 @@ class AuthService {
       name: 'Guest Player',
       username: 'Guest_${guestId.substring(guestId.length - 4)}',
       fullName: 'Guest Player',
-      email: 'guest@mobinx.gaming',
+      email: 'guest@obin.gaming',
       avatar: AppConstants.defaultAvatar,
       role: 'Guest Member',
       isAdmin: false,

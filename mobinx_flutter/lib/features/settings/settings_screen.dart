@@ -22,7 +22,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final user = AuthService.instance.currentUser;
     final userName = user?.name.isNotEmpty == true ? user!.name : 'Player';
-    final userEmail = user?.email.isNotEmpty == true ? user!.email : 'gamer@mobinx.app';
+    final userEmail = user?.email.isNotEmpty == true ? user!.email : 'gamer@obin.app';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),

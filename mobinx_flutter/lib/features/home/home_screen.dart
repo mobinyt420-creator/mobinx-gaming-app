@@ -36,20 +36,39 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _currentNavIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     HomeDataService.instance.init();
     StoreService.instance.init();
     NotificationService.instance.init();
     DownloadService.instance.init();
+    _checkNotificationPermission();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkNotificationPermission();
+    }
+  }
+
+  void _checkNotificationPermission() {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final isGranted = await NotificationService.instance.isPermissionGranted();
       if (!isGranted) {
+        await Future.delayed(const Duration(milliseconds: 350));
         await NotificationService.instance.requestPermission();
       }
     });
@@ -138,6 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: _currentNavIndex == 0
           ? AppBar(
               backgroundColor: Colors.white,
+              toolbarHeight: 48,
               elevation: 0,
               centerTitle: false,
               scrolledUnderElevation: 0,

@@ -74,7 +74,7 @@ class _FlashDealsSectionState extends State<FlashDealsSection> {
   List<EcommerceProductItem> _ecommerceProducts = [
     const EcommerceProductItem(
       id: 'ecom-1',
-      title: 'Mobin X Pro Esports Jersey',
+      title: 'OBIN Pro Esports Jersey',
       category: 'Official T-Shirt',
       price: '৳ 650',
       originalPrice: '৳ 850',
@@ -83,7 +83,7 @@ class _FlashDealsSectionState extends State<FlashDealsSection> {
     ),
     const EcommerceProductItem(
       id: 'ecom-2',
-      title: 'Mobin X RGB Gaming Headset',
+      title: 'OBIN RGB Gaming Headset',
       category: 'Pro Audio Gadget',
       price: '৳ 1,250',
       originalPrice: '৳ 1,600',
@@ -112,15 +112,18 @@ class _FlashDealsSectionState extends State<FlashDealsSection> {
   void _listenToShopProducts() {
     if (FirebaseService.isInitialized) {
       try {
-        FirebaseService.firestore.collection('shop_products').limit(2).snapshots().listen((snap) {
-          if (snap.docs.isNotEmpty) {
-            final live = snap.docs
-                .map((doc) => EcommerceProductItem.fromJson({...doc.data(), 'id': doc.id}))
-                .toList();
-            if (live.isNotEmpty && mounted) {
-              setState(() {
-                _ecommerceProducts = live.take(2).toList();
-              });
+        FirebaseService.firestore.doc('config/shop_products').snapshots().listen((snap) {
+          if (snap.exists && snap.data() != null) {
+            final data = snap.data()!;
+            if (data['products'] is List) {
+              final liveList = (data['products'] as List)
+                  .map((p) => EcommerceProductItem.fromJson(Map<String, dynamic>.from(p)))
+                  .toList();
+              if (liveList.isNotEmpty && mounted) {
+                setState(() {
+                  _ecommerceProducts = liveList.take(2).toList();
+                });
+              }
             }
           }
         });

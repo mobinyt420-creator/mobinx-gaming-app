@@ -239,7 +239,7 @@ class _GoogleProfileSheetState extends State<GoogleProfileSheet> {
                 textCapitalization: TextCapitalization.characters,
                 style: const TextStyle(fontFamily: 'Inter', fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 1.0),
                 decoration: const InputDecoration(
-                  hintText: 'e.g. MOBINXVIP',
+                  hintText: 'e.g. OBINVIP',
                   prefixIcon: Icon(Icons.card_giftcard_rounded, size: 18, color: Color(0xFF16A34A)),
                 ),
                 onChanged: (val) {

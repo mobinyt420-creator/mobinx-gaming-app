@@ -21,10 +21,18 @@ void main() async {
     debugPrint('⚡ Mobin X Caught Error: ${details.exception}');
   };
 
-  // 1. Completely disable HTTP runtime font downloads (forces instant 0ms offline bundled fonts)
+  // 1. Initialize Firebase Core synchronously and register background messaging handler
+  try {
+    await FirebaseService.init();
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  } catch (e) {
+    debugPrint('Firebase init notice: $e');
+  }
+
+  // 2. Completely disable HTTP runtime font downloads (forces instant 0ms offline bundled fonts)
   GoogleFonts.config.allowRuntimeFetching = false;
 
-  // 2. Fast local disk session init (<5ms)
+  // 3. Fast local disk session init (<5ms)
   try {
     await StorageService.init();
   } catch (e) {
@@ -51,42 +59,35 @@ void main() async {
     );
   } catch (_) {}
 
-  // 3. Launch UI immediately for instant cold-start (<50ms)
-  runApp(const MobinXApp());
+  // 4. Launch UI
+  runApp(const ObinApp());
 
-  // 4. Initialize Firebase, Notifications, and Cloud Services concurrently without blocking first frame
-  _initBackgroundServices();
+  // 5. Initialize secondary runtime services
+  _initSecondaryServices();
 }
 
-void _initBackgroundServices() async {
+void _initSecondaryServices() async {
   try {
-    await FirebaseService.init().timeout(const Duration(seconds: 3));
-    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-  } catch (e) {
-    debugPrint('Firebase init notice: $e');
-  }
-
-  try {
-    NotificationService.instance.init();
+    await NotificationService.instance.init();
   } catch (e) {
     debugPrint('Notification init notice: $e');
   }
 
   try {
-    AuthService.instance.init();
+    await AuthService.instance.init();
   } catch (e) {
     debugPrint('Auth init notice: $e');
   }
 
   try {
-    AdMobService.instance.init();
+    await AdMobService.instance.init();
   } catch (e) {
     debugPrint('AdMob init notice: $e');
   }
 }
 
-class MobinXApp extends StatelessWidget {
-  const MobinXApp({super.key});
+class ObinApp extends StatelessWidget {
+  const ObinApp({super.key});
 
   @override
   Widget build(BuildContext context) {

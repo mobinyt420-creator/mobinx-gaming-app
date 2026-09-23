@@ -27,6 +27,11 @@ class MainActivity : FlutterActivity() {
     private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            val audioAttributes = AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                .build()
 
             // 1. High Importance Channel matching FCM v1 payload
             val highChannelId = "mobinx_high_importance_channel"
@@ -39,15 +44,10 @@ class MainActivity : FlutterActivity() {
             ).apply {
                 description = highChannelDesc
                 enableLights(true)
-                lightColor = Color.parseColor("#1482FF")
+                lightColor = Color.parseColor("#0284C7")
                 enableVibration(true)
                 vibrationPattern = longArrayOf(0, 250, 250, 250)
                 lockscreenVisibility = Notification.VISIBILITY_PUBLIC
-                val soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
-                val audioAttributes = AudioAttributes.Builder()
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                    .build()
                 setSound(soundUri, audioAttributes)
             }
             notificationManager.createNotificationChannel(highChannel)
@@ -61,10 +61,30 @@ class MainActivity : FlutterActivity() {
             ).apply {
                 description = "Instant status bar alerts for all users"
                 enableLights(true)
-                lightColor = Color.parseColor("#1482FF")
+                lightColor = Color.parseColor("#0284C7")
                 enableVibration(true)
+                vibrationPattern = longArrayOf(0, 250, 250, 250)
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+                setSound(soundUri, audioAttributes)
             }
             notificationManager.createNotificationChannel(secChannel)
+
+            // 3. Fallback FCM Channel (Used if Firebase Console doesn't specify channel ID)
+            val fallbackChannelId = "fcm_fallback_notification_channel"
+            val fallbackChannel = NotificationChannel(
+                fallbackChannelId,
+                "OBIN Notifications",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "General notifications & broadcast updates"
+                enableLights(true)
+                lightColor = Color.parseColor("#0284C7")
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 250, 250, 250)
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+                setSound(soundUri, audioAttributes)
+            }
+            notificationManager.createNotificationChannel(fallbackChannel)
         }
     }
 

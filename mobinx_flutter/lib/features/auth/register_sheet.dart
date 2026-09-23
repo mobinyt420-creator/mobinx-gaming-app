@@ -337,7 +337,7 @@ class _RegisterSheetState extends State<RegisterSheet> {
               controller: _referralCtrl,
               textCapitalization: TextCapitalization.characters,
               style: const TextStyle(color: AppColors.textMain, fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 1.0),
-              decoration: _inputDeco('e.g. MOBINXVIP', Icons.card_giftcard_rounded),
+              decoration: _inputDeco('e.g. OBINVIP', Icons.card_giftcard_rounded),
               onChanged: (val) {
                 if (val.trim().isNotEmpty) {
                   StorageService.setReferralCode(val.trim());

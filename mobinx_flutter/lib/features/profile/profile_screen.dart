@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/page_transitions.dart';
@@ -640,6 +641,34 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   );
                 },
               ),
+              _buildSettingsTile(
+                icon: Icons.notifications_active_outlined,
+                title: 'Copy Test Token (FCM)',
+                subtitle: 'Copy device token to paste in Firebase Console',
+                iconColor: const Color(0xFFF59E0B),
+                onTap: () async {
+                  try {
+                    String? token = await FirebaseMessaging.instance.getToken();
+                    if (token != null) {
+                      await Clipboard.setData(ClipboardData(text: token));
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('✅ FCM Token copied! Paste it in Firebase.')),
+                        );
+                      }
+                    } else {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('❌ Could not get FCM token.')),
+                        );
+                      }
+                    }
+                  } catch (e) {
+                    debugPrint('Error getting token: $e');
+                  }
+                },
+              ),
+
               _buildSettingsTile(
                 icon: Icons.help_outline_rounded,
                 title: 'Help & Support 24/7',

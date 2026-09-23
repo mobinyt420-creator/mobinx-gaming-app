@@ -13,28 +13,34 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   try {
     await FirebaseService.init();
     debugPrint('[FCM Background] Received message: ${message.messageId} | data: ${message.data}');
-    // If it's a data-only message without an automatic OS notification, render local notification
+    
+    // If it's a data-only message (or background payload without automatic OS notification display), render local notification
     if (message.notification == null && message.data.isNotEmpty) {
-      final title = message.data['title']?.toString() ?? 'OBIN Alert';
-      final body = message.data['body']?.toString() ?? message.data['message']?.toString() ?? '';
-      if (body.isNotEmpty) {
+      final title = message.data['title']?.toString() ?? 'OBIN Official Alert';
+      final body = message.data['body']?.toString() ?? 
+                   message.data['message']?.toString() ?? 
+                   message.data['desc']?.toString() ?? 
+                   '';
+      if (title.isNotEmpty || body.isNotEmpty) {
         final localNotifs = FlutterLocalNotificationsPlugin();
         const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
         await localNotifs.initialize(settings: const InitializationSettings(android: androidInit));
         const androidDetails = AndroidNotificationDetails(
           'mobinx_high_importance_channel',
           'OBIN Official Alerts',
+          channelDescription: 'Real-time push notifications for OBIN Super App orders, top-ups, tournaments and deals',
           importance: Importance.max,
           priority: Priority.high,
           icon: '@mipmap/ic_launcher',
           color: Color(0xFF0284C7),
           playSound: true,
           enableVibration: true,
+          visibility: NotificationVisibility.public,
         );
         await localNotifs.show(
           id: (message.messageId ?? '${DateTime.now().millisecondsSinceEpoch}').hashCode.abs() % 100000,
           title: title,
-          body: body,
+          body: body.isNotEmpty ? body : 'Tap to open OBIN App',
           notificationDetails: const NotificationDetails(android: androidDetails),
           payload: message.data['targetUrl'] ?? message.data['actionUrl'],
         );
@@ -98,7 +104,7 @@ class NotificationItem {
 
     return NotificationItem(
       id: docId,
-      title: data['title']?.toString() ?? 'Mobin X Notice',
+      title: data['title']?.toString() ?? 'OBIN Notice',
       message: data['message']?.toString() ?? data['desc']?.toString() ?? data['body']?.toString() ?? '',
       type: data['type']?.toString().toLowerCase() ?? 'general',
       timestamp: ts,
@@ -213,6 +219,19 @@ class NotificationService {
           showBadge: true,
         );
         await androidPlugin.createNotificationChannel(androidChannel2);
+
+        // Channel 3: Fallback FCM channel (used by Firebase Console if not specified)
+        const androidChannel3 = AndroidNotificationChannel(
+          'fcm_fallback_notification_channel',
+          'OBIN Notifications',
+          description: 'General notifications & broadcast updates',
+          importance: Importance.max,
+          enableLights: true,
+          enableVibration: true,
+          playSound: true,
+          showBadge: true,
+        );
+        await androidPlugin.createNotificationChannel(androidChannel3);
       }
     } catch (e) {
       debugPrint('[NotificationService] Local notification init error: $e');
@@ -336,7 +355,7 @@ class NotificationService {
       await FirebaseService.firestore.collection('fcm_tokens').doc(token).set({
         'token': token,
         'platform': 'android',
-        'app': 'Mobin X',
+        'app': 'OBIN',
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     } catch (e) {

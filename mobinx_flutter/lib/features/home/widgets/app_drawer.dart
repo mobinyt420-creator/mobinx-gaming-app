@@ -46,8 +46,8 @@ class _AppDrawerState extends State<AppDrawer> with SingleTickerProviderStateMix
         valueListenable: AuthService.instance.userNotifier,
         builder: (context, user, _) {
           final userName = user?.name.isNotEmpty == true ? user!.name : 'Player';
-          final userEmail = user?.email.isNotEmpty == true ? user!.email : 'player@mobinx.gaming';
-          final userId = user?.id.isNotEmpty == true ? user!.id : 'MX-001';
+          final userEmail = user?.email.isNotEmpty == true ? user!.email : 'player@obin.gaming';
+          final userId = user?.id.isNotEmpty == true ? user!.id : 'OBIN-001';
 
           return Column(
             children: [
