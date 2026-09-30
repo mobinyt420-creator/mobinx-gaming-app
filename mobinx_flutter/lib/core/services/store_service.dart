@@ -83,12 +83,16 @@ class StoreService {
     }
   }
 
-  /// Top Up opens with brand NoobTopUp Electric Blue (#1482FF) matching Reference Screenshot
-  Future<bool> openTopUp() => openStore(
-        url: _topUpUrl,
-        title: 'NoobTopUp',
-        colorHex: '#1482FF',
-      );
+  /// Top Up opens official web partner portal directly in external Chrome browser for 100% Google Play compliance
+  Future<bool> openTopUp() async {
+    try {
+      final uri = Uri.parse(_topUpUrl);
+      return await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      debugPrint('[StoreService] openTopUp error: $e');
+      return false;
+    }
+  }
 
   /// Shop opens with brand Warm Orange (#F97316)
   Future<bool> openShop() => openStore(

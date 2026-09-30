@@ -164,7 +164,7 @@ class _AppDrawerState extends State<AppDrawer> with SingleTickerProviderStateMix
                     ),
                     _buildDrawerItem(
                       icon: Icons.diamond_rounded,
-                      title: 'Diamond Top-Up (noobtopup.com)',
+                      title: 'Gamer Top-Up (Web Partner)',
                       index: 2,
                       onTap: () {
                         Navigator.of(context).pop();

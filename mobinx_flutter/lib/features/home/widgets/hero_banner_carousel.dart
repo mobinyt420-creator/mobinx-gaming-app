@@ -58,7 +58,23 @@ class _HeroBannerCarouselState extends State<HeroBannerCarousel> with SingleTick
 
   @override
   Widget build(BuildContext context) {
-    if (widget.banners.isEmpty) return const SizedBox.shrink();
+    if (widget.banners.isEmpty) {
+      return Container(
+        height: 165,
+        margin: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.grey.shade200,
+              Colors.grey.shade100,
+            ],
+          ),
+        ),
+      );
+    }
 
     return Column(
       children: [

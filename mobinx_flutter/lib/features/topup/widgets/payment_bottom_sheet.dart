@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter/services.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/gamer_components.dart';
 import '../../../core/models/diamond_package_model.dart';
-import '../../../core/models/topup_request_model.dart';
-import '../../../core/services/auth_service.dart';
-import '../../../core/services/topup_service.dart';
+import '../../../core/constants/app_constants.dart';
 
-class PaymentBottomSheet extends StatefulWidget {
+class PaymentBottomSheet extends StatelessWidget {
   final DiamondPackageModel package;
 
   const PaymentBottomSheet({super.key, required this.package});
@@ -23,97 +20,18 @@ class PaymentBottomSheet extends StatefulWidget {
     );
   }
 
-  @override
-  State<PaymentBottomSheet> createState() => _PaymentBottomSheetState();
-}
-
-class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
-  final _playerIdController = TextEditingController();
-  final _trxIdController = TextEditingController();
-  
-  String _selectedMethod = 'bKash';
-  bool _isSubmitting = false;
-
-  final String _bkashNumber = '01711223344'; // Mock Admin Number
-  final String _nagadNumber = '01811223344';
-
-  void _copyToClipboard(String text) {
-    Clipboard.setData(ClipboardData(text: text));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Copied: $text'),
-        backgroundColor: AppColors.cyanLight,
-        behavior: SnackBarBehavior.floating,
-      )
-    );
-  }
-
-  Future<void> _submit() async {
-    final playerId = _playerIdController.text.trim();
-    final trxId = _trxIdController.text.trim();
-
-    if (playerId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter your Player UID'), backgroundColor: AppColors.danger));
-      return;
-    }
-    if (trxId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter the TrxID'), backgroundColor: AppColors.danger));
-      return;
-    }
-
-    setState(() => _isSubmitting = true);
-
-    final user = AuthService.instance.currentUser;
-    if (user == null) {
-      setState(() => _isSubmitting = false);
-      return;
-    }
-
-    // Generate unique ID using Firestore
-    final docId = FirebaseFirestore.instance.collection('topup_requests').doc().id;
-
-    final request = TopUpRequestModel(
-      id: docId,
-      userId: user.uid,
-      playerId: playerId,
-      packageId: widget.package.id,
-      paymentMethod: _selectedMethod,
-      trxId: trxId,
-      amount: widget.package.priceBDT,
-      status: 'pending',
-      createdAt: DateTime.now(),
-    );
-
-    final success = await TopupService.instance.submitTopUpRequest(request);
-
-    if (!mounted) return;
-    setState(() => _isSubmitting = false);
-
-    if (success) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✅ Top-Up Request Submitted!'),
-          backgroundColor: AppColors.emerald,
-          behavior: SnackBarBehavior.floating,
-        )
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('❌ Failed to submit request. Try again.'),
-          backgroundColor: AppColors.danger,
-          behavior: SnackBarBehavior.floating,
-        )
-      );
+  Future<void> _launchPartnerUrl(BuildContext context) async {
+    Navigator.pop(context);
+    final uri = Uri.parse(AppConstants.topUpPartnerUrl);
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      debugPrint('[PaymentBottomSheet] Launch error: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final numberToCopy = _selectedMethod == 'bKash' ? _bkashNumber : _nagadNumber;
-    final isBkash = _selectedMethod == 'bKash';
-
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.background,
@@ -139,10 +57,28 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
               ),
             ),
             const SizedBox(height: 20),
+            
+            // Header icon
+            Center(
+              child: Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.primary.withValues(alpha: 0.15),
+                  border: Border.all(color: AppColors.cyanLight.withValues(alpha: 0.4)),
+                ),
+                child: const Center(
+                  child: Text('💎', style: TextStyle(fontSize: 28)),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+
             Text(
-              'Checkout',
+              'Official Web Partner Portal',
               style: GoogleFonts.outfit(
-                fontSize: 22,
+                fontSize: 20,
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
               ),
@@ -150,192 +86,90 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
             ),
             const SizedBox(height: 6),
             Text(
-              '${widget.package.name} • ৳${widget.package.priceBDT.toInt()}',
+              '${package.diamonds} Diamonds • ৳${package.priceBDT.toInt()}',
               style: GoogleFonts.inter(
-                fontSize: 14,
+                fontSize: 15,
                 color: AppColors.cyanLight,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 24),
-
-            // Player ID Input
-            Text(
-              'PLAYER UID',
-              style: GoogleFonts.outfit(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textMuted,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _playerIdController,
-              keyboardType: TextInputType.number,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'Enter your game Player ID',
-                hintStyle: const TextStyle(color: AppColors.textMuted),
-                filled: true,
-                fillColor: AppColors.surfaceCard,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.cyanLight),
-                ),
-              ),
-            ),
             const SizedBox(height: 20),
 
-            // Payment Method
-            Text(
-              'PAYMENT METHOD',
-              style: GoogleFonts.outfit(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textMuted,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _selectedMethod = 'bKash'),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: isBkash ? AppColors.primary.withValues(alpha: 0.2) : AppColors.surfaceCard,
-                        border: Border.all(
-                          color: isBkash ? AppColors.cyanLight : AppColors.borderLight,
-                          width: isBkash ? 1.5 : 1.0,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Center(
-                        child: Text(
-                          'bKash',
-                          style: GoogleFonts.outfit(
-                            fontWeight: FontWeight.bold,
-                            color: isBkash ? AppColors.cyanLight : AppColors.textMain,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _selectedMethod = 'Nagad'),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: !isBkash ? AppColors.gold.withValues(alpha: 0.2) : AppColors.surfaceCard,
-                        border: Border.all(
-                          color: !isBkash ? AppColors.gold : AppColors.borderLight,
-                          width: !isBkash ? 1.5 : 1.0,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Center(
-                        child: Text(
-                          'Nagad',
-                          style: GoogleFonts.outfit(
-                            fontWeight: FontWeight.bold,
-                            color: !isBkash ? AppColors.gold : AppColors.textMain,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // Instructions
+            // Partner Info Card
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: AppColors.surfaceCard,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppColors.borderLight),
               ),
               child: Column(
                 children: [
-                  Text(
-                    'Send ৳${widget.package.priceBDT.toInt()} to the number below (Send Money):',
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: AppColors.textMain,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        numberToCopy,
-                        style: GoogleFonts.outfit(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          letterSpacing: 2,
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.verified_rounded, color: Color(0xFF10B981), size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Verified Partner: NoobTopUp.com',
+                              style: GoogleFonts.outfit(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              'Instant 24/7 automated delivery via Player UID',
+                              style: GoogleFonts.inter(
+                                fontSize: 11.5,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      IconButton(
-                        icon: const Icon(Icons.copy, color: AppColors.cyanLight, size: 20),
-                        onPressed: () => _copyToClipboard(numberToCopy),
-                        visualDensity: VisualDensity.compact,
-                      )
                     ],
                   ),
+                  const SizedBox(height: 14),
+                  const Divider(height: 1, color: AppColors.borderLight),
+                  const SizedBox(height: 14),
+                  _buildBenefitRow(Icons.bolt_rounded, 'Instant direct delivery into your game account'),
+                  const SizedBox(height: 8),
+                  _buildBenefitRow(Icons.lock_outline_rounded, '100% Safe, encrypted & verified web checkout'),
+                  const SizedBox(height: 8),
+                  _buildBenefitRow(Icons.support_agent_rounded, '24/7 dedicated gamer live support'),
                 ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // TrxID Input
-            Text(
-              'TRANSACTION ID (TRXID)',
-              style: GoogleFonts.outfit(
-                fontSize: 12,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textMuted,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _trxIdController,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'Enter $_selectedMethod TrxID',
-                hintStyle: const TextStyle(color: AppColors.textMuted),
-                filled: true,
-                fillColor: AppColors.surfaceCard,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.cyanLight),
-                ),
               ),
             ),
             const SizedBox(height: 24),
 
-            // Submit Button
+            // Continue Button
             GamerButton(
-              label: _isSubmitting ? 'PROCESSING...' : 'CONFIRM PAYMENT',
-              onPressed: _isSubmitting ? null : _submit,
+              label: 'CONTINUE TO OFFICIAL WEBSITE',
+              onPressed: () => _launchPartnerUrl(context),
+            ),
+            const SizedBox(height: 12),
+
+            // Compliance Footnote
+            Text(
+              'Orders and deliveries are fulfilled securely on our official partner web portal in your external browser.',
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                color: AppColors.textMuted,
+                height: 1.4,
+              ),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 10),
           ],
@@ -343,4 +177,23 @@ class _PaymentBottomSheetState extends State<PaymentBottomSheet> {
       ),
     );
   }
+
+  Widget _buildBenefitRow(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: AppColors.cyanLight),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: AppColors.textMain,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
+

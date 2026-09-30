@@ -286,7 +286,7 @@ class _MatchRegistrationSheetState extends State<MatchRegistrationSheet> {
                       controller: _ignCtrl,
                       style: GoogleFonts.inter(color: const Color(0xFF0F172A), fontSize: 14, fontWeight: FontWeight.w700),
                       decoration: InputDecoration(
-                        hintText: 'Enter your Free Fire In-Game Name',
+                        hintText: 'Enter your In-Game Name (IGN)',
                         hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8), fontSize: 13),
                         prefixIcon: const Icon(Icons.badge_rounded, size: 20, color: Color(0xFF2563EB)),
                         filled: true,
@@ -300,8 +300,8 @@ class _MatchRegistrationSheetState extends State<MatchRegistrationSheet> {
                     ),
                     const SizedBox(height: 12),
 
-                    // Free Fire UID
-                    _buildFieldLabel('Free Fire UID (10 Digits) *'),
+                    // Player UID
+                    _buildFieldLabel('Player UID (10 Digits) *'),
                     TextFormField(
                       controller: _ffUidCtrl,
                       keyboardType: TextInputType.number,
@@ -317,12 +317,12 @@ class _MatchRegistrationSheetState extends State<MatchRegistrationSheet> {
                         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1), width: 1.2)),
                         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2)),
                       ),
-                      validator: (v) => v?.trim().isEmpty == true ? 'Free Fire UID is required' : null,
+                      validator: (v) => v?.trim().isEmpty == true ? 'Player UID is required' : null,
                     ),
                     const SizedBox(height: 12),
 
-                    // Phone / bKash Number
-                    _buildFieldLabel('bKash / Nagad Number (For Prize Delivery) *'),
+                    // Contact / Prize Delivery Number
+                    _buildFieldLabel('Contact / Prize Delivery Number *'),
                     TextFormField(
                       controller: _phoneCtrl,
                       keyboardType: TextInputType.phone,
@@ -395,7 +395,7 @@ class _MatchRegistrationSheetState extends State<MatchRegistrationSheet> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'I agree to fair play rules (No hacks, no teaming, only mobile devices).',
+                              'I agree to fair play rules (Fair play only, no unauthorized third-party tools, no teaming).',
                               style: GoogleFonts.inter(
                                 fontSize: 11.5,
                                 color: AppColors.textBody,

@@ -53,14 +53,27 @@ class _TournamentsScreenState extends State<TournamentsScreen> {
             ),
           ),
         ),
-        title: Text(
-          'BR MATCHES & TOURNAMENTS',
-          style: GoogleFonts.outfit(
-            fontSize: 16.5,
-            fontWeight: FontWeight.w900,
-            color: AppColors.textMain,
-            letterSpacing: -0.2,
-          ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'COMMUNITY TOURNAMENTS',
+              style: GoogleFonts.outfit(
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+                color: AppColors.textMain,
+                letterSpacing: -0.2,
+              ),
+            ),
+            Text(
+              '100% Free Entry Community Scrims',
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF16A34A),
+              ),
+            ),
+          ],
         ),
         actions: [
           IconButton(
@@ -101,7 +114,7 @@ class _TournamentsScreenState extends State<TournamentsScreen> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'New Free Fire custom rooms will appear shortly.',
+                        'New community esports custom rooms will appear shortly.',
                         style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
                         textAlign: TextAlign.center,
                       ),

@@ -38,7 +38,7 @@ class _TopupScreenState extends State<TopupScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'DIAMOND SHOP',
+                        'GAMER TOP-UP HUB',
                         style: GoogleFonts.outfit(
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
@@ -47,7 +47,7 @@ class _TopupScreenState extends State<TopupScreen> {
                         ),
                       ),
                       Text(
-                        'Instant Top-Up via bKash/Nagad',
+                        'Official Web Partner Portal • Instant 24/7 Delivery',
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           color: AppColors.textSecondary,

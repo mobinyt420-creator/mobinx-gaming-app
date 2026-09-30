@@ -5,8 +5,8 @@ class AppConstants {
   // App Identity
   static const String appName = 'OBIN';
   static const String appTagline = 'The Ultimate Super App Ecosystem';
-  static const String appVersion = '3.0.1';
-  static const int appVersionCode = 4;
+  static const String appVersion = '3.0.2';
+  static const int appVersionCode = 5;
   static const String packageName = 'com.mobinx.gaming';
 
   // Master Administration

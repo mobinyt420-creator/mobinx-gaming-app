@@ -214,6 +214,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         if (item.unread) {
           NotificationService.instance.markAsRead(item.id);
         }
+        if (item.targetUrl != null && item.targetUrl!.trim().isNotEmpty) {
+          NotificationService.handleActionPayload(item.targetUrl);
+        }
       },
       child: Container(
         padding: const EdgeInsets.all(14),

@@ -18,7 +18,7 @@ class DownloadsScreen extends StatefulWidget {
 
 class _DownloadsScreenState extends State<DownloadsScreen> {
   String _selectedCategory = 'All';
-  final List<String> _categories = ['All', 'Mobin APK', 'Tools', 'Premium Apps'];
+  final List<String> _categories = ['All', 'Tools', 'Official Utilities', 'Wallpapers & Guides'];
 
   @override
   void initState() {
@@ -58,7 +58,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
           ),
         ),
         title: Text(
-          'APK & Tool Downloads',
+          'Official Tools & Downloads',
           style: GoogleFonts.outfit(
             fontSize: 16.5,
             fontWeight: FontWeight.w900,
@@ -150,7 +150,16 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
                 builder: (context, allItems, _) {
                   final filtered = allItems.where((it) {
                     if (_selectedCategory == 'All') return true;
-                    return it.category.toLowerCase() == _selectedCategory.toLowerCase();
+                    final cat = it.category.toLowerCase();
+                    final sel = _selectedCategory.toLowerCase();
+                    if (sel == 'tools') {
+                      return cat.contains('tool');
+                    } else if (sel == 'official utilities') {
+                      return cat.contains('util') || cat.contains('mobin') || cat.contains('app') || cat.contains('official') || cat.contains('premium');
+                    } else if (sel == 'wallpapers & guides') {
+                      return cat.contains('wall') || cat.contains('guide') || cat.contains('paper');
+                    }
+                    return cat == sel;
                   }).toList();
 
                   if (filtered.isEmpty) {

@@ -23,6 +23,10 @@
 -keep class com.google.android.gms.ads.** { *; }
 -dontwarn com.google.android.gms.ads.**
 
+# URL Launcher & AndroidX Browser
+-keep class androidx.browser.customtabs.** { *; }
+-keep class io.flutter.plugins.urllauncher.** { *; }
+
 # Keep annotations
 -keepattributes *Annotation*
 -keepattributes SourceFile,LineNumberTable

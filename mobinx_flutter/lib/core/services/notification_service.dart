@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'firebase_service.dart';
 
 /// Top-level background message handler for FCM
@@ -23,7 +24,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
                    '';
       if (title.isNotEmpty || body.isNotEmpty) {
         final localNotifs = FlutterLocalNotificationsPlugin();
-        const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+        const androidInit = AndroidInitializationSettings('@drawable/ic_stat_obin');
         await localNotifs.initialize(settings: const InitializationSettings(android: androidInit));
         const androidDetails = AndroidNotificationDetails(
           'mobinx_high_importance_channel',
@@ -31,18 +32,19 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
           channelDescription: 'Real-time push notifications for OBIN Super App orders, top-ups, tournaments and deals',
           importance: Importance.max,
           priority: Priority.high,
-          icon: '@mipmap/ic_launcher',
+          icon: '@drawable/ic_stat_obin',
           color: Color(0xFF0284C7),
           playSound: true,
           enableVibration: true,
           visibility: NotificationVisibility.public,
         );
+        final payload = message.data['url'] ?? message.data['targetUrl'] ?? message.data['actionUrl'] ?? message.data['link'];
         await localNotifs.show(
           id: (message.messageId ?? '${DateTime.now().millisecondsSinceEpoch}').hashCode.abs() % 100000,
           title: title,
           body: body.isNotEmpty ? body : 'Tap to open OBIN App',
           notificationDetails: const NotificationDetails(android: androidDetails),
-          payload: message.data['targetUrl'] ?? message.data['actionUrl'],
+          payload: payload?.toString(),
         );
       }
     }
@@ -109,7 +111,7 @@ class NotificationItem {
       type: data['type']?.toString().toLowerCase() ?? 'general',
       timestamp: ts,
       unread: !isRead,
-      targetUrl: data['targetUrl']?.toString() ?? data['actionUrl']?.toString(),
+      targetUrl: data['url']?.toString() ?? data['targetUrl']?.toString() ?? data['actionUrl']?.toString() ?? data['link']?.toString(),
       imageUrl: data['imageUrl']?.toString(),
     );
   }
@@ -170,7 +172,7 @@ class NotificationService {
 
   Future<void> _initLocalNotifications() async {
     try {
-      const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+      const androidInit = AndroidInitializationSettings('@drawable/ic_stat_obin');
       const iosInit = DarwinInitializationSettings(
         requestAlertPermission: true,
         requestBadgePermission: true,
@@ -186,6 +188,7 @@ class NotificationService {
         settings: initSettings,
         onDidReceiveNotificationResponse: (NotificationResponse response) {
           debugPrint('[Local Notification Tapped]: ${response.payload}');
+          handleActionPayload(response.payload);
         },
       );
 
@@ -238,6 +241,23 @@ class NotificationService {
     }
   }
 
+  /// Safely opens external URLs or deep-links when notifications are clicked
+  static Future<void> handleActionPayload(String? payload) async {
+    if (payload == null || payload.trim().isEmpty) return;
+    final clean = payload.trim();
+    debugPrint('🔔 [NotificationService] Handling notification payload: $clean');
+    if (clean.startsWith('http://') || clean.startsWith('https://')) {
+      final uri = Uri.tryParse(clean);
+      if (uri != null) {
+        try {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } catch (e) {
+          debugPrint('⚠️ [NotificationService] Failed to launch external url: $e');
+        }
+      }
+    }
+  }
+
   Future<void> _initFCM() async {
     try {
       final messaging = FirebaseMessaging.instance;
@@ -267,15 +287,32 @@ class NotificationService {
         final data = message.data;
         final title = notif?.title ?? data['title'] ?? 'OBIN Official Alert';
         final body = notif?.body ?? data['body'] ?? data['message'] ?? '';
+        final payload = data['url'] ?? data['targetUrl'] ?? data['actionUrl'] ?? data['link'];
 
         if (title.isNotEmpty || body.isNotEmpty) {
           showSystemNotification(
             id: message.messageId ?? 'fcm_${DateTime.now().millisecondsSinceEpoch}',
             title: title,
             body: body,
-            payload: data['targetUrl'] ?? data['actionUrl'],
+            payload: payload?.toString(),
             type: data['type'],
           );
+        }
+      });
+
+      // Background tap handler: user taps on OS notification when app is in background
+      FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+        debugPrint('🔔 [FCM] Notification opened app from background: ${message.data}');
+        final payload = message.data['url'] ?? message.data['targetUrl'] ?? message.data['actionUrl'] ?? message.data['link'];
+        handleActionPayload(payload?.toString());
+      });
+
+      // Cold start / terminated tap handler: app launched by tapping notification
+      messaging.getInitialMessage().then((RemoteMessage? message) {
+        if (message != null) {
+          debugPrint('🔔 [FCM] Notification opened app from terminated state: ${message.data}');
+          final payload = message.data['url'] ?? message.data['targetUrl'] ?? message.data['actionUrl'] ?? message.data['link'];
+          handleActionPayload(payload?.toString());
         }
       });
     } catch (e) {
@@ -378,7 +415,7 @@ class NotificationService {
         channelDescription: channelDescription,
         importance: Importance.max,
         priority: Priority.max,
-        icon: '@mipmap/ic_launcher',
+        icon: '@drawable/ic_stat_obin',
         color: const Color(0xFF0284C7),
         enableLights: true,
         enableVibration: true,

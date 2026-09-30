@@ -19,13 +19,13 @@ class _HelpScreenState extends State<HelpScreen> {
       'open': false,
     },
     {
-      'q': 'How fast is diamond top-up delivery?',
-      'a': 'Diamond top-ups through NoobTopUp are processed instantly within 1 to 5 minutes via direct Player ID API integration.',
+      'q': 'How does the official web partner top-up work?',
+      'a': 'Orders placed through our official web partner portal are processed instantly within 1 to 5 minutes via direct Player ID integration in your browser.',
       'open': false,
     },
     {
-      'q': 'What payment methods are supported in Bangladesh?',
-      'a': 'bKash, Nagad, Rocket, Upay, and all major local debit/credit cards are fully supported with zero extra transaction fees.',
+      'q': 'What payment methods does the web partner portal support?',
+      'a': 'The official web partner portal supports bKash, Nagad, Rocket, and local cards securely with 24/7 delivery.',
       'open': false,
     },
     {

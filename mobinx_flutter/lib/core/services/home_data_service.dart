@@ -3,6 +3,7 @@ import '../models/banner_model.dart';
 import '../models/tournament_model.dart';
 import '../models/notice_model.dart';
 import 'firebase_service.dart';
+import 'storage_service.dart';
 
 /// Centralized Realtime Data Provider for Mobin X Home Screen
 class HomeDataService {
@@ -16,93 +17,34 @@ class HomeDataService {
   final ValueNotifier<NoticeModel?> activeNoticeNotifier = ValueNotifier<NoticeModel?>(null);
   final ValueNotifier<bool> isLoadingNotifier = ValueNotifier<bool>(false);
 
-  /// Default mock banners for offline & 0-ms instant load
-  static final List<BannerModel> _defaultBanners = [
-    BannerModel(
-      id: 'banner-1',
-      title: 'BOOYAH PASS SEASON 17',
-      badge: 'SEASON 17',
-      image: 'assets/images/banner_booyah.jpg',
-      actionUrl: 'topup',
-    ),
-    BannerModel(
-      id: 'banner-2',
-      title: 'GLOBAL ESPORTS CUP 2026',
-      badge: 'GRAND FINALS',
-      image: 'assets/images/banner_esports.jpg',
-      actionUrl: 'tournaments',
-    ),
-    BannerModel(
-      id: 'banner-3',
-      title: 'DAILY REDEEM CODES & UPDATES',
-      badge: 'COMMUNITY',
-      image: 'assets/images/banner_referral.jpg',
-      actionUrl: 'telegram',
-    ),
-  ];
-
-  /// Default flash deals
-  static final List<FlashDealModel> _defaultFlashDeals = [
-    FlashDealModel(
-      id: 'flash-1',
-      diamondAmount: '100 DIAMONDS',
-      price: '৳ 80.00',
-      badge: '100% BONUS',
-      bonus: '+100 Free',
-    ),
-    FlashDealModel(
-      id: 'flash-2',
-      diamondAmount: '310 DIAMONDS',
-      price: '৳ 270.00',
-      badge: 'POPULAR',
-      bonus: '+31 Free',
-    ),
-    FlashDealModel(
-      id: 'flash-3',
-      diamondAmount: '520 DIAMONDS',
-      price: '৳ 420.00',
-      badge: 'BEST VALUE',
-      bonus: '+52 Free',
-    ),
-    FlashDealModel(
-      id: 'flash-4',
-      diamondAmount: '1060 DIAMONDS',
-      price: '৳ 820.00',
-      badge: 'LIMITED',
-      bonus: '+106 Free',
-    ),
-    FlashDealModel(
-      id: 'flash-5',
-      diamondAmount: '2180 DIAMONDS',
-      price: '৳ 1650.00',
-      badge: 'MEGA DEAL',
-      bonus: '+218 Free',
-    ),
-    FlashDealModel(
-      id: 'flash-6',
-      diamondAmount: '5600 DIAMONDS',
-      price: '৳ 4100.00',
-      badge: 'VIP DEAL',
-      bonus: '+560 Free',
-    ),
-  ];
-
-  /// Default featured tournaments (empty by default, loaded from Firestore)
-  static final List<TournamentModel> _defaultTournaments = [];
-
-  /// Initialize Home Data with instant defaults, then sync with Firestore in background
+  /// Initialize Home Data from persistent disk cache immediately, then sync with Firestore in background
   Future<void> init() async {
-    // 1. Populate instant defaults so user experiences 0ms UI render
-    bannersNotifier.value = _defaultBanners;
-    flashDealsNotifier.value = _defaultFlashDeals;
-    featuredTournamentsNotifier.value = _defaultTournaments;
-    activeNoticeNotifier.value = null;
+    // 1. Populate from offline cache if available (instant real data, NO dummy placeholder flashing)
+    try {
+      final cachedBanners = StorageService.getCache('obin_live_banners');
+      if (cachedBanners is List && cachedBanners.isNotEmpty) {
+        final list = cachedBanners
+            .map((b) => BannerModel.fromJson(Map<String, dynamic>.from(b)))
+            .where((b) => b.isActive)
+            .toList();
+        if (list.isNotEmpty) bannersNotifier.value = list;
+      }
+    } catch (_) {}
 
-    // 2. Fetch live data from Firestore asynchronously after UI paints completely (prevents UI freeze)
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      refresh();
-      _setupRealtimeListeners();
-    });
+    try {
+      final cachedDeals = StorageService.getCache('obin_live_deals');
+      if (cachedDeals is List && cachedDeals.isNotEmpty) {
+        final list = cachedDeals
+            .map((d) => FlashDealModel.fromJson(Map<String, dynamic>.from(d)))
+            .where((d) => d.inStock)
+            .toList();
+        if (list.isNotEmpty) flashDealsNotifier.value = list;
+      }
+    } catch (_) {}
+
+    // 2. Fetch live data immediately without artificial delay
+    refresh();
+    _setupRealtimeListeners();
   }
 
   void _setupRealtimeListeners() {
@@ -114,7 +56,10 @@ class HomeDataService {
               .map((doc) => BannerModel.fromJson({...doc.data(), 'id': doc.id}))
               .where((b) => b.isActive)
               .toList();
-          if (live.isNotEmpty) bannersNotifier.value = live;
+          if (live.isNotEmpty) {
+            bannersNotifier.value = live;
+            StorageService.setCache('obin_live_banners', live.map((b) => b.toJson()).toList());
+          }
         }
       });
       FirebaseService.firestore.collection('flashDeals').snapshots().listen((snap) {
@@ -123,7 +68,10 @@ class HomeDataService {
               .map((doc) => FlashDealModel.fromJson({...doc.data(), 'id': doc.id}))
               .where((d) => d.inStock)
               .toList();
-          if (live.isNotEmpty) flashDealsNotifier.value = live;
+          if (live.isNotEmpty) {
+            flashDealsNotifier.value = live;
+            StorageService.setCache('obin_live_deals', live.map((d) => d.toJson()).toList());
+          }
         }
       });
       // Real-time listener for Admin Welcome Popup (Only when explicitly enabled by Admin)
@@ -163,7 +111,7 @@ class HomeDataService {
           FirebaseService.firestore
               .collection('banners')
               .get()
-              .timeout(const Duration(seconds: 3))
+              .timeout(const Duration(seconds: 4))
               .then((bannerSnap) {
             if (bannerSnap.docs.isNotEmpty) {
               final liveBanners = bannerSnap.docs
@@ -172,6 +120,7 @@ class HomeDataService {
                   .toList();
               if (liveBanners.isNotEmpty) {
                 bannersNotifier.value = liveBanners;
+                StorageService.setCache('obin_live_banners', liveBanners.map((b) => b.toJson()).toList());
               }
             }
           }).catchError((_) => null),
@@ -180,7 +129,7 @@ class HomeDataService {
           FirebaseService.firestore
               .collection('flashDeals')
               .get()
-              .timeout(const Duration(seconds: 3))
+              .timeout(const Duration(seconds: 4))
               .then((dealsSnap) {
             if (dealsSnap.docs.isNotEmpty) {
               final liveDeals = dealsSnap.docs
@@ -189,6 +138,7 @@ class HomeDataService {
                   .toList();
               if (liveDeals.isNotEmpty) {
                 flashDealsNotifier.value = liveDeals;
+                StorageService.setCache('obin_live_deals', liveDeals.map((d) => d.toJson()).toList());
               }
             }
           }).catchError((_) => null),
@@ -198,7 +148,7 @@ class HomeDataService {
               .collection('tournaments')
               .limit(5)
               .get()
-              .timeout(const Duration(seconds: 3))
+              .timeout(const Duration(seconds: 4))
               .then((tournSnap) {
             if (tournSnap.docs.isNotEmpty) {
               final liveTourns = tournSnap.docs
@@ -215,7 +165,7 @@ class HomeDataService {
               .collection('config')
               .doc('notices')
               .get()
-              .timeout(const Duration(seconds: 3))
+              .timeout(const Duration(seconds: 4))
               .then((noticeDoc) {
             if (noticeDoc.exists && noticeDoc.data() != null) {
               final data = noticeDoc.data()!;

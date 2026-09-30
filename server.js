@@ -45,12 +45,14 @@ const server = http.createServer((req, res) => {
         const notif = payload.notification || payload;
         let serviceAccount = payload.serviceAccount;
 
-        if (!serviceAccount && process.env.FIREBASE_SERVICE_ACCOUNT) {
-          try {
-            serviceAccount = typeof process.env.FIREBASE_SERVICE_ACCOUNT === 'string'
-              ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-              : process.env.FIREBASE_SERVICE_ACCOUNT;
-          } catch (_) {}
+        if (!serviceAccount || !serviceAccount.client_email || !serviceAccount.private_key) {
+          if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+            try {
+              serviceAccount = typeof process.env.FIREBASE_SERVICE_ACCOUNT === 'string'
+                ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+                : process.env.FIREBASE_SERVICE_ACCOUNT;
+            } catch (_) {}
+          }
         }
         if (typeof serviceAccount === 'string') {
           try { serviceAccount = JSON.parse(serviceAccount); } catch (_) {}
@@ -163,8 +165,8 @@ const server = http.createServer((req, res) => {
                   notification_priority: 'PRIORITY_MAX',
                   default_sound: true,
                   default_vibrate_timings: true,
-                  icon: 'ic_launcher',
-                  color: '#1482FF',
+                  icon: 'ic_stat_obin',
+                  color: '#0284C7',
                   click_action: 'FLUTTER_NOTIFICATION_CLICK',
                   visibility: 'PUBLIC'
                 }

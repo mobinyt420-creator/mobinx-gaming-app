@@ -40,7 +40,7 @@ class TournamentModel {
     this.roomId = '',
     this.roomPass = '',
     this.isRoomReleased = false,
-    this.rules = 'Fair play policy. Emotes allowed. No hacks or PC emulators in mobile rooms.',
+    this.rules = 'Fair play policy. Emotes allowed. Mobile devices only, no unauthorized third-party tools.',
     this.isRegistered = false,
     this.prizeTiers = const [],
     this.participants = const [],
@@ -65,7 +65,7 @@ class TournamentModel {
 
     return TournamentModel(
       id: json['id']?.toString() ?? '',
-      title: json['title']?.toString() ?? 'Free Fire Custom Match',
+      title: json['title']?.toString() ?? 'Community Esports Match',
       mode: json['mode']?.toString() ?? json['gameMode']?.toString() ?? 'Squad',
       map: json['map']?.toString() ?? 'Bermuda',
       entryFee: json['entryFee']?.toString() ?? 'Free',
@@ -83,7 +83,7 @@ class TournamentModel {
           json['isRoomReleased'] == true ||
           (roomCreds?['roomId'] != null && roomCreds!['roomId'].toString().trim().isNotEmpty) ||
           (json['roomId'] != null && json['roomId'].toString().trim().isNotEmpty),
-      rules: json['rules']?.toString() ?? 'Fair play policy. Emotes allowed. No hacks or PC emulators in mobile rooms.',
+      rules: json['rules']?.toString() ?? 'Fair play policy. Emotes allowed. Mobile devices only, no unauthorized third-party tools.',
       isRegistered: json['isRegistered'] == true,
       prizeTiers: parsedTiers,
       participants: parsedParticipants,

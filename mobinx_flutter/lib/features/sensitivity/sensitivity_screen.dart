@@ -121,12 +121,12 @@ Preset: ${preset.title}
 - Free Look: ${preset.freeLook}
 - Fire Button Size: ${preset.buttonSize}
 - Recommended DPI: $dpiVal
-⚡ 100% Free Fire Headshot Accuracy Calibrated by Mobin X
+⚡ Pro Gamer Sensitivity & DPI Calibrated by Mobin X
 ''';
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('💾 Sensitivity settings copied to clipboard! Paste into Free Fire.'),
+        content: Text('💾 Sensitivity settings copied to clipboard! Paste into your game settings.'),
         behavior: SnackBarBehavior.floating,
         backgroundColor: Color(0xFF2563EB),
       ),
@@ -715,7 +715,7 @@ Preset: ${preset.title}
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'RECOMMENDED SENSI ${preset.tabName} | 100% HEADSHOT ACCURACY',
+                  'RECOMMENDED SENSI ${preset.tabName} | PRO ACCURACY SETTINGS',
                   style: GoogleFonts.outfit(
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
@@ -1082,7 +1082,7 @@ Preset: ${preset.title}
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Enter your phone hardware specs to calculate calibrated headshot sensitivity & DPI for Free Fire.',
+                  'Enter your phone hardware specs to calculate calibrated sensitivity & DPI settings.',
                   style: GoogleFonts.inter(
                     fontSize: 11.5,
                     color: const Color(0xFF64748B),
