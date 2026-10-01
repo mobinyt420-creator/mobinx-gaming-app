@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/models/tournament_model.dart';
 import '../../core/services/tournament_service.dart';
+import '../../core/services/admob_service.dart';
 import 'widgets/tournament_card.dart';
 
 /// BR Matches & Tournaments Screen (Exact Alignment with Screenshot 2)
@@ -138,6 +139,13 @@ class _TournamentsScreenState extends State<TournamentsScreen> {
               },
             );
           },
+        ),
+      ),
+      bottomNavigationBar: Container(
+        color: Colors.white,
+        child: const SafeArea(
+          top: false,
+          child: AdMobBannerWidget(padding: EdgeInsets.symmetric(vertical: 4)),
         ),
       ),
     );

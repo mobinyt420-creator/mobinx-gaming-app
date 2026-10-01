@@ -10,9 +10,62 @@ class HomeDataService {
   static final HomeDataService instance = HomeDataService._();
   HomeDataService._();
 
-  // Reactive state notifiers
-  final ValueNotifier<List<BannerModel>> bannersNotifier = ValueNotifier<List<BannerModel>>([]);
-  final ValueNotifier<List<FlashDealModel>> flashDealsNotifier = ValueNotifier<List<FlashDealModel>>([]);
+  // Default curated offline fallback banners (0ms instant display)
+  static final List<BannerModel> _defaultBanners = [
+    BannerModel(
+      id: 'default_1',
+      title: 'Free Fire Elite Esports',
+      image: 'assets/images/banner_esports.jpg',
+      actionUrl: 'tournaments',
+      badge: 'HOT',
+    ),
+    BannerModel(
+      id: 'default_2',
+      title: 'Diamond Top Up & Offers',
+      image: 'assets/images/banner_booyah.jpg',
+      actionUrl: 'topup',
+      badge: 'SPECIAL',
+    ),
+    BannerModel(
+      id: 'default_3',
+      title: 'Invite & Earn Rewards',
+      image: 'assets/images/banner_referral.jpg',
+      actionUrl: 'referral',
+      badge: 'REWARD',
+    ),
+  ];
+
+  static List<BannerModel> _getInitialBanners() {
+    try {
+      final cachedBanners = StorageService.getCache('obin_live_banners');
+      if (cachedBanners is List && cachedBanners.isNotEmpty) {
+        final list = cachedBanners
+            .map((b) => BannerModel.fromJson(Map<String, dynamic>.from(b)))
+            .where((b) => b.isActive)
+            .toList();
+        if (list.isNotEmpty) return list;
+      }
+    } catch (_) {}
+    return _defaultBanners;
+  }
+
+  static List<FlashDealModel> _getInitialDeals() {
+    try {
+      final cachedDeals = StorageService.getCache('obin_live_deals');
+      if (cachedDeals is List && cachedDeals.isNotEmpty) {
+        final list = cachedDeals
+            .map((d) => FlashDealModel.fromJson(Map<String, dynamic>.from(d)))
+            .where((d) => d.inStock)
+            .toList();
+        if (list.isNotEmpty) return list;
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  // Reactive state notifiers - pre-populated for instant 0ms render
+  final ValueNotifier<List<BannerModel>> bannersNotifier = ValueNotifier<List<BannerModel>>(_getInitialBanners());
+  final ValueNotifier<List<FlashDealModel>> flashDealsNotifier = ValueNotifier<List<FlashDealModel>>(_getInitialDeals());
   final ValueNotifier<List<TournamentModel>> featuredTournamentsNotifier = ValueNotifier<List<TournamentModel>>([]);
   final ValueNotifier<NoticeModel?> activeNoticeNotifier = ValueNotifier<NoticeModel?>(null);
   final ValueNotifier<bool> isLoadingNotifier = ValueNotifier<bool>(false);

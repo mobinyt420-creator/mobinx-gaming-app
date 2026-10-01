@@ -28,7 +28,14 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: widget.onBack == null,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && widget.onBack != null) {
+          widget.onBack!();
+        }
+      },
+      child: Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -204,6 +211,7 @@ class _DownloadsScreenState extends State<DownloadsScreen> {
         top: false,
         child: AdMobBannerWidget(),
       ),
-    );
-  }
+    ),
+  );
+}
 }

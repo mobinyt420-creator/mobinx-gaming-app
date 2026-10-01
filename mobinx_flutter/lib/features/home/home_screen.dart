@@ -39,6 +39,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   int _currentNavIndex = 0;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  DateTime? _lastBackPressTime;
 
   @override
   void initState() {
@@ -148,7 +149,47 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (bool didPop, dynamic result) async {
+        if (didPop) return;
+
+        // 1. If drawer is open, close drawer first
+        if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
+          _scaffoldKey.currentState?.closeDrawer();
+          return;
+        }
+
+        // 2. If user is on any other tab (Downloads, Profile, etc.), switch back to Home
+        if (_currentNavIndex != 0) {
+          setState(() => _currentNavIndex = 0);
+          return;
+        }
+
+        // 3. If on Home, require double back press within 2 seconds to exit
+        final now = DateTime.now();
+        if (_lastBackPressTime == null || now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
+          _lastBackPressTime = now;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Press back again to exit',
+                style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Colors.white, fontSize: 13),
+              ),
+              backgroundColor: const Color(0xFF0F172A),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              duration: const Duration(seconds: 2),
+              margin: const EdgeInsets.only(bottom: 24, left: 40, right: 40),
+            ),
+          );
+          return;
+        }
+
+        // Exit application cleanly
+        SystemNavigator.pop();
+      },
+      child: Scaffold(
       key: _scaffoldKey,
       backgroundColor: const Color(0xFFF8FAFC),
       drawer: AppDrawer(
@@ -329,7 +370,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
           : null,
       body: _buildBody(),
       bottomNavigationBar: _buildBottomNav(),
-    );
+    ),
+  );
   }
 
   Widget _buildBody() {
@@ -337,7 +379,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       return DownloadsScreen(onBack: () => setState(() => _currentNavIndex = 0));
     }
     if (_currentNavIndex == 4) {
-      return const ProfileScreen();
+      return ProfileScreen(onBack: () => setState(() => _currentNavIndex = 0));
     }
     return _buildHomeTab();
   }
@@ -349,7 +391,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
       backgroundColor: Colors.white,
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(parent: ClampingScrollPhysics()),
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.only(top: 4, bottom: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

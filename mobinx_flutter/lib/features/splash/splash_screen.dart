@@ -67,6 +67,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         transitionDuration: const Duration(milliseconds: 120),
       ),
     );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      NotificationService.processPendingNotification();
+    });
   }
 
   @override

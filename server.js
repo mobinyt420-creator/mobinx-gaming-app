@@ -58,7 +58,7 @@ const server = http.createServer((req, res) => {
           try { serviceAccount = JSON.parse(serviceAccount); } catch (_) {}
         }
 
-        const topics = ['all', 'all_users', 'mobinx_broadcast', 'obin_broadcast'];
+        const canonicalTopic = 'obin_broadcast';
 
         // 1. Modern FCM HTTP v1 using Service Account JWT
         if (serviceAccount && serviceAccount.client_email && serviceAccount.private_key) {
@@ -108,37 +108,6 @@ const server = http.createServer((req, res) => {
 
           const accessToken = tokenData.access_token;
 
-          // Helper to fetch tokens from Firestore
-          const deviceTokens = await new Promise((resolve) => {
-            const reqFs = https.request(`https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/fcm_tokens`, {
-              method: 'GET',
-              headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Accept': 'application/json'
-              }
-            }, (resFs) => {
-              let dFs = '';
-              resFs.on('data', c => { dFs += c; });
-              resFs.on('end', () => {
-                try {
-                  if (resFs.statusCode === 200) {
-                    const parsed = JSON.parse(dFs);
-                    const tokens = [];
-                    if (Array.isArray(parsed.documents)) {
-                      for (const doc of parsed.documents) {
-                        const tokenVal = doc.fields?.token?.stringValue;
-                        if (tokenVal && tokenVal.length > 20) tokens.push(tokenVal);
-                      }
-                    }
-                    resolve(tokens);
-                  } else { resolve([]); }
-                } catch (_) { resolve([]); }
-              });
-            });
-            reqFs.on('error', () => resolve([]));
-            reqFs.end();
-          });
-
           const createPayload = (targetKey, targetVal) => ({
             message: {
               [targetKey]: targetVal,
@@ -163,6 +132,7 @@ const server = http.createServer((req, res) => {
                 notification: {
                   channel_id: 'mobinx_high_importance_channel',
                   notification_priority: 'PRIORITY_MAX',
+                  tag: 'obin_alert',
                   default_sound: true,
                   default_vibrate_timings: true,
                   icon: 'ic_stat_obin',
@@ -195,18 +165,15 @@ const server = http.createServer((req, res) => {
             });
           };
 
-          const topicResults = await Promise.all(topics.map(topic => sendOne('topic', topic)));
-          const tokenResults = await Promise.all(deviceTokens.map(tok => sendOne('token', tok)));
-          const allResults = [...topicResults, ...tokenResults];
+          const topicResult = await sendOne('topic', canonicalTopic);
+          const allResults = [topicResult];
 
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({
-            success: true,
+            success: topicResult.status === 200,
             protocol: 'fcm_v1',
             projectId,
-            topicsDelivered: topicResults.filter(r => r.status === 200).length,
-            tokensDelivered: tokenResults.filter(r => r.status === 200).length,
-            totalDevicesTargeted: deviceTokens.length,
+            topic: canonicalTopic,
             results: allResults
           }));
           return;
@@ -235,31 +202,29 @@ const server = http.createServer((req, res) => {
             }
           };
 
-          const results = await Promise.all(topics.map(topic => {
-            return new Promise(resolve => {
-              const dataStr = JSON.stringify({ ...legacyPayload, to: `/topics/${topic}` });
-              const fcmReq = https.request('https://fcm.googleapis.com/fcm/send', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `key=${serverKey}`,
-                  'Content-Length': Buffer.byteLength(dataStr)
-                }
-              }, (fcmRes) => {
-                let fcmBody = '';
-                fcmRes.on('data', d => { fcmBody += d; });
-                fcmRes.on('end', () => {
-                  resolve({ topic, status: fcmRes.statusCode, body: fcmBody });
-                });
+          const result = await new Promise(resolve => {
+            const dataStr = JSON.stringify({ ...legacyPayload, to: `/topics/${canonicalTopic}` });
+            const fcmReq = https.request('https://fcm.googleapis.com/fcm/send', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `key=${serverKey}`,
+                'Content-Length': Buffer.byteLength(dataStr)
+              }
+            }, (fcmRes) => {
+              let fcmBody = '';
+              fcmRes.on('data', d => { fcmBody += d; });
+              fcmRes.on('end', () => {
+                resolve({ topic: canonicalTopic, status: fcmRes.statusCode, body: fcmBody });
               });
-              fcmReq.on('error', (err) => resolve({ topic, error: err.message }));
-              fcmReq.write(dataStr);
-              fcmReq.end();
             });
-          }));
+            fcmReq.on('error', (err) => resolve({ topic: canonicalTopic, error: err.message }));
+            fcmReq.write(dataStr);
+            fcmReq.end();
+          });
 
           res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-          res.end(JSON.stringify({ success: true, protocol: 'legacy_fcm', results }));
+          res.end(JSON.stringify({ success: true, protocol: 'legacy_fcm', result }));
           return;
         }
 

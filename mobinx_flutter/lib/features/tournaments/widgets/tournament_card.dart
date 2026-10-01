@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/models/tournament_model.dart';
+import '../../../core/services/admob_service.dart';
 import 'room_credentials_dialog.dart';
 import 'match_registration_sheet.dart';
 
@@ -26,6 +27,7 @@ class TournamentCard extends StatefulWidget {
 class _TournamentCardState extends State<TournamentCard> {
   bool _showRoomDetails = false;
   bool _showPrizePool = false;
+  bool _isCredentialsUnlocked = false;
   int _countdownSeconds = 3597; // 00h 59m 57s
   Timer? _timer;
 
@@ -46,6 +48,21 @@ class _TournamentCardState extends State<TournamentCard> {
     super.dispose();
   }
 
+  void _unlockCredentials() {
+    if (!AdMobService.instance.isAdsEnabled) {
+      setState(() => _isCredentialsUnlocked = true);
+      return;
+    }
+    // Google AdMob safe interstitial ad to unlock credentials
+    AdMobService.instance.showInterstitialAd(
+      onDismissed: () {
+        if (mounted) {
+          setState(() => _isCredentialsUnlocked = true);
+        }
+      },
+    );
+  }
+
   String _formatCountdown() {
     final hrs = (_countdownSeconds ~/ 3600).toString().padLeft(2, '0');
     final mins = ((_countdownSeconds % 3600) ~/ 60).toString().padLeft(2, '0');
@@ -63,6 +80,144 @@ class _TournamentCardState extends State<TournamentCard> {
   bool get _isRoomCredentialsLive {
     final t = widget.tournament;
     return (t.isRoomReleased || t.isLive) && t.roomId.trim().isNotEmpty;
+  }
+
+  void _handleJoinClick(BuildContext context) {
+    final t = widget.tournament;
+    // Check if ads are active
+    if (!AdMobService.instance.isAdsEnabled) {
+      MatchRegistrationSheet.show(
+        context,
+        t,
+        onRegistered: widget.onStateChanged,
+      );
+      return;
+    }
+
+    // Google AdMob Rewarded Policy: Explicit Opt-in Confirmation Modal
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE2E8F0),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 18),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                color: Color(0xFFEFF6FF),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.play_circle_fill_rounded, color: Color(0xFF2563EB), size: 40),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Claim Free Tournament Slot',
+              style: GoogleFonts.outfit(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: AppColors.textMain,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Entry fee is 100% Free! Watch a short sponsor video ad to unlock and confirm your match registration.',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                color: const Color(0xFF64748B),
+                height: 1.4,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFCBD5E1)),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: Text(
+                      'Cancel',
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF64748B),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      AdMobService.instance.showRewardedAd(
+                        context: context,
+                        onRewardEarned: () {
+                          if (!mounted) return;
+                          MatchRegistrationSheet.show(
+                            context,
+                            t,
+                            onRegistered: widget.onStateChanged,
+                          );
+                        },
+                        onCancelled: () {
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('⚠️ You must watch the complete video ad to claim the free tournament slot.'),
+                              backgroundColor: Color(0xFFDC2626),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        },
+                      );
+                    },
+                    icon: const Icon(Icons.play_arrow_rounded, color: Colors.white, size: 20),
+                    label: Text(
+                      'Watch Ad & Join Free',
+                      style: GoogleFonts.outfit(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -355,11 +510,7 @@ class _TournamentCardState extends State<TournamentCard> {
                               );
                             }
                           } else {
-                            MatchRegistrationSheet.show(
-                              context,
-                              t,
-                              onRegistered: widget.onStateChanged,
-                            );
+                            _handleJoinClick(context);
                           }
                         },
                   style: OutlinedButton.styleFrom(
@@ -382,195 +533,339 @@ class _TournamentCardState extends State<TournamentCard> {
               ],
             ),
           ),
-          // 4. Prominent Red Custom Room Credentials Box (Directly visible when Room is Live / Released)
+          // 4. Custom Room Credentials Box (Protected for Joined Players, Ad-Unlocked)
           if (_isRoomCredentialsLive) ...[
             const SizedBox(height: 10),
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 14),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEF2F2),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFFECDD3), width: 1.2),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFDC2626).withValues(alpha: 0.08),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+            if (t.isRegistered) ...[
+              // Registered Player View
+              if (!_isCredentialsUnlocked) ...[
+                // Locked State for Joined Player: Watch Ad to Unlock
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF2F2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFFECDD3), width: 1.2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFDC2626).withValues(alpha: 0.08),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Top Row: Red dot + CUSTOM ROOM LIVE + Copy Both Button
-                  Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFDC2626),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 7),
-                      Text(
-                        'CUSTOM ROOM LIVE',
-                        style: GoogleFonts.outfit(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                          color: const Color(0xFFDC2626),
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const Spacer(),
-                      InkWell(
-                        onTap: () {
-                          Clipboard.setData(ClipboardData(text: 'Room: ${t.roomId} Pass: ${t.roomPassword}'));
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Room ID & Password copied!'),
-                              behavior: SnackBarBehavior.floating,
-                              duration: Duration(seconds: 2),
+                      Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFDC2626),
+                              shape: BoxShape.circle,
                             ),
-                          );
-                        },
-                        borderRadius: BorderRadius.circular(6),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: const Color(0xFFFECDD3)),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.copy_rounded, size: 11, color: Color(0xFFDC2626)),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Copy Both',
-                                style: GoogleFonts.inter(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: const Color(0xFFDC2626),
-                                ),
+                          const SizedBox(width: 7),
+                          Text(
+                            'CUSTOM ROOM LIVE',
+                            style: GoogleFonts.outfit(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFFDC2626),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFDC2626).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              'Joined Player',
+                              style: GoogleFonts.inter(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFFDC2626),
                               ),
-                            ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Room credentials released! Tap below to view Room ID & Password.',
+                        style: GoogleFonts.inter(
+                          fontSize: 11.5,
+                          color: const Color(0xFF475569),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _unlockCredentials,
+                          icon: const Icon(Icons.key_rounded, size: 15, color: Colors.white),
+                          label: Text(
+                            'View Room ID & Password',
+                            style: GoogleFonts.outfit(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFDC2626),
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 9),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-
-                  // Room ID & Password Chips Row
-                  Row(
+                ),
+              ] else ...[
+                // Unlocked State for Joined Player
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF2F2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFFECDD3), width: 1.2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFDC2626).withValues(alpha: 0.08),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Room ID Chip
-                      Expanded(
-                        child: InkWell(
-                          onTap: () {
-                            Clipboard.setData(ClipboardData(text: t.roomId));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Room ID ${t.roomId} copied!'),
-                                behavior: SnackBarBehavior.floating,
-                                duration: const Duration(seconds: 2),
-                              ),
-                            );
-                          },
-                          borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
-                            ),
-                            child: Row(
-                              children: [
-                                Text(
-                                  'ID: ',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11,
-                                    color: const Color(0xFF64748B),
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Text(
-                                    t.roomId,
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 12.5,
-                                      fontWeight: FontWeight.w900,
-                                      color: const Color(0xFF0F172A),
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const Icon(Icons.copy_rounded, size: 13, color: Color(0xFF64748B)),
-                              ],
+                      Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFDC2626),
+                              shape: BoxShape.circle,
                             ),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-
-                      // Password Chip
-                      Expanded(
-                        child: InkWell(
-                          onTap: () {
-                            Clipboard.setData(ClipboardData(text: t.roomPassword));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Password ${t.roomPassword} copied!'),
-                                behavior: SnackBarBehavior.floating,
-                                duration: const Duration(seconds: 2),
-                              ),
-                            );
-                          },
-                          borderRadius: BorderRadius.circular(8),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                          const SizedBox(width: 7),
+                          Text(
+                            'CUSTOM ROOM LIVE',
+                            style: GoogleFonts.outfit(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              color: const Color(0xFFDC2626),
+                              letterSpacing: 0.5,
                             ),
-                            child: Row(
-                              children: [
-                                Text(
-                                  'Pass: ',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11,
-                                    color: const Color(0xFF64748B),
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                          ),
+                          const Spacer(),
+                          InkWell(
+                            onTap: () {
+                              Clipboard.setData(ClipboardData(text: 'Room: ${t.roomId} Pass: ${t.roomPassword}'));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Room ID & Password copied!'),
+                                  behavior: SnackBarBehavior.floating,
+                                  duration: Duration(seconds: 2),
                                 ),
-                                Expanded(
-                                  child: Text(
-                                    t.roomPassword.isNotEmpty ? t.roomPassword : 'None',
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 12.5,
-                                      fontWeight: FontWeight.w900,
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(6),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: const Color(0xFFFECDD3)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(Icons.copy_rounded, size: 11, color: Color(0xFFDC2626)),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Copy Both',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w800,
                                       color: const Color(0xFFDC2626),
                                     ),
-                                    overflow: TextOverflow.ellipsis,
                                   ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Room ID & Password Chips Row
+                      Row(
+                        children: [
+                          // Room ID Chip
+                          Expanded(
+                            child: InkWell(
+                              onTap: () {
+                                Clipboard.setData(ClipboardData(text: t.roomId));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Room ID ${t.roomId} copied!'),
+                                    behavior: SnackBarBehavior.floating,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
                                 ),
-                                const Icon(Icons.copy_rounded, size: 13, color: Color(0xFFDC2626)),
-                              ],
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      'ID: ',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 11,
+                                        color: const Color(0xFF64748B),
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        t.roomId,
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w900,
+                                          color: const Color(0xFF0F172A),
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const Icon(Icons.copy_rounded, size: 13, color: Color(0xFF64748B)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+
+                          // Password Chip
+                          Expanded(
+                            child: InkWell(
+                              onTap: () {
+                                Clipboard.setData(ClipboardData(text: t.roomPassword));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Password ${t.roomPassword} copied!'),
+                                    behavior: SnackBarBehavior.floating,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      'Pass: ',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 11,
+                                        color: const Color(0xFF64748B),
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        t.roomPassword.isNotEmpty ? t.roomPassword : 'None',
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w900,
+                                          color: const Color(0xFFDC2626),
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const Icon(Icons.copy_rounded, size: 13, color: Color(0xFFDC2626)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ] else ...[
+              // Non-Registered Player View: Protected & Locked
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFFBEB),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFFDE68A), width: 1.2),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.lock_rounded, size: 16, color: Color(0xFFD97706)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Room is Live! Join this match to access Room ID & Password.',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF92400E),
+                        ),
+                      ),
+                    ),
+                    if (t.slotsFilled < t.slotsTotal)
+                      InkWell(
+                        onTap: () => _handleJoinClick(context),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD97706),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'Join Now',
+                            style: GoogleFonts.outfit(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
                             ),
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
+            ],
           ],
 
           const SizedBox(height: 8),

@@ -18,7 +18,9 @@ import '../settings/settings_screen.dart';
 import '../about/about_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final VoidCallback? onBack;
+
+  const ProfileScreen({super.key, this.onBack});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -179,38 +181,89 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<UserModel?>(
-      valueListenable: AuthService.instance.userNotifier,
-      builder: (context, user, child) {
-        if (user == null) {
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.account_circle_outlined, size: 64, color: AppColors.textMuted),
-                const SizedBox(height: 12),
-                Text(
-                  'Not Signed In',
-                  style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textMain),
-                ),
-                const SizedBox(height: 6),
-                const Text('Sign in to manage your gaming profile and tournaments.', style: TextStyle(color: AppColors.textMuted)),
-                const SizedBox(height: 18),
-                GamerButton(
-                  label: 'Sign In / Register',
-                  width: 180,
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (context) => const OnboardingScreen()),
-                    );
-                  },
-                ),
-              ],
-            ),
-          );
+    return PopScope(
+      canPop: widget.onBack == null,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && widget.onBack != null) {
+          widget.onBack!();
         }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+          centerTitle: false,
+          leading: Padding(
+            padding: const EdgeInsets.only(left: 12, top: 8, bottom: 8),
+            child: InkWell(
+              onTap: () {
+                if (widget.onBack != null) {
+                  widget.onBack!();
+                } else {
+                  Navigator.maybePop(context);
+                }
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Center(
+                  child: Icon(Icons.chevron_left_rounded, color: AppColors.textMain, size: 24),
+                ),
+              ),
+            ),
+          ),
+          title: Text(
+            'Player Profile',
+            style: GoogleFonts.outfit(
+              fontSize: 16.5,
+              fontWeight: FontWeight.w900,
+              color: AppColors.textMain,
+              letterSpacing: -0.2,
+            ),
+          ),
+          bottom: const PreferredSize(
+            preferredSize: Size.fromHeight(1.0),
+            child: Divider(height: 1.0, color: AppColors.borderLight),
+          ),
+        ),
+        body: ValueListenableBuilder<UserModel?>(
+          valueListenable: AuthService.instance.userNotifier,
+          builder: (context, user, child) {
+            if (user == null) {
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.account_circle_outlined, size: 64, color: AppColors.textMuted),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Not Signed In',
+                      style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textMain),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text('Sign in to manage your gaming profile and tournaments.', style: TextStyle(color: AppColors.textMuted)),
+                    const SizedBox(height: 18),
+                    GamerButton(
+                      label: 'Sign In / Register',
+                      width: 180,
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              );
+            }
 
-        return SafeArea(
+            return SafeArea(
+              top: false,
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Column(
@@ -705,7 +758,9 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
         ),
       );
     },
-  );
+  ),
+),
+);
 }
 
   Widget _buildStatBox(String label, String value, IconData icon, Color color) {

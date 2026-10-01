@@ -6,6 +6,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'firebase_service.dart';
+import '../../features/notifications/notifications_screen.dart';
+import '../../features/tournaments/tournaments_screen.dart';
+import '../../features/downloads/downloads_screen.dart';
 
 /// Top-level background message handler for FCM
 @pragma('vm:entry-point')
@@ -34,13 +37,14 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
           priority: Priority.high,
           icon: '@drawable/ic_stat_obin',
           color: Color(0xFF0284C7),
+          tag: 'obin_alert',
           playSound: true,
           enableVibration: true,
           visibility: NotificationVisibility.public,
         );
         final payload = message.data['url'] ?? message.data['targetUrl'] ?? message.data['actionUrl'] ?? message.data['link'];
         await localNotifs.show(
-          id: (message.messageId ?? '${DateTime.now().millisecondsSinceEpoch}').hashCode.abs() % 100000,
+          id: 1001,
           title: title,
           body: body.isNotEmpty ? body : 'Tap to open OBIN App',
           notificationDetails: const NotificationDetails(android: androidDetails),
@@ -142,22 +146,17 @@ class NotificationService {
   final ValueNotifier<int> unreadCountNotifier = ValueNotifier<int>(0);
 
   final Set<String> _readIds = {};
-  final Set<String> _knownIds = {};
-  String? _lastSeenBroadcastId;
   bool _isInit = false;
-  bool _initialFirestoreSyncDone = false;
-  bool _initialNoticesSyncDone = false;
 
   Future<void> init() async {
     if (_isInit) return;
     _isInit = true;
 
-    // 1. Load locally cached read IDs and last seen broadcast ID
+    // 1. Load locally cached read IDs
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedRead = prefs.getStringList('obin_read_notifications') ?? prefs.getStringList('mobinx_read_notifications') ?? [];
       _readIds.addAll(savedRead);
-      _lastSeenBroadcastId = prefs.getString('obin_last_seen_broadcast_id');
     } catch (_) {}
 
     // 2. Initialize Local Notifications Plugin & Android Channel
@@ -241,21 +240,49 @@ class NotificationService {
     }
   }
 
-  /// Safely opens external URLs or deep-links when notifications are clicked
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  static String? pendingActionPayload;
+
+  /// Safely opens external URLs or deep-links to app screens when notifications are clicked
   static Future<void> handleActionPayload(String? payload) async {
-    if (payload == null || payload.trim().isEmpty) return;
-    final clean = payload.trim();
+    final clean = payload?.trim() ?? '';
     debugPrint('🔔 [NotificationService] Handling notification payload: $clean');
+
+    // 1. External URL (e.g. https://... or http://...)
     if (clean.startsWith('http://') || clean.startsWith('https://')) {
       final uri = Uri.tryParse(clean);
       if (uri != null) {
         try {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
+          return;
         } catch (e) {
           debugPrint('⚠️ [NotificationService] Failed to launch external url: $e');
         }
       }
     }
+
+    // 2. In-App Screen Navigation
+    final nav = navigatorKey.currentState;
+    if (nav != null) {
+      if (clean == 'tournaments') {
+        nav.push(MaterialPageRoute(builder: (_) => const TournamentsScreen()));
+      } else if (clean == 'downloads') {
+        nav.push(MaterialPageRoute(builder: (_) => const DownloadsScreen()));
+      } else {
+        nav.push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
+      }
+    } else {
+      // Store to navigate after splash finishes
+      pendingActionPayload = clean.isNotEmpty ? clean : 'notifications';
+    }
+  }
+
+  /// Process any pending notification tap from cold-start launch
+  static void processPendingNotification() {
+    if (pendingActionPayload == null) return;
+    final payload = pendingActionPayload;
+    pendingActionPayload = null;
+    handleActionPayload(payload);
   }
 
   Future<void> _initFCM() async {
@@ -281,17 +308,20 @@ class NotificationService {
       // Ensures background push delivery to closed devices regardless of initial prompt timing
       await _registerAndSubscribe(messaging);
 
-      // Foreground message listener: Trigger native system notification in status bar
+      // Foreground message listener: Trigger native system notification in status bar (deduplicated)
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         final notif = message.notification;
         final data = message.data;
         final title = notif?.title ?? data['title'] ?? 'OBIN Official Alert';
         final body = notif?.body ?? data['body'] ?? data['message'] ?? '';
         final payload = data['url'] ?? data['targetUrl'] ?? data['actionUrl'] ?? data['link'];
+        final broadcastId = data['broadcastId']?.toString();
+        final notifId = data['id']?.toString() ?? message.messageId ?? 'fcm_${DateTime.now().millisecondsSinceEpoch}';
 
         if (title.isNotEmpty || body.isNotEmpty) {
           showSystemNotification(
-            id: message.messageId ?? 'fcm_${DateTime.now().millisecondsSinceEpoch}',
+            id: notifId,
+            broadcastId: broadcastId,
             title: title,
             body: body,
             payload: payload?.toString(),
@@ -369,10 +399,14 @@ class NotificationService {
 
   Future<void> _registerAndSubscribe(FirebaseMessaging messaging) async {
     try {
-      // Subscribe to broadcast topics for zero-server push delivery
-      await messaging.subscribeToTopic('all');
-      await messaging.subscribeToTopic('all_users');
-      await messaging.subscribeToTopic('mobinx_broadcast');
+      // Unsubscribe from legacy redundant topics to prevent duplicate delivery
+      try {
+        await messaging.unsubscribeFromTopic('all');
+        await messaging.unsubscribeFromTopic('all_users');
+        await messaging.unsubscribeFromTopic('mobinx_broadcast');
+      } catch (_) {}
+
+      // Subscribe to ONLY ONE canonical broadcast topic
       await messaging.subscribeToTopic('obin_broadcast');
 
       // Fetch device registration token & persist to Firestore
@@ -380,7 +414,7 @@ class NotificationService {
       if (token != null) {
         await _syncFCMToken(token);
       }
-      debugPrint('🔔 [NotificationService] Subscribed to broadcast topics & synced token');
+      debugPrint('🔔 [NotificationService] Subscribed to canonical topic (obin_broadcast) & synced token');
     } catch (e) {
       debugPrint('[NotificationService] Token register error: $e');
     }
@@ -400,15 +434,46 @@ class NotificationService {
     }
   }
 
-  /// Trigger a Real Android System Heads-Up Status Bar Notification
+  // Deduplication cache: tracks signatures of notifications shown in the last 3 minutes
+  static final Map<String, int> _recentlyShownSignatures = {};
+
+  static bool isDuplicateOrSpam(String signature) {
+    if (signature.isEmpty) return false;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    _recentlyShownSignatures.removeWhere((_, time) => now - time > 180000);
+
+    if (_recentlyShownSignatures.containsKey(signature)) {
+      final elapsed = now - _recentlyShownSignatures[signature]!;
+      if (elapsed < 120000) { // 2 minutes debounce
+        return true;
+      }
+    }
+    _recentlyShownSignatures[signature] = now;
+    return false;
+  }
+
+  /// Trigger a Real Android System Heads-Up Status Bar Notification (with strict deduplication)
   Future<void> showSystemNotification({
     required String id,
     required String title,
     required String body,
     String? payload,
     String? type,
+    String? broadcastId,
   }) async {
     try {
+      // 1. Strict deduplication: ensure exactly ONE notification per event, zero duplicates
+      final signature = (broadcastId != null && broadcastId.isNotEmpty)
+          ? broadcastId
+          : (id.isNotEmpty && !id.startsWith('fcm_') && !id.startsWith('notice_'))
+              ? id
+              : '${title.trim().toLowerCase()}_${body.trim().toLowerCase()}';
+
+      if (isDuplicateOrSpam(signature)) {
+        debugPrint('🛡️ [NotificationService] Deduplication: suppressed duplicate notification "$signature"');
+        return;
+      }
+
       final androidDetails = AndroidNotificationDetails(
         channelId,
         channelName,
@@ -417,6 +482,7 @@ class NotificationService {
         priority: Priority.max,
         icon: '@drawable/ic_stat_obin',
         color: const Color(0xFF0284C7),
+        tag: 'obin_alert',
         enableLights: true,
         enableVibration: true,
         playSound: true,
@@ -430,13 +496,14 @@ class NotificationService {
       );
 
       final details = NotificationDetails(android: androidDetails);
-      final notifId = (id.hashCode.abs() % 90000) + 1000;
+      // Fixed ID 1001 ensures exactly ONE status bar notification ever exists (collapses previous)
+      const notifId = 1001;
       await _localNotifications.show(
         id: notifId,
         title: title,
         body: body,
         notificationDetails: details,
-        payload: payload,
+        payload: (payload != null && payload.trim().isNotEmpty) ? payload.trim() : 'notifications',
       );
       debugPrint('🔔 [NotificationService] Displayed System Notification: $title - $body (id: $notifId)');
     } catch (e) {
@@ -461,7 +528,7 @@ class NotificationService {
     }
 
     try {
-      // 1. Listen to notifications collection (for in-app notification center list & status bar alerts)
+      // 1. Listen to notifications collection (solely for updating in-app notification center inbox)
       FirebaseService.firestore
           .collection('notifications')
           .limit(50)
@@ -474,39 +541,15 @@ class NotificationService {
           }).toList();
 
           liveItems.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-
-          if (!_initialFirestoreSyncDone) {
-            // Initial load: populate known IDs without triggering notifications for historical items
-            for (final item in liveItems) {
-              _knownIds.add(item.id);
-            }
-            _initialFirestoreSyncDone = true;
-          } else {
-            // Real-time addition while app is active: trigger native status bar notification
-            for (final item in liveItems) {
-              if (!_knownIds.contains(item.id)) {
-                _knownIds.add(item.id);
-                showSystemNotification(
-                  id: item.id,
-                  title: item.title,
-                  body: item.message,
-                  payload: item.targetUrl,
-                  type: item.type,
-                );
-              }
-            }
-          }
-
           _updateList(liveItems);
         } else {
-          _initialFirestoreSyncDone = true;
           _updateList([]);
         }
       }, onError: (e) {
         debugPrint('[NotificationService] Firestore snapshot error: $e');
       });
 
-      // 2. Also listen to config/notices broadcast (Broadcasted from admin panel)
+      // 2. Also listen to config/notices broadcast (Solely for in-app notices state sync)
       FirebaseService.firestore
           .collection('config')
           .doc('notices')
@@ -518,31 +561,10 @@ class NotificationService {
           if (pushData is Map<String, dynamic>) {
             final id = pushData['id']?.toString() ?? 'notice_${DateTime.now().millisecondsSinceEpoch}';
             final broadcastId = pushData['broadcastId']?.toString() ?? data['broadcastId']?.toString() ?? id;
-            final notif = NotificationItem.fromFirestore(id, pushData, false);
 
             final prefs = await SharedPreferences.getInstance();
-            final savedLastSeen = prefs.getString('obin_last_seen_broadcast_id');
-
-            // Trigger status bar notification if this broadcast ID has not yet alerted this device
-            if (broadcastId != savedLastSeen && broadcastId != _lastSeenBroadcastId) {
-              _lastSeenBroadcastId = broadcastId;
-              await prefs.setString('obin_last_seen_broadcast_id', broadcastId);
-
-              final isRecent = DateTime.now().difference(notif.timestamp).inHours < 24;
-              if (isRecent || _initialNoticesSyncDone) {
-                showSystemNotification(
-                  id: notif.id,
-                  title: notif.title,
-                  body: notif.message,
-                  payload: notif.targetUrl,
-                  type: notif.type,
-                );
-              }
-            }
-            _initialNoticesSyncDone = true;
+            await prefs.setString('obin_last_seen_broadcast_id', broadcastId);
           }
-        } else {
-          _initialNoticesSyncDone = true;
         }
       }, onError: (e) {
         debugPrint('[NotificationService] Notices snapshot error: $e');

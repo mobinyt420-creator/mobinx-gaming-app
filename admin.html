@@ -2786,13 +2786,18 @@ function renderDownloads() {
             </div>
 
             <div class="form-group">
-              <label class="form-label">Rewarded Ad Unit ID</label>
+              <label class="form-label">Rewarded Video Ad Unit ID (Free Tournaments & Downloads)</label>
               <input type="text" id="admob-rewarded-id" class="form-control" placeholder="ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy" value="${admob.rewarded_ad_id || ''}" />
             </div>
 
             <div class="form-group">
-              <label class="form-label">Banner Ad Unit ID</label>
+              <label class="form-label">Banner Ad Unit ID (Tournaments & Sensitivity Screens)</label>
               <input type="text" id="admob-banner-id" class="form-control" placeholder="ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy" value="${admob.banner_ad_id || ''}" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Interstitial Ad Unit ID (5-6s Skippable Ad)</label>
+              <input type="text" id="admob-interstitial-id" class="form-control" placeholder="ca-app-pub-xxxxxxxxxxxxxxxx/yyyyyyyyyy" value="${admob.interstitial_ad_id || ''}" />
             </div>
           </div>
 
@@ -4300,8 +4305,8 @@ function renderNotifications() {
             </div>
 
             <div>
-              <label class="form-label">কাস্টম লিংক বা ব্যানার ইমেজ (Optional Image / URL)</label>
-              <input type="text" id="notif-input-extra" class="form-control" placeholder="Optional URL (e.g. https://... or image link)" />
+              <label class="form-label">কাস্টম অ্যাকশন লিংক বা ব্যানার ইমেজ (Optional URL e.g. https://... টপ-আপ বা ওয়েবসাইট লিংক)</label>
+              <input type="text" id="notif-input-extra" class="form-control" placeholder="কাস্টম লিংক দিন (e.g. https://www.obinshop.com/ বা টেলিগ্রাম লিংক)" />
             </div>
 
             <div style="display: flex; gap: 10px; margin-top: 6px;">
@@ -4548,8 +4553,11 @@ function bindCurrentTabEvents() {
     if (r3) prizeTiers.push({ rank: '3rd Place', place: '3rd Place', prize: r3, amount: r3 });
     if (r4) prizeTiers.push({ rank: '4th Place', place: '4th Place', prize: r4, amount: r4 });
 
+    const now = Date.now();
     const newTourn = {
-      id: 'tourn-' + Date.now(),
+      id: 'tourn-' + now,
+      createdAt: now,
+      timestamp: now,
       title,
       mode,
       gameMode: mode,
@@ -5455,12 +5463,14 @@ function bindCurrentTabEvents() {
     const is_test_mode = document.getElementById('admob-test-mode')?.value === 'true';
     const rewarded_ad_id = document.getElementById('admob-rewarded-id')?.value.trim() || '';
     const banner_ad_id = document.getElementById('admob-banner-id')?.value.trim() || '';
+    const interstitial_ad_id = document.getElementById('admob-interstitial-id')?.value.trim() || '';
 
     state.admob = {
       enabled,
       is_test_mode,
       rewarded_ad_id,
       banner_ad_id,
+      interstitial_ad_id,
       updatedAt: new Date().toISOString()
     };
 
@@ -6109,6 +6119,10 @@ function bindCurrentTabEvents() {
     const targetVal = document.getElementById('notif-input-target')?.value || 'home';
     const extraVal = extraInput?.value.trim() || '';
 
+    const isExternalUrl = extraVal.startsWith('http://') || extraVal.startsWith('https://');
+    const isImageOnly = isExternalUrl && Boolean(extraVal.match(/\.(jpeg|jpg|png|webp|gif)($|\?)/i));
+    const effectiveActionUrl = (isExternalUrl && !isImageOnly) ? extraVal : targetVal;
+
     const notifId = `notif_${Date.now()}`;
     const broadcastId = `bc_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
     const newNotif = {
@@ -6118,10 +6132,11 @@ function bindCurrentTabEvents() {
       message: msgVal,
       desc: msgVal,
       type: catVal,
-      targetUrl: targetVal,
-      actionUrl: targetVal,
+      url: effectiveActionUrl,
+      targetUrl: effectiveActionUrl,
+      actionUrl: effectiveActionUrl,
       extraUrl: extraVal,
-      imageUrl: extraVal,
+      imageUrl: (isImageOnly || extraVal.includes('image')) ? extraVal : '',
       timestamp: Date.now(),
       createdAt: Date.now(),
       active: true

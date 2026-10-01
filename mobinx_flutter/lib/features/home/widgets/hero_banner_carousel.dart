@@ -64,14 +64,20 @@ class _HeroBannerCarouselState extends State<HeroBannerCarousel> with SingleTick
         margin: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.grey.shade200,
-              Colors.grey.shade100,
-            ],
-          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Image.asset(
+          'assets/images/banner_esports.jpg',
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
         ),
       );
     }

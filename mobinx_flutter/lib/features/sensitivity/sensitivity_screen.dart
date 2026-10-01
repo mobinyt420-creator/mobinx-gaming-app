@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/models/sensitivity_model.dart';
 import '../../core/services/sensitivity_service.dart';
+import '../../core/services/admob_service.dart';
 
 enum SensitivityViewMode {
   brands,
@@ -79,6 +80,7 @@ class _SensitivityScreenState extends State<SensitivityScreen> {
       _isNoDpiMode = false;
       _mode = SensitivityViewMode.result;
     });
+    AdMobService.instance.showInterstitialAd(onDismissed: () {});
   }
 
   void _openBrandModels(DeviceBrandModel brand) {
@@ -105,6 +107,7 @@ class _SensitivityScreenState extends State<SensitivityScreen> {
       _isNoDpiMode = false;
       _mode = SensitivityViewMode.result;
     });
+    AdMobService.instance.showInterstitialAd(onDismissed: () {});
   }
 
   void _copySettings(SensitivityPreset preset) {
@@ -206,6 +209,13 @@ Preset: ${preset.title}
               ),
             ),
           ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        color: const Color(0xFF0A0E17),
+        child: const SafeArea(
+          top: false,
+          child: AdMobBannerWidget(padding: EdgeInsets.symmetric(vertical: 4)),
         ),
       ),
     );

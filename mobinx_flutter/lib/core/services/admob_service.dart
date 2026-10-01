@@ -10,10 +10,12 @@ class AdMobService {
   // Official Google Sample Test Ad Unit IDs (100% policy-safe for development & testing)
   static const String testRewardedAdUnitIdAndroid = 'ca-app-pub-3940256099942544/5224354917';
   static const String testBannerAdUnitIdAndroid = 'ca-app-pub-3940256099942544/6300978111';
+  static const String testInterstitialAdUnitIdAndroid = 'ca-app-pub-3940256099942544/1033173712';
 
   // Real Ad Unit IDs (When ready, can also be dynamically updated from Firebase)
   String? realRewardedAdUnitId;
   String? realBannerAdUnitId;
+  String? realInterstitialAdUnitId;
 
   // Master switch (can be toggled from Admin Panel / Firestore or debug)
   bool isAdsEnabled = true;
@@ -24,6 +26,10 @@ class AdMobService {
   RewardedAd? _rewardedAd;
   bool _isRewardedAdLoading = false;
   int _rewardedRetryAttempts = 0;
+
+  InterstitialAd? _interstitialAd;
+  bool _isInterstitialAdLoading = false;
+  DateTime? _lastInterstitialShownAt;
 
   String get rewardedAdUnitId {
     if (isTestMode || realRewardedAdUnitId == null || realRewardedAdUnitId!.trim().isEmpty) {
@@ -39,6 +45,13 @@ class AdMobService {
     return realBannerAdUnitId!.trim();
   }
 
+  String get interstitialAdUnitId {
+    if (isTestMode || realInterstitialAdUnitId == null || realInterstitialAdUnitId!.trim().isEmpty) {
+      return testInterstitialAdUnitIdAndroid;
+    }
+    return realInterstitialAdUnitId!.trim();
+  }
+
   /// Initialize Mobile Ads SDK and pre-load ads
   Future<void> init() async {
     if (kIsWeb) return;
@@ -49,8 +62,9 @@ class AdMobService {
       // Load remote ad configuration from Firestore if available
       _fetchRemoteConfig();
       
-      // Pre-load the first Rewarded Ad immediately
+      // Pre-load initial ads immediately
       loadRewardedAd();
+      loadInterstitialAd();
     } catch (e) {
       debugPrint('⚠️ [AdMobService] Init notice: $e');
     }
@@ -66,6 +80,7 @@ class AdMobService {
           isTestMode = data['is_test_mode'] as bool? ?? true;
           realRewardedAdUnitId = data['rewarded_ad_id'] as String?;
           realBannerAdUnitId = data['banner_ad_id'] as String?;
+          realInterstitialAdUnitId = data['interstitial_ad_id'] as String?;
           debugPrint('🔄 [AdMobService] Remote Config synced: AdsEnabled=$isAdsEnabled, TestMode=$isTestMode');
         }
       });
@@ -168,6 +183,77 @@ class AdMobService {
         userEarnedReward = true;
       },
     );
+  }
+
+  /// Pre-load Interstitial Ad (5-6 seconds skippable ad)
+  void loadInterstitialAd() {
+    try {
+      if (kIsWeb || !isAdsEnabled) return;
+      if (_interstitialAd != null || _isInterstitialAdLoading) return;
+
+      _isInterstitialAdLoading = true;
+      InterstitialAd.load(
+        adUnitId: interstitialAdUnitId,
+        request: const AdRequest(),
+        adLoadCallback: InterstitialAdLoadCallback(
+          onAdLoaded: (ad) {
+            debugPrint('✅ [AdMobService] Interstitial Ad Loaded and Ready');
+            _interstitialAd = ad;
+            _isInterstitialAdLoading = false;
+          },
+          onAdFailedToLoad: (LoadAdError error) {
+            debugPrint('⚠️ [AdMobService] Interstitial Ad Failed to Load: $error');
+            _interstitialAd = null;
+            _isInterstitialAdLoading = false;
+          },
+        ),
+      );
+    } catch (e) {
+      _isInterstitialAdLoading = false;
+      debugPrint('⚠️ [AdMobService] loadInterstitialAd exception: $e');
+    }
+  }
+
+  /// Show Interstitial Ad (Google Policy: frequency capped, non-intrusive)
+  void showInterstitialAd({
+    required VoidCallback onDismissed,
+  }) {
+    if (!isAdsEnabled || kIsWeb) {
+      onDismissed();
+      return;
+    }
+
+    // Google Policy: Respect frequency capping (minimum 45s cooldown)
+    final now = DateTime.now();
+    if (_lastInterstitialShownAt != null && now.difference(_lastInterstitialShownAt!).inSeconds < 45) {
+      onDismissed();
+      return;
+    }
+
+    if (_interstitialAd == null) {
+      onDismissed();
+      loadInterstitialAd();
+      return;
+    }
+
+    _interstitialAd!.fullScreenContentCallback = FullScreenContentCallback(
+      onAdDismissedFullScreenContent: (ad) {
+        _lastInterstitialShownAt = DateTime.now();
+        ad.dispose();
+        _interstitialAd = null;
+        loadInterstitialAd();
+        onDismissed();
+      },
+      onAdFailedToShowFullScreenContent: (ad, error) {
+        ad.dispose();
+        _interstitialAd = null;
+        loadInterstitialAd();
+        onDismissed();
+      },
+    );
+
+    _interstitialAd!.setImmersiveMode(true);
+    _interstitialAd!.show();
   }
 }
 

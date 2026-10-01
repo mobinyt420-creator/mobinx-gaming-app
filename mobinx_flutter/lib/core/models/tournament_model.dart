@@ -18,6 +18,7 @@ class TournamentModel {
   final bool isRoomReleased;
   final String rules;
   final bool isRegistered;
+  final int createdAt;
   final List<Map<String, dynamic>> prizeTiers;
   final List<Map<String, dynamic>> participants;
 
@@ -42,6 +43,7 @@ class TournamentModel {
     this.isRoomReleased = false,
     this.rules = 'Fair play policy. Emotes allowed. Mobile devices only, no unauthorized third-party tools.',
     this.isRegistered = false,
+    this.createdAt = 0,
     this.prizeTiers = const [],
     this.participants = const [],
   });
@@ -85,6 +87,11 @@ class TournamentModel {
           (json['roomId'] != null && json['roomId'].toString().trim().isNotEmpty),
       rules: json['rules']?.toString() ?? 'Fair play policy. Emotes allowed. Mobile devices only, no unauthorized third-party tools.',
       isRegistered: json['isRegistered'] == true,
+      createdAt: json['createdAt'] is int
+          ? json['createdAt'] as int
+          : (json['timestamp'] is int
+              ? json['timestamp'] as int
+              : (int.tryParse(json['id']?.toString().replaceAll(RegExp(r'[^0-9]'), '') ?? '0') ?? 0)),
       prizeTiers: parsedTiers,
       participants: parsedParticipants,
     );
@@ -110,6 +117,7 @@ class TournamentModel {
       'isRoomReleased': isRoomReleased,
       'rules': rules,
       'isRegistered': isRegistered,
+      'createdAt': createdAt,
       'prizeTiers': prizeTiers,
       'participants': participants,
     };
@@ -134,6 +142,7 @@ class TournamentModel {
     bool? isRoomReleased,
     String? rules,
     bool? isRegistered,
+    int? createdAt,
     List<Map<String, dynamic>>? prizeTiers,
     List<Map<String, dynamic>>? participants,
   }) {
@@ -156,6 +165,7 @@ class TournamentModel {
       isRoomReleased: isRoomReleased ?? this.isRoomReleased,
       rules: rules ?? this.rules,
       isRegistered: isRegistered ?? this.isRegistered,
+      createdAt: createdAt ?? this.createdAt,
       prizeTiers: prizeTiers ?? this.prizeTiers,
       participants: participants ?? this.participants,
     );

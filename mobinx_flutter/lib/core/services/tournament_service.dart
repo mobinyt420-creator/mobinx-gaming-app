@@ -61,6 +61,8 @@ class TournamentService {
     final updated = rawList.map((t) {
       return t.copyWith(isRegistered: registered.contains(t.id));
     }).toList();
+    // Sort newest tournament on top (newest creation timestamp first)
+    updated.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     tournamentsNotifier.value = updated;
   }
 
