@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/page_transitions.dart';
@@ -14,8 +13,8 @@ import '../tournaments/tournaments_screen.dart';
 import '../sensitivity/sensitivity_screen.dart';
 import '../referral/referral_screen.dart';
 import '../help/help_screen.dart';
-import '../settings/settings_screen.dart';
 import '../about/about_screen.dart';
+import '../notifications/notifications_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -269,18 +268,22 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Player Profile Card (Modern Light Theme Hero Card)
+                // 1. VIP Esports Gamer ID Card (Hero Header)
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.borderLight, width: 1.0),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.35), width: 1.5),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
+                        color: const Color(0xFF0F172A).withValues(alpha: 0.4),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
                       ),
                     ],
                   ),
@@ -292,15 +295,17 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                           AnimatedBuilder(
                             animation: _glowAnim,
                             builder: (context, child) => Container(
-                              width: 64,
-                              height: 64,
+                              width: 66,
+                              height: 66,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                gradient: AppColors.brandGradient,
-                                border: Border.all(color: AppColors.primaryLight, width: 2),
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFF0284C7), Color(0xFF38BDF8)],
+                                ),
+                                border: Border.all(color: const Color(0xFF38BDF8), width: 2),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: AppColors.primary.withValues(alpha: _glowAnim.value),
+                                    color: const Color(0xFF38BDF8).withValues(alpha: _glowAnim.value * 0.8),
                                     blurRadius: 16,
                                     spreadRadius: 2,
                                     offset: const Offset(0, 2),
@@ -314,7 +319,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                                   ? CachedNetworkImage(
                                       imageUrl: user.avatar,
                                       fit: BoxFit.cover,
-                                      placeholder: (_, _) => Container(color: AppColors.primaryLight),
+                                      placeholder: (_, _) => Container(color: const Color(0xFF1E293B)),
                                       errorWidget: (_, _, _) => Center(
                                         child: Text(
                                           user.name.isNotEmpty ? user.name[0].toUpperCase() : 'M',
@@ -340,27 +345,37 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                           ),
                           const SizedBox(width: 14),
 
-                          // Name, Player Number & Badge
+                          // Name, Email & VIP Badge
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  user.name,
-                                  style: GoogleFonts.outfit(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.textMain,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        user.name,
+                                        style: GoogleFonts.outfit(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.white,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.edit_note_rounded, color: Color(0xFF38BDF8), size: 22),
+                                      onPressed: () => _openEditProfileDialog(user),
+                                      visualDensity: VisualDensity.compact,
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 2),
                                 Text(
                                   user.email,
                                   style: GoogleFonts.inter(
-                                    fontSize: 11.5,
-                                    color: AppColors.textSecondary,
+                                    fontSize: 12,
+                                    color: const Color(0xFF94A3B8),
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -371,10 +386,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                       decoration: BoxDecoration(
-                                        color: user.isAdmin ? const Color(0xFFFEF3C7) : const Color(0xFFEFF6FF),
+                                        color: user.isAdmin ? const Color(0xFFFEF3C7) : const Color(0xFF1E3A8A),
                                         borderRadius: BorderRadius.circular(20),
                                         border: Border.all(
-                                          color: user.isAdmin ? const Color(0xFFFDE68A) : const Color(0xFFBFDBFE),
+                                          color: user.isAdmin ? const Color(0xFFFDE68A) : const Color(0xFF3B82F6),
                                           width: 1,
                                         ),
                                       ),
@@ -382,18 +397,18 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           Icon(
-                                            user.isAdmin ? Icons.verified_user_rounded : Icons.star_rounded,
+                                            user.isAdmin ? Icons.verified_user_rounded : Icons.military_tech_rounded,
                                             size: 13,
-                                            color: user.isAdmin ? const Color(0xFFD97706) : AppColors.primary,
+                                            color: user.isAdmin ? const Color(0xFFD97706) : const Color(0xFF60A5FA),
                                           ),
                                           const SizedBox(width: 4),
                                           Text(
-                                            user.isAdmin ? 'ADMIN' : 'VIP PRO',
+                                            user.isAdmin ? 'ADMIN' : 'VIP WARRIOR',
                                             style: GoogleFonts.outfit(
-                                              fontSize: 10.5,
+                                              fontSize: 10,
                                               fontWeight: FontWeight.w900,
-                                              color: user.isAdmin ? const Color(0xFFD97706) : AppColors.primary,
-                                              letterSpacing: 0.3,
+                                              color: user.isAdmin ? const Color(0xFFD97706) : Colors.white,
+                                              letterSpacing: 0.4,
                                             ),
                                           ),
                                         ],
@@ -401,11 +416,11 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      '#${user.playerNumber.toString().padLeft(4, '0')}',
+                                      'ID: #${user.playerNumber.toString().padLeft(4, '0')}',
                                       style: GoogleFonts.outfit(
-                                        fontSize: 11.5,
+                                        fontSize: 11,
                                         fontWeight: FontWeight.w800,
-                                        color: AppColors.textMuted,
+                                        color: const Color(0xFF64748B),
                                       ),
                                     ),
                                   ],
@@ -413,83 +428,90 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                               ],
                             ),
                           ),
-
-                          IconButton(
-                            icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
-                            onPressed: () => _openEditProfileDialog(user),
-                          ),
                         ],
                       ),
 
                       const SizedBox(height: 14),
-                      const Divider(color: AppColors.borderLight),
-                      const SizedBox(height: 10),
+                      const Divider(color: Colors.white12, height: 1),
+                      const SizedBox(height: 12),
 
-                      // Free Fire UID Row
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(Icons.videogame_asset_outlined, color: AppColors.primary, size: 20),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Free Fire UID:',
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              if (user.ffUid.isNotEmpty) {
-                                Clipboard.setData(ClipboardData(text: user.ffUid));
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Copied Free Fire UID to clipboard!'),
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                              } else {
-                                _openEditProfileDialog(user);
-                              }
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: user.ffUid.isNotEmpty ? AppColors.surfaceCardSubtle : AppColors.primary,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: user.ffUid.isNotEmpty ? AppColors.borderLight : Colors.transparent,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    user.ffUid.isNotEmpty ? user.ffUid : 'Set UID +',
-                                    style: GoogleFonts.outfit(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w800,
-                                      color: user.ffUid.isNotEmpty ? AppColors.textMain : Colors.white,
-                                    ),
-                                  ),
-                                  if (user.ffUid.isNotEmpty) ...[
-                                    const SizedBox(width: 4),
-                                    const Icon(Icons.copy_rounded, size: 12, color: AppColors.textMuted),
-                                  ],
-                                ],
+                      // Integrated Free Fire UID Row with Instant Copy
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.06),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white12),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.sports_esports_rounded, color: Color(0xFF38BDF8), size: 18),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Free Fire UID: ',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF94A3B8),
                               ),
                             ),
-                          ),
-                        ],
+                            Expanded(
+                              child: Text(
+                                user.ffUid.isNotEmpty ? user.ffUid : 'Not Linked Yet',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w900,
+                                  color: user.ffUid.isNotEmpty ? Colors.white : const Color(0xFFF59E0B),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            InkWell(
+                              onTap: () {
+                                if (user.ffUid.isNotEmpty) {
+                                  Clipboard.setData(ClipboardData(text: user.ffUid));
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('✅ Free Fire UID copied to clipboard!'),
+                                      behavior: SnackBarBehavior.floating,
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                } else {
+                                  _openEditProfileDialog(user);
+                                }
+                              },
+                              borderRadius: BorderRadius.circular(8),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF0284C7),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(user.ffUid.isNotEmpty ? Icons.copy_rounded : Icons.add_rounded, size: 12, color: Colors.white),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      user.ffUid.isNotEmpty ? 'Copy' : 'Set UID',
+                                      style: GoogleFonts.outfit(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w800,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
 
                 // Referral Program Banner Card (Replacing Unnecessary Wallet Balance)
                 GestureDetector(
@@ -597,7 +619,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
               // Profile Quick Actions & Features
               Text(
-                '🎯 Quick Actions & Features',
+                '🏆 Esports & Tournament Hub',
                 style: GoogleFonts.outfit(
                   fontSize: 14.5,
                   fontWeight: FontWeight.w800,
@@ -630,18 +652,6 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   );
                 },
               ),
-              _buildSettingsTile(
-                icon: Icons.card_giftcard_rounded,
-                title: 'Referral Program & Rewards',
-                subtitle: 'Invite friends, earn diamonds & instant bKash rewards',
-                iconColor: const Color(0xFF7C3AED),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    SharedAxisPageRoute(page: const ReferralScreen()),
-                  );
-                },
-              ),
 
               if (user.isAdmin) ...[
                 const SizedBox(height: 14),
@@ -662,7 +672,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                   onTap: () {
                     StoreService.instance.openUrlInBrowserView(
                       'https://mobinx-admin-console.vercel.app',
-                      title: 'Mobin X Admin Console',
+                      title: 'OBIN Admin Console',
                       barColor: const Color(0xFF1E1B4B),
                     );
                   },
@@ -673,7 +683,7 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
 
               // Settings & Actions List
               Text(
-                '⚙️ Account Settings',
+                '⚙️ Account Settings & Support',
                 style: GoogleFonts.outfit(
                   fontSize: 14.5,
                   fontWeight: FontWeight.w800,
@@ -683,47 +693,20 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
               const SizedBox(height: 10),
 
               _buildSettingsTile(
-                icon: Icons.settings_rounded,
-                title: 'App Settings & Preferences',
-                subtitle: 'Push notifications, sound alerts & cache manager',
-                iconColor: AppColors.textSecondary,
+                icon: Icons.notifications_active_rounded,
+                title: 'Push Notifications & Alerts',
+                subtitle: 'Match room alerts, diamond discounts & winners feed',
+                iconColor: const Color(0xFF0284C7),
                 onTap: () {
                   Navigator.push(
                     context,
-                    SharedAxisPageRoute(page: const SettingsScreen()),
+                    SharedAxisPageRoute(page: const NotificationsScreen()),
                   );
-                },
-              ),
-              _buildSettingsTile(
-                icon: Icons.notifications_active_outlined,
-                title: 'Copy Test Token (FCM)',
-                subtitle: 'Copy device token to paste in Firebase Console',
-                iconColor: const Color(0xFFF59E0B),
-                onTap: () async {
-                  try {
-                    String? token = await FirebaseMessaging.instance.getToken();
-                    if (token != null) {
-                      await Clipboard.setData(ClipboardData(text: token));
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('✅ FCM Token copied! Paste it in Firebase.')),
-                        );
-                      }
-                    } else {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('❌ Could not get FCM token.')),
-                        );
-                      }
-                    }
-                  } catch (e) {
-                    debugPrint('Error getting token: $e');
-                  }
                 },
               ),
 
               _buildSettingsTile(
-                icon: Icons.help_outline_rounded,
+                icon: Icons.headset_mic_rounded,
                 title: 'Help & Support 24/7',
                 subtitle: 'WhatsApp, Telegram, live tickets & FAQs',
                 iconColor: const Color(0xFF10B981),
@@ -735,10 +718,10 @@ class _ProfileScreenState extends State<ProfileScreen> with SingleTickerProvider
                 },
               ),
               _buildSettingsTile(
-                icon: Icons.info_outline_rounded,
-                title: 'About OBIN',
-                subtitle: 'Version details, ecosystem & security shield',
-                iconColor: AppColors.primary,
+                icon: Icons.shield_rounded,
+                title: 'About OBIN Ecosystem',
+                subtitle: 'Version 3.0.7 • Fair play guarantee & security shield',
+                iconColor: const Color(0xFF6366F1),
                 onTap: () {
                   Navigator.push(
                     context,

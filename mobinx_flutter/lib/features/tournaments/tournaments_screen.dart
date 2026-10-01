@@ -129,7 +129,7 @@ class _TournamentsScreenState extends State<TournamentsScreen> {
               physics: const AlwaysScrollableScrollPhysics(parent: ClampingScrollPhysics()),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
               itemCount: tournaments.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 16),
+              separatorBuilder: (context, index) => const SizedBox(height: 22),
               itemBuilder: (context, index) {
                 final tourn = tournaments[index];
                 return TournamentCard(

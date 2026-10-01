@@ -226,17 +226,24 @@ class _TournamentCardState extends State<TournamentCard> {
     final spotsLeft = (t.slotsTotal - t.slotsFilled).clamp(0, t.slotsTotal);
     final fillFraction = t.slotsTotal > 0 ? (t.slotsFilled / t.slotsTotal).clamp(0.0, 1.0) : 0.0;
     final isFull = t.slotsFilled >= t.slotsTotal;
+    final isLiveMatch = t.isLive || t.status.toUpperCase() == 'LIVE' || t.isRoomReleased;
 
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.borderLight, width: 1.0),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: isLiveMatch ? const Color(0xFFEF4444) : const Color(0xFF3B82F6),
+          width: isLiveMatch ? 2.2 : 1.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            color: isLiveMatch
+                ? const Color(0xFFEF4444).withValues(alpha: 0.22)
+                : const Color(0xFF1E40AF).withValues(alpha: 0.08),
+            blurRadius: isLiveMatch ? 18 : 12,
+            offset: const Offset(0, 4),
+            spreadRadius: isLiveMatch ? 1 : 0,
           ),
         ],
       ),
@@ -244,9 +251,78 @@ class _TournamentCardState extends State<TournamentCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Top Match Status Ribbon
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: isLiveMatch
+                    ? [const Color(0xFFDC2626), const Color(0xFFEF4444)]
+                    : [const Color(0xFF1E3A8A), const Color(0xFF2563EB)],
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    if (isLiveMatch) ...[
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '🔴 MATCH IS LIVE NOW — ROOM JOIN OPEN',
+                        style: GoogleFonts.outfit(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ] else ...[
+                      const Text('🏆', style: TextStyle(fontSize: 11)),
+                      const SizedBox(width: 6),
+                      Text(
+                        'COMMUNITY TOURNAMENT',
+                        style: GoogleFonts.outfit(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    isLiveMatch ? 'LIVE' : 'UPCOMING',
+                    style: GoogleFonts.outfit(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
           // 1. Header Row (Image 2)
           Padding(
-            padding: const EdgeInsets.only(left: 14, right: 14, top: 14, bottom: 8),
+            padding: const EdgeInsets.only(left: 14, right: 14, top: 12, bottom: 8),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1031,9 +1107,9 @@ class _TournamentCardState extends State<TournamentCard> {
             ),
           ],
 
-          // 6. Attached Green Bottom Countdown Bar (Hidden when room credentials released)
+          // 6. Attached Bottom Bar: Green Countdown when upcoming, Red Live Banner when room live
+          const SizedBox(height: 12),
           if (!_isRoomCredentialsLive) ...[
-            const SizedBox(height: 12),
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 10),
@@ -1058,7 +1134,31 @@ class _TournamentCardState extends State<TournamentCard> {
               ),
             ),
           ] else ...[
-            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFFDC2626), Color(0xFFB91C1C)],
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.flash_on_rounded, color: Colors.white, size: 16),
+                  const SizedBox(width: 6),
+                  Text(
+                    '🔴 ROOM IS LIVE — JOIN & PLAY NOW',
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ],
       ),

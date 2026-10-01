@@ -74,9 +74,18 @@ class _MatchRegistrationSheetState extends State<MatchRegistrationSheet> {
     super.dispose();
   }
 
-  bool get _isTeamMode {
+  bool get _isSoloMode {
     final m = widget.tournament.mode.toLowerCase();
-    return m.contains('squad') || m.contains('duo');
+    return m.contains('solo') || m.contains('headshot');
+  }
+
+  bool get _isDuoMode {
+    final m = widget.tournament.mode.toLowerCase();
+    return m.contains('duo');
+  }
+
+  bool get _isSquadMode {
+    return !_isSoloMode && !_isDuoMode;
   }
 
   void _handleSubmit() async {
@@ -280,13 +289,13 @@ class _MatchRegistrationSheetState extends State<MatchRegistrationSheet> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Captain / Player 1 IGN
-                    _buildFieldLabel('Game ID Name (In-Game Name) *'),
+                    // Captain / Player 1 Game Name
+                    _buildFieldLabel('Free Fire Game Name (গেম আইডি নাম) *'),
                     TextFormField(
                       controller: _ignCtrl,
                       style: GoogleFonts.inter(color: const Color(0xFF0F172A), fontSize: 14, fontWeight: FontWeight.w700),
                       decoration: InputDecoration(
-                        hintText: 'Enter your In-Game Name (IGN)',
+                        hintText: 'আপনার গেমের নাম লিখুন (e.g. MOBIN_YT)',
                         hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8), fontSize: 13),
                         prefixIcon: const Icon(Icons.badge_rounded, size: 20, color: Color(0xFF2563EB)),
                         filled: true,
@@ -296,12 +305,12 @@ class _MatchRegistrationSheetState extends State<MatchRegistrationSheet> {
                         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1), width: 1.2)),
                         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2)),
                       ),
-                      validator: (v) => v?.trim().isEmpty == true ? 'Game ID Name is required' : null,
+                      validator: (v) => v?.trim().isEmpty == true ? 'Game Name is required' : null,
                     ),
                     const SizedBox(height: 12),
 
                     // Player UID
-                    _buildFieldLabel('Player UID (10 Digits) *'),
+                    _buildFieldLabel('Free Fire Player UID (10 Digits) *'),
                     TextFormField(
                       controller: _ffUidCtrl,
                       keyboardType: TextInputType.number,
@@ -321,16 +330,28 @@ class _MatchRegistrationSheetState extends State<MatchRegistrationSheet> {
                     ),
                     const SizedBox(height: 12),
 
-                    // Contact / Prize Delivery Number
-                    _buildFieldLabel('Contact / Prize Delivery Number *'),
+                    // Contact / Prize Delivery Number (bKash/Nagad) - 100% Manually Editable
+                    _buildFieldLabel('Contact / Prize Delivery Number (bKash/Nagad) *'),
                     TextFormField(
                       controller: _phoneCtrl,
                       keyboardType: TextInputType.phone,
                       style: GoogleFonts.inter(color: const Color(0xFF0F172A), fontSize: 14, fontWeight: FontWeight.w700),
                       decoration: InputDecoration(
-                        hintText: '01XXXXXXXXX',
+                        hintText: '01XXXXXXXXX (bKash/Nagad number)',
                         hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8), fontSize: 13),
                         prefixIcon: const Icon(Icons.phone_iphone_rounded, size: 20, color: Color(0xFF10B981)),
+                        suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                          valueListenable: _phoneCtrl,
+                          builder: (context, value, _) {
+                            if (value.text.isEmpty) return const SizedBox.shrink();
+                            return IconButton(
+                              icon: const Icon(Icons.cancel_rounded, size: 18, color: Color(0xFF94A3B8)),
+                              onPressed: () => _phoneCtrl.clear(),
+                            );
+                          },
+                        ),
+                        helperText: '💰 Enter active bKash/Nagad number to receive prize delivery.',
+                        helperStyle: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF059669), fontWeight: FontWeight.w600),
                         filled: true,
                         fillColor: const Color(0xFFF1F5F9),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -341,35 +362,91 @@ class _MatchRegistrationSheetState extends State<MatchRegistrationSheet> {
                       validator: (v) => v?.trim().isEmpty == true ? 'Phone number is required' : null,
                     ),
 
-                    // Team mode members (Squad / Duo)
-                    if (_isTeamMode) ...[
+                    // Dynamic Teammates based on Mode (Solo vs Duo vs Squad)
+                    if (_isSoloMode) ...[
+                      const SizedBox(height: 14),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFBFDBFE), width: 1),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.military_tech_rounded, color: Color(0xFF2563EB), size: 24),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Solo Match (একক ম্যাচ)',
+                                    style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w800, color: const Color(0xFF1E40AF)),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'You are registering as a Solo Warrior! No teammates needed.',
+                                    style: GoogleFonts.inter(fontSize: 11.5, color: const Color(0xFF3B82F6), fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ] else if (_isDuoMode) ...[
                       const SizedBox(height: 18),
                       Row(
                         children: [
-                          const Icon(Icons.group_rounded, size: 16, color: AppColors.cyanLight),
+                          const Icon(Icons.group_rounded, size: 18, color: Color(0xFF2563EB)),
                           const SizedBox(width: 6),
                           Text(
-                            'TEAM MEMBERS (OPTIONAL / SUB-MEMBERS)',
+                            'DUO TEAMMATE (PARTNER 2 - OPTIONAL)',
                             style: GoogleFonts.outfit(
                               fontSize: 12,
                               fontWeight: FontWeight.w800,
-                              color: AppColors.cyanLight,
+                              color: const Color(0xFF1E40AF),
                               letterSpacing: 0.5,
                             ),
                           ),
                         ],
                       ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'You are Player 1 (Team Leader). Add your partner below:',
+                        style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B)),
+                      ),
                       const SizedBox(height: 10),
-
-                      // Player 2
+                      _buildTeammateRow('Player 2 (Teammate)', _tm2Ign, _tm2Uid),
+                    ] else if (_isSquadMode) ...[
+                      // Squad Mode (4v4, Clash Squad)
+                      const SizedBox(height: 18),
+                      Row(
+                        children: [
+                          const Icon(Icons.groups_rounded, size: 20, color: Color(0xFF2563EB)),
+                          const SizedBox(width: 6),
+                          Text(
+                            'SQUAD MEMBERS (PLAYERS 2, 3 & 4 - OPTIONAL)',
+                            style: GoogleFonts.outfit(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF1E40AF),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'You are Player 1 (Leader). Add your 3 teammates below (Optional):',
+                        style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B)),
+                      ),
+                      const SizedBox(height: 10),
                       _buildTeammateRow('Player 2', _tm2Ign, _tm2Uid),
                       const SizedBox(height: 8),
-
-                      // Player 3
                       _buildTeammateRow('Player 3', _tm3Ign, _tm3Uid),
                       const SizedBox(height: 8),
-
-                      // Player 4
                       _buildTeammateRow('Player 4', _tm4Ign, _tm4Uid),
                     ],
 
@@ -458,47 +535,69 @@ class _MatchRegistrationSheetState extends State<MatchRegistrationSheet> {
 
   Widget _buildTeammateRow(String label, TextEditingController ignCtrl, TextEditingController uidCtrl) {
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFCBD5E1), width: 1),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: TextField(
-              controller: ignCtrl,
-              style: GoogleFonts.inter(color: const Color(0xFF0F172A), fontSize: 12.5, fontWeight: FontWeight.w600),
-              decoration: InputDecoration(
-                hintText: '$label IGN',
-                hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8), fontSize: 12),
-                isDense: true,
-                filled: true,
-                fillColor: const Color(0xFFF1F5F9),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          Row(
+            children: [
+              const Icon(Icons.person_outline_rounded, size: 14, color: Color(0xFF2563EB)),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: GoogleFonts.outfit(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF334155),
+                ),
               ),
-            ),
+            ],
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: TextField(
-              controller: uidCtrl,
-              keyboardType: TextInputType.number,
-              style: GoogleFonts.inter(color: const Color(0xFF0F172A), fontSize: 12.5, fontWeight: FontWeight.w600),
-              decoration: InputDecoration(
-                hintText: '$label UID',
-                hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8), fontSize: 12),
-                isDense: true,
-                filled: true,
-                fillColor: const Color(0xFFF1F5F9),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
-                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: ignCtrl,
+                  style: GoogleFonts.inter(color: const Color(0xFF0F172A), fontSize: 13, fontWeight: FontWeight.w600),
+                  decoration: InputDecoration(
+                    hintText: 'খেলোয়াড়ের নাম (Name)',
+                    hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8), fontSize: 12),
+                    isDense: true,
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextField(
+                  controller: uidCtrl,
+                  keyboardType: TextInputType.number,
+                  style: GoogleFonts.inter(color: const Color(0xFF0F172A), fontSize: 13, fontWeight: FontWeight.w600),
+                  decoration: InputDecoration(
+                    hintText: 'খেলোয়াড় UID (Digits)',
+                    hintStyle: GoogleFonts.inter(color: const Color(0xFF94A3B8), fontSize: 12),
+                    isDense: true,
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFCBD5E1))),
+                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),

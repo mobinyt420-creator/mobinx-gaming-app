@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import '../models/banner_model.dart';
 import '../models/tournament_model.dart';
 import '../models/notice_model.dart';
+import '../../features/home/widgets/popular_services_grid.dart';
 import 'firebase_service.dart';
 import 'storage_service.dart';
 
@@ -63,9 +64,23 @@ class HomeDataService {
     return [];
   }
 
+  static List<PopularServiceItem> _getInitialServices() {
+    try {
+      final cachedServices = StorageService.getCache('obin_live_services');
+      if (cachedServices is List && cachedServices.isNotEmpty) {
+        final list = cachedServices
+            .map((s) => PopularServiceItem.fromJson(Map<String, dynamic>.from(s)))
+            .toList();
+        if (list.isNotEmpty) return list;
+      }
+    } catch (_) {}
+    return PopularServicesGrid.defaultServices;
+  }
+
   // Reactive state notifiers - pre-populated for instant 0ms render
   final ValueNotifier<List<BannerModel>> bannersNotifier = ValueNotifier<List<BannerModel>>(_getInitialBanners());
   final ValueNotifier<List<FlashDealModel>> flashDealsNotifier = ValueNotifier<List<FlashDealModel>>(_getInitialDeals());
+  final ValueNotifier<List<PopularServiceItem>> servicesNotifier = ValueNotifier<List<PopularServiceItem>>(_getInitialServices());
   final ValueNotifier<List<TournamentModel>> featuredTournamentsNotifier = ValueNotifier<List<TournamentModel>>([]);
   final ValueNotifier<NoticeModel?> activeNoticeNotifier = ValueNotifier<NoticeModel?>(null);
   final ValueNotifier<bool> isLoadingNotifier = ValueNotifier<bool>(false);
@@ -144,6 +159,21 @@ class HomeDataService {
               );
             } else {
               activeNoticeNotifier.value = null;
+            }
+          }
+        }
+      });
+      // Real-time listener for Services Grid customization
+      FirebaseService.firestore.collection('config').doc('services_grid').snapshots().listen((snap) {
+        if (snap.exists && snap.data() != null) {
+          final data = snap.data()!;
+          if (data['services'] is List) {
+            final list = (data['services'] as List)
+                .map((s) => PopularServiceItem.fromJson(Map<String, dynamic>.from(s as Map)))
+                .toList();
+            if (list.isNotEmpty) {
+              servicesNotifier.value = list;
+              StorageService.setCache('obin_live_services', list.map((s) => s.toJson()).toList());
             }
           }
         }
@@ -233,6 +263,27 @@ class HomeDataService {
                     actionText: wp['btnText']?.toString() ?? 'OK',
                     actionUrl: wp['btnUrl']?.toString() ?? '',
                   );
+                }
+              }
+            }
+          }).catchError((_) => null),
+
+          // Services Grid
+          FirebaseService.firestore
+              .collection('config')
+              .doc('services_grid')
+              .get()
+              .timeout(const Duration(seconds: 4))
+              .then((gridDoc) {
+            if (gridDoc.exists && gridDoc.data() != null) {
+              final data = gridDoc.data()!;
+              if (data['services'] is List) {
+                final list = (data['services'] as List)
+                    .map((s) => PopularServiceItem.fromJson(Map<String, dynamic>.from(s as Map)))
+                    .toList();
+                if (list.isNotEmpty) {
+                  servicesNotifier.value = list;
+                  StorageService.setCache('obin_live_services', list.map((s) => s.toJson()).toList());
                 }
               }
             }
