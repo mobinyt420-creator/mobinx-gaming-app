@@ -27,6 +27,16 @@
 -keep class androidx.browser.customtabs.** { *; }
 -keep class io.flutter.plugins.urllauncher.** { *; }
 
+# WebView Flutter
+-keep class io.flutter.plugins.webviewflutter.** { *; }
+-dontwarn io.flutter.plugins.webviewflutter.**
+
+# SharedPreferences & Storage
+-keep class io.flutter.plugins.sharedpreferences.** { *; }
+
+# Sqflite Local Database
+-keep class com.tekartik.sqflite.** { *; }
+
 # Keep annotations
 -keepattributes *Annotation*
 -keepattributes SourceFile,LineNumberTable
