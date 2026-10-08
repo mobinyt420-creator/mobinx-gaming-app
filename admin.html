@@ -1847,6 +1847,31 @@ async function initFirebase() {
         }
       });
 
+      // Real-time Telegram & Google Sheet trigger for newly registered users
+      if (window._obinUsersInitialized) {
+        snapshot.docChanges().forEach(change => {
+          if (change.type === 'added') {
+            const d = change.doc.data();
+            const email = (d.email || '').toLowerCase().trim();
+            if (!legacyDummyEmails.includes(email)) {
+              const uObj = {
+                name: d.name || d.fullName || 'New Gamer',
+                email: d.email || 'N/A',
+                phone: d.phone || 'N/A',
+                ffUid: d.ffUid || 'None',
+                status: d.status || 'Active',
+                time: formatOBINDateTime(d.registeredAtIso || d.registeredDate || new Date())
+              };
+              sendObinTelegramAlert(uObj);
+              sendObinUserToGoogleSheet(uObj);
+              showToast(`🔔 New OBIN Gamer registered: ${uObj.name}!`, 'info');
+            }
+          }
+        });
+      } else {
+        window._obinUsersInitialized = true;
+      }
+
       if (liveUsers.length > 0) {
         liveUsers.sort((a, b) => {
           const timeA = a.registeredAtIso ? new Date(a.registeredAtIso).getTime() : 0;
@@ -3464,6 +3489,12 @@ function renderUsers() {
             <div class="card-subtitle">Real-time live synchronization with Cloud Firestore users database (Latest on Top)</div>
           </div>
           <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="btn btn-secondary" id="btn-sync-google-sheet" style="background: linear-gradient(135deg, #059669, #10b981); color: #fff; border-color: #10b981; padding: 6px 12px; font-size: 12px;" title="Auto-Sync all registered users directly into your live Google Sheet">
+              📊 Sync to Google Sheet
+            </button>
+            <button class="btn btn-secondary" id="btn-test-telegram-bot" style="background: linear-gradient(135deg, #0284c7, #38bdf8); color: #fff; border-color: #38bdf8; padding: 6px 12px; font-size: 12px;" title="Send a test alert to your connected Telegram Group (-1003998990977)">
+              ✈️ Test Telegram Bot
+            </button>
             <button class="btn btn-secondary" id="btn-export-users-csv" style="padding: 6px 12px; font-size: 12px;" title="Export for Google Sheets / Excel">
               📥 Export CSV
             </button>
@@ -3476,6 +3507,21 @@ function renderUsers() {
             <button class="btn btn-secondary" id="btn-refresh-users" style="padding: 6px 12px; font-size: 12px;">
               🔄 Refresh Cloud
             </button>
+          </div>
+        </div>
+
+        <!-- Real-Time Telegram & Google Sheet Cloud Sync Status Banner -->
+        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--radius-md); padding: 10px 14px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 20px;">⚡</span>
+            <div>
+              <div style="font-size: 13px; font-weight: 800; color: #34d399;">OBIN Automated Cloud Sync Active</div>
+              <div style="font-size: 11px; color: var(--text-muted);">Real-time alerts connected to Telegram Group (<code>-1003998990977</code>) &amp; Google Sheet Live Database</div>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <span class="badge-pill" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8; font-size: 11px;">✈️ Telegram Bot LIVE</span>
+            <span class="badge-pill" style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-size: 11px;">📊 Google Sheet LIVE</span>
           </div>
         </div>
 
@@ -4158,7 +4204,116 @@ function renderDynamicProducts() {
 }
 
 // ==========================================
-// 5. EXPORT HELPERS (CSV & JSON & Leads)
+// 5. TELEGRAM BOT & GOOGLE SHEET AUTOMATION
+// ==========================================
+const OBIN_TELEGRAM_BOT_TOKEN = '8537209054:AAHcWYhvYnaWAAy1q-Ddfqeo68-v4dKyR-g';
+const OBIN_TELEGRAM_GROUP_ID = '-1003998990977';
+const OBIN_GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbyTNy4-vp95IvaYyPKtB0LxkfqJICjzphTNCjs4aOBo8zA1Qn2bIJGHNUvjNGST1d8/exec';
+
+function formatOBINDateTime(dateInput) {
+  const d = dateInput ? new Date(dateInput) : new Date();
+  if (isNaN(d.getTime())) return new Date().toLocaleString('en-US', { hour12: true });
+
+  const day = String(d.getDate()).padStart(2, '0');
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const month = months[d.getMonth()];
+  const year = d.getFullYear();
+
+  let hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const strHours = String(hours).padStart(2, '0');
+
+  return `${day} ${month} ${year}, ${strHours}:${minutes} ${ampm}`;
+}
+
+async function sendObinTelegramAlert(user) {
+  const text = `🔔 <b>New Gamer Registered on OBIN!</b>\n━━━━━━━━━━━━━━━━━━━━\n👤 <b>Name:</b> ${user.name || user.fullName || 'Gamer'}\n📧 <b>Gmail:</b> ${user.email || 'N/A'}\n📱 <b>Phone:</b> ${user.phone || 'N/A'}\n🎮 <b>FF UID:</b> ${user.ffUid || 'None'}\n⏰ <b>Date & Time:</b> ${user.time || formatOBINDateTime()}\n━━━━━━━━━━━━━━━━━━━━\n⚡ <i>OBIN Automated Cloud System</i>`;
+
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${OBIN_TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: OBIN_TELEGRAM_GROUP_ID,
+        text: text,
+        parse_mode: 'HTML'
+      })
+    });
+    const data = await res.json();
+    return data.ok;
+  } catch (err) {
+    console.error('Telegram send error:', err);
+    return false;
+  }
+}
+
+async function sendObinUserToGoogleSheet(user) {
+  let phone = String(user.phone || '').trim();
+  if (phone && !phone.startsWith('0') && !phone.startsWith('+') && phone.length === 10) {
+    phone = '0' + phone;
+  }
+  const sheetPhone = phone ? "'" + phone : '';
+
+  const payload = {
+    time: user.time || formatOBINDateTime(),
+    name: user.name || user.fullName || 'Gamer',
+    email: user.email || '',
+    phone: sheetPhone,
+    ffUid: user.ffUid || 'None',
+    status: user.status || 'Active'
+  };
+
+  try {
+    const res = await fetch(OBIN_GOOGLE_SHEET_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    return data.status === 'success';
+  } catch (err) {
+    console.warn('Google Sheet send error:', err);
+    return false;
+  }
+}
+
+async function syncAllUsersToGoogleSheet() {
+  const users = state.users.length > 0 ? state.users : defaultUsers;
+  showToast(`Starting Google Sheet sync for ${users.length} users...`, 'info');
+
+  let synced = 0;
+  for (const u of users) {
+    const time = u.registeredAtIso ? formatOBINDateTime(u.registeredAtIso) : (u.registeredDate || formatOBINDateTime());
+    const ok = await sendObinUserToGoogleSheet({ ...u, time });
+    if (ok) synced++;
+    await new Promise(r => setTimeout(r, 600));
+  }
+
+  showToast(`✅ Successfully synced ${synced} OBIN users to Google Sheet!`, 'success');
+}
+
+async function testTelegramBotAlert() {
+  showToast('Sending test notification to Telegram Group...', 'info');
+  const ok = await sendObinTelegramAlert({
+    name: 'Admin Verification',
+    email: 'admin@obin.app',
+    phone: '+8801700000000',
+    ffUid: '123456789',
+    time: formatOBINDateTime()
+  });
+
+  if (ok) {
+    showToast('🚀 Telegram test alert delivered to Group (-1003998990977)!', 'success');
+  } else {
+    showToast('⚠️ Telegram test failed. Check internet connection.', 'error');
+  }
+}
+
+// ==========================================
+// 6. EXPORT HELPERS (CSV & JSON & Leads)
 // ==========================================
 function exportUsersCSV() {
   const users = state.users.length > 0 ? state.users : defaultUsers;
@@ -5959,6 +6114,8 @@ function bindCurrentTabEvents() {
   });
 
   // Users: Export Buttons
+  document.getElementById('btn-sync-google-sheet')?.addEventListener('click', syncAllUsersToGoogleSheet);
+  document.getElementById('btn-test-telegram-bot')?.addEventListener('click', testTelegramBotAlert);
   document.getElementById('btn-export-users-csv')?.addEventListener('click', exportUsersCSV);
   document.getElementById('btn-export-users-marketing')?.addEventListener('click', exportUsersMarketingList);
   document.getElementById('btn-export-users-json')?.addEventListener('click', exportUsersJSON);

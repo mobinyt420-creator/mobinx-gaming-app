@@ -13,15 +13,15 @@ class AdMobService {
   static const String testInterstitialAdUnitIdAndroid = 'ca-app-pub-3940256099942544/1033173712';
 
   // Real Ad Unit IDs (When ready, can also be dynamically updated from Firebase)
-  String? realRewardedAdUnitId;
-  String? realBannerAdUnitId;
-  String? realInterstitialAdUnitId;
+  String? realRewardedAdUnitId = 'ca-app-pub-8241003118710445/7900529481';
+  String? realBannerAdUnitId = 'ca-app-pub-8241003118710445/6290180322';
+  String? realInterstitialAdUnitId = 'ca-app-pub-8241003118710445/2020771981';
 
   // Master switch (can be toggled from Admin Panel / Firestore or debug)
   bool isAdsEnabled = true;
 
   // In test mode, always use official Google sample IDs to protect user account
-  bool isTestMode = true;
+  bool isTestMode = false;
 
   RewardedAd? _rewardedAd;
   bool _isRewardedAdLoading = false;
