@@ -7,7 +7,7 @@ import { startObinCloudSync } from './services/obin_cloud_sync.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const PORT = 5173;
+const PORT = process.env.PORT || 5173;
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=UTF-8',
@@ -24,6 +24,13 @@ const MIME_TYPES = {
 
 const server = http.createServer((req, res) => {
   let reqPath = decodeURI(req.url.split('?')[0]);
+
+  // Health check for Render / Cloud
+  if (reqPath === '/health' || reqPath === '/api/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    res.end(JSON.stringify({ status: 'online', service: 'OBIN Server & Cloud Sync', time: new Date().toISOString() }));
+    return;
+  }
 
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -48,11 +55,14 @@ const server = http.createServer((req, res) => {
 
         if (!serviceAccount || !serviceAccount.client_email || !serviceAccount.private_key) {
           if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+            let val = String(process.env.FIREBASE_SERVICE_ACCOUNT).trim();
             try {
-              serviceAccount = typeof process.env.FIREBASE_SERVICE_ACCOUNT === 'string'
-                ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-                : process.env.FIREBASE_SERVICE_ACCOUNT;
-            } catch (_) {}
+              serviceAccount = JSON.parse(val);
+            } catch (_) {
+              try {
+                serviceAccount = JSON.parse(Buffer.from(val, 'base64').toString('utf8'));
+              } catch (_) {}
+            }
           }
         }
         if (typeof serviceAccount === 'string') {

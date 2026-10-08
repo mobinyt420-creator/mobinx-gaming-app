@@ -144,11 +144,14 @@ export async function startObinCloudSync() {
 
   let serviceAccount = null;
   if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    let val = String(process.env.FIREBASE_SERVICE_ACCOUNT).trim();
     try {
-      serviceAccount = typeof process.env.FIREBASE_SERVICE_ACCOUNT === 'string'
-        ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-        : process.env.FIREBASE_SERVICE_ACCOUNT;
-    } catch (_) {}
+      serviceAccount = JSON.parse(val);
+    } catch (_) {
+      try {
+        serviceAccount = JSON.parse(Buffer.from(val, 'base64').toString('utf8'));
+      } catch (_) {}
+    }
   }
 
   if (!serviceAccount) {
@@ -289,7 +292,7 @@ export async function startObinCloudSync() {
 }
 
 // 4. EMBEDDED HTTP SERVER FOR 24/7 CLOUD HOSTING & HEALTH CHECKS
-if (process.env.PORT) {
+if (process.argv[1] === fileURLToPath(import.meta.url) && process.env.PORT) {
   const HTTP_PORT = process.env.PORT || 8080;
   const server = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'application/json' });
