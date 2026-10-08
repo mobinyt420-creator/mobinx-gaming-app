@@ -3,6 +3,7 @@ import https from 'https';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { startObinCloudSync } from './services/obin_cloud_sync.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -270,4 +271,6 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running locally at: http://localhost:${PORT}/`);
   console.log(`Mobile Phone Access URL: http://192.168.16.229:${PORT}/`);
+  // Start real-time Telegram Bot & Google Sheet Cloud Sync
+  startObinCloudSync().catch(err => console.warn('[CloudSync] Init notice:', err.message));
 });

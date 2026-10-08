@@ -6,6 +6,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "sync": "node services/obin_cloud_sync.mjs",
     "admin": "node admin-website/server.js",
     "cap:init": "npx cap init \"Mobin X\" \"com.mobinx.gaming\" --web-dir .",
     "cap:add": "npx cap add android",
@@ -25,6 +26,7 @@
     "@capacitor/android": "^8.5.0",
     "@capacitor/browser": "^8.0.4",
     "@capacitor/cli": "^8.5.0",
-    "@capacitor/core": "^8.5.0"
+    "@capacitor/core": "^8.5.0",
+    "firebase-admin": "^14.5.0"
   }
 }

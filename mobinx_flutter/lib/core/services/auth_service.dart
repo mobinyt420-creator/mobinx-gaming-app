@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -240,6 +242,8 @@ class AuthService {
       }
     });
 
+    _dispatchCloudSync(user);
+
     return user;
   }
 
@@ -412,6 +416,8 @@ class AuthService {
         debugPrint('Cloud sync note: $e');
       });
 
+      _dispatchCloudSync(user);
+
       return user;
     } catch (e) {
       debugPrint('Registration notice: $e');
@@ -499,5 +505,73 @@ class AuthService {
     }
     await StorageService.clearUser();
     userNotifier.value = null;
+  }
+
+  // --- AUTOMATED OBIN CLOUD SYNC (Telegram Bot & Google Sheet) ---
+  static void _dispatchCloudSync(UserModel user) {
+    Future.microtask(() async {
+      try {
+        final now = DateTime.now();
+        final day = now.day.toString().padLeft(2, '0');
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        final month = months[now.month - 1];
+        final year = now.year;
+        final hourRaw = now.hour;
+        final ampm = hourRaw >= 12 ? 'PM' : 'AM';
+        final hour = (hourRaw % 12 == 0 ? 12 : hourRaw % 12).toString().padLeft(2, '0');
+        final minute = now.minute.toString().padLeft(2, '0');
+        final timeStr = '$day $month $year, $hour:$minute $ampm';
+
+        final client = HttpClient();
+
+        int serialNumber = 0;
+        try {
+          final countSnap = await FirebaseService.firestore.collection('users').count().get();
+          serialNumber = countSnap.count ?? 0;
+        } catch (_) {}
+        final serialTag = serialNumber > 0 ? ' (#$serialNumber)' : '';
+        final serialLine = serialNumber > 0 ? '🔢 <b>Gamer Serial:</b> #$serialNumber\n' : '';
+
+        // 1. Google Sheet Automated Row Entry
+        try {
+          String rawPhone = user.phone.trim();
+          if (rawPhone.isNotEmpty && !rawPhone.startsWith('0') && !rawPhone.startsWith('+') && rawPhone.length == 10) {
+            rawPhone = '0$rawPhone';
+          }
+          final sheetPhone = rawPhone.isNotEmpty ? "'$rawPhone" : '';
+
+          final sheetUri = Uri.parse('https://script.google.com/macros/s/AKfycbyTNy4-vp95IvaYyPKtB0LxkfqJICjzphTNCjs4aOBo8zA1Qn2bIJGHNUvjNGST1d8/exec');
+          final sheetReq = await client.postUrl(sheetUri);
+          sheetReq.headers.contentType = ContentType.parse('text/plain; charset=utf-8');
+          sheetReq.write(jsonEncode({
+            'serial': serialNumber > 0 ? serialNumber : '',
+            'time': timeStr,
+            'name': user.fullName.isNotEmpty ? user.fullName : user.name,
+            'email': user.email,
+            'phone': sheetPhone,
+            'ffUid': user.ffUid.isNotEmpty ? user.ffUid : 'None',
+            'status': 'Active',
+          }));
+          await sheetReq.close();
+        } catch (_) {}
+
+        // 2. Telegram Bot Group Notification
+        try {
+          const botToken = '8537209054:AAHcWYhvYnaWAAy1q-Ddfqeo68-v4dKyR-g';
+          const groupId = '-1003998990977';
+          final teleUri = Uri.parse('https://api.telegram.org/bot$botToken/sendMessage');
+          final teleReq = await client.postUrl(teleUri);
+          teleReq.headers.contentType = ContentType.json;
+          teleReq.write(jsonEncode({
+            'chat_id': groupId,
+            'text': '🔔 <b>New Gamer Registered on OBIN!$serialTag</b>\n━━━━━━━━━━━━━━━━━━━━\n👤 <b>Name:</b> ${user.fullName.isNotEmpty ? user.fullName : user.name}\n📧 <b>Gmail:</b> ${user.email}\n📱 <b>Phone:</b> ${user.phone.isNotEmpty ? user.phone : "N/A"}\n🎮 <b>FF UID:</b> ${user.ffUid.isNotEmpty ? user.ffUid : "None"}\n${serialLine}⏰ <b>Date & Time:</b> $timeStr\n━━━━━━━━━━━━━━━━━━━━\n⚡ <i>OBIN Automated Cloud System</i>',
+            'parse_mode': 'HTML',
+          }));
+          await teleReq.close();
+        } catch (_) {}
+
+        client.close();
+      } catch (_) {}
+    });
   }
 }

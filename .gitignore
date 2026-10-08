@@ -4,6 +4,7 @@ Thumbs.db
 *.log
 .system_generated/
 scratch/
+services/notified_users.json
 www/
 android/.gradle/
 android/build/
