@@ -22,10 +22,28 @@ const POSSIBLE_SA_PATHS = [
 const PRIMARY_CACHE_PATH = path.resolve(__dirname, 'notified_users.json');
 const FALLBACK_CACHE_PATH = path.resolve(__dirname, '../scratch/notified_users.json');
 
+// Helper: Safe HTML Escaping for Telegram
+export function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
 // Helper: 12-Hour AM/PM Time Formatter (Bangladeshi Standard)
 export function formatOBINDateTime(dateInput) {
-  const d = dateInput ? new Date(dateInput) : new Date();
-  if (isNaN(d.getTime())) return new Date().toLocaleString('en-US', { hour12: true });
+  let d;
+  if (dateInput && typeof dateInput.toDate === 'function') {
+    d = dateInput.toDate();
+  } else if (dateInput && typeof dateInput.seconds === 'number') {
+    d = new Date(dateInput.seconds * 1000);
+  } else if (dateInput && dateInput !== 'Today') {
+    d = new Date(dateInput);
+  } else {
+    d = new Date();
+  }
+  if (isNaN(d.getTime())) d = new Date();
 
   const day = String(d.getDate()).padStart(2, '0');
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -42,33 +60,48 @@ export function formatOBINDateTime(dateInput) {
   return `${day} ${month} ${year}, ${strHours}:${minutes} ${ampm}`;
 }
 
-// Helper: Send Telegram Alert with Serial Number
+// Helper: Send Telegram Alert with Serial Number & Rate-Limit Handling
 export async function sendTelegramAlert(user) {
   const serialTag = user.serial ? ` (#${user.serial})` : '';
   const serialLine = user.serial ? `🔢 <b>Gamer Serial:</b> #${user.serial}\n` : '';
-  const text = `🔔 <b>New Gamer Registered on OBIN!${serialTag}</b>\n━━━━━━━━━━━━━━━━━━━━\n👤 <b>Name:</b> ${user.name || 'Gamer'}\n📧 <b>Gmail:</b> ${user.email || 'N/A'}\n📱 <b>Phone:</b> ${user.phone || 'N/A'}\n🎮 <b>FF UID:</b> ${user.ffUid || 'None'}\n${serialLine}⏰ <b>Date & Time:</b> ${user.time}\n━━━━━━━━━━━━━━━━━━━━\n⚡ <i>OBIN Automated Cloud System</i>`;
+  const safeName = escapeHtml(user.name || 'Gamer');
+  const safeEmail = escapeHtml(user.email || 'N/A');
+  const safePhone = escapeHtml(user.phone || 'N/A');
+  const safeFfUid = escapeHtml(user.ffUid || 'None');
+  const safeTime = escapeHtml(user.time || '');
 
-  try {
-    const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: TELEGRAM_GROUP_ID,
-        text: text,
-        parse_mode: 'HTML'
-      }),
-      signal: AbortSignal.timeout(8000)
-    });
-    const data = await res.json();
-    if (!data.ok) {
+  const text = `🔔 <b>New Gamer Registered on OBIN!${serialTag}</b>\n━━━━━━━━━━━━━━━━━━━━\n👤 <b>Name:</b> ${safeName}\n📧 <b>Gmail:</b> ${safeEmail}\n📱 <b>Phone:</b> ${safePhone}\n🎮 <b>FF UID:</b> ${safeFfUid}\n${serialLine}⏰ <b>Date & Time:</b> ${safeTime}\n━━━━━━━━━━━━━━━━━━━━\n⚡ <i>OBIN Automated Cloud System</i>`;
+
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      const res = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: TELEGRAM_GROUP_ID,
+          text: text,
+          parse_mode: 'HTML'
+        }),
+        signal: AbortSignal.timeout(10000)
+      });
+      const data = await res.json();
+      if (data.ok) {
+        return true;
+      }
+      if (data.error_code === 429) {
+        const waitSec = (data.parameters?.retry_after || 4) + 1;
+        console.warn(`[Telegram] Rate limited (429). Pausing ${waitSec}s before retry...`);
+        await new Promise(r => setTimeout(r, waitSec * 1000));
+        continue;
+      }
       console.warn(`[Telegram] Alert warning:`, data.description);
       return false;
+    } catch (err) {
+      console.error(`[Telegram] Network error (attempt ${attempt + 1}):`, err.message);
+      await new Promise(r => setTimeout(r, 2000));
     }
-    return true;
-  } catch (err) {
-    console.error(`[Telegram] Network error:`, err.message);
-    return false;
   }
+  return false;
 }
 
 // Helper: Send to Google Sheet (text/plain with 15s timeout)
@@ -222,8 +255,19 @@ export async function startObinCloudSync() {
         }
       });
 
+      const updateCloudSyncDoc = async () => {
+        try {
+          await db.collection('system_sync').doc('telegram_sheet').set({
+            lastUpdated: new Date().toISOString(),
+            syncedCount: notifiedSet.size,
+            syncedIds: Array.from(notifiedSet)
+          }, { merge: true });
+        } catch (_) {}
+      };
+
       if (missingUsers.length > 0) {
         console.log(`⚡ Found ${missingUsers.length} unnotified users who registered while offline! Syncing now...`);
+        let processedCount = 0;
         for (const userObj of missingUsers) {
           const serial = notifiedSet.size + 1;
           userObj.serial = serial;
@@ -235,9 +279,15 @@ export async function startObinCloudSync() {
           notifiedSet.add(userObj.id);
           saveNotifiedSet(notifiedSet);
           // Mark in Firestore
-          db.collection('users').doc(userObj.id).set({ telegramSynced: true }, { merge: true }).catch(() => {});
-          await new Promise(r => setTimeout(r, 600));
+          db.collection('users').doc(userObj.id).set({ telegramSynced: true, gamerSerial: serial }, { merge: true }).catch(() => {});
+          
+          processedCount++;
+          if (processedCount % 10 === 0) {
+            await updateCloudSyncDoc();
+          }
+          await new Promise(r => setTimeout(r, 1200));
         }
+        await updateCloudSyncDoc();
         console.log(`✅ All ${missingUsers.length} backlog users synced successfully!`);
       } else {
         console.log(`✅ All ${snapshot.size} users are up to date.`);
@@ -277,7 +327,15 @@ export async function startObinCloudSync() {
           ]);
 
           // Mark in Firestore
-          db.collection('users').doc(id).set({ telegramSynced: true }, { merge: true }).catch(() => {});
+          db.collection('users').doc(id).set({ telegramSynced: true, gamerSerial: serial }, { merge: true }).catch(() => {});
+          
+          try {
+            await db.collection('system_sync').doc('telegram_sheet').set({
+              lastUpdated: new Date().toISOString(),
+              syncedCount: notifiedSet.size,
+              syncedIds: Array.from(notifiedSet)
+            }, { merge: true });
+          } catch (_) {}
         }
       }
     }
