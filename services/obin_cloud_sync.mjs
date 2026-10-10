@@ -305,7 +305,15 @@ export async function startObinCloudSync() {
         const data = doc.data();
 
         if (!notifiedSet.has(id) && !data.telegramSynced) {
-          const serial = notifiedSet.size + 1;
+          let serial = data.gamerSerial;
+          if (!serial) {
+            try {
+              const countSnap = await db.collection('users').count().get();
+              serial = countSnap.data().count;
+            } catch (_) {
+              serial = notifiedSet.size + 1;
+            }
+          }
           notifiedSet.add(id);
           saveNotifiedSet(notifiedSet);
 
